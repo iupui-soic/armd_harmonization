@@ -154,9 +154,11 @@ def build_cohort(
     flow: list[dict] = []
 
     def record(step: str, where: str, with_split: bool) -> None:
+        # Steps before the partition filter include sealed test patients, so they count no labels.
         join = joins if with_split else f"JOIN {label_table} l USING (culture_id)"
+        label_count = "COUNT(*) FILTER (WHERE l.label = 1)" if with_split else "NULL"
         n, patients, positive = con.execute(
-            f"SELECT COUNT(*), COUNT(DISTINCT e.patient_id), COUNT(*) FILTER (WHERE l.label = 1) FROM {episodes} e {join} WHERE {where}"
+            f"SELECT COUNT(*), COUNT(DISTINCT e.patient_id), {label_count} FROM {episodes} e {join} WHERE {where}"
         ).fetchone()
         flow.append({"step": step, "cultures": n, "patients": patients, "label_positive": positive})
 

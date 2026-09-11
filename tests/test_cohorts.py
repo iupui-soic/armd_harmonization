@@ -56,7 +56,8 @@ def test_e2_primary_excludes_sealed_test_patients(stanford):
         "stanford:p3:106": (0, "not_resistant", "derivation"),
     }
     assert steps(result) == [("ordered cultures", 6), ("evaluable for E2", 4), ("in partition derivation", 3)]
-    assert result.flow[-1]["label_positive"] == 1
+    # Label counts start at the partition step, so the test patient's cultures are never counted.
+    assert [s["label_positive"] for s in result.flow] == [None, None, 1]
 
 
 def test_subgroups_and_features(stanford):

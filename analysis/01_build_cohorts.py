@@ -76,8 +76,13 @@ def write_parquet(con, table: str, out_dir) -> None:
 
 
 def suppressed_flow(flow: list[dict]) -> list[dict]:
-    return [{"step": s["step"], "cultures": cell(s["cultures"]), "patients": cell(s["patients"]),
-             "label_positive": cell(s["label_positive"]), "prevalence": rate(s["label_positive"], s["cultures"])} for s in flow]
+    out = []
+    for s in flow:
+        positive = s["label_positive"]
+        out.append({"step": s["step"], "cultures": cell(s["cultures"]), "patients": cell(s["patients"]),
+                    "label_positive": None if positive is None else cell(positive),
+                    "prevalence": None if positive is None else rate(positive, s["cultures"])})
+    return out
 
 
 def run_site(site: str, run: RunManifest) -> dict:
@@ -143,7 +148,9 @@ def render(summary: dict) -> str:
         ]
         for name, c in s["cohorts"].items():
             for step in c["flow"]:
-                lines.append(f"| {name} | {step['step']} | {step['cultures']} | {step['patients']} | {step['label_positive']} | {step['prevalence']} |")
+                positive, prevalence = ("n/a", "n/a") if step["label_positive"] is None else (step["label_positive"], step["prevalence"])
+                lines.append(f"| {name} | {step['step']} | {step['cultures']} | {step['patients']} | {positive} | {prevalence} |")
+        lines += ["", "Labels are counted from the partition step on, because earlier steps include the sealed test partition."]
         lines += ["", "| covariate | E1 mean | E2 mean | SMD (E2 minus E1) |", "|---|---|---|---|"]
         for cov, v in a1["covariates"].items():
             lines.append(f"| {cov} | {v['E1_mean']} | {v['E2_mean']} | {v['smd_E2_minus_E1']} |")
