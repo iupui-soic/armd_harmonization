@@ -13,12 +13,10 @@ def feature_rows(loader, table, names):
     return {r[0]: dict(zip(names, r[1:])) for r in loader.con.execute(f"SELECT culture_id, {columns} FROM {table} ORDER BY 1").fetchall()}
 
 
-@pytest.fixture()
-def stanford(tmp_path, monkeypatch):
-    monkeypatch.setenv("ARMD_DATA_ROOT", str(tmp_path))
+def build_stanford_feature_release(root):
     site = "armd-stanford"
-    build_dryad_release(tmp_path, site, "order_time_jittered_utc")
-    write_table(tmp_path, site, "antibiotic_subtype_exposure", f"{IDS}, medication_name VARCHAR, medication_time_to_cultureTime DOUBLE", [
+    build_dryad_release(root, site, "order_time_jittered_utc")
+    write_table(root, site, "antibiotic_subtype_exposure", f"{IDS}, medication_name VARCHAR, medication_time_to_cultureTime DOUBLE", [
         ("p1", "e2", "102", "Cefepime In", 30.0),
         ("p1", "e2", "102", "Levaquin", 0.5),
         ("p1", "e2", "102", "Piperacillin-Tazobactam-Dextrs", 100.0),
@@ -27,7 +25,7 @@ def stanford(tmp_path, monkeypatch):
         ("p2", "e3", "103", "Ertapenem", 20.0),
         ("p2", "e3", "103", "Ciprofloxacin-Dexamethasone", 3.0),
     ])
-    write_table(tmp_path, site, "microbial_resistance", f"{IDS}, organism VARCHAR, antibiotic VARCHAR, resistant_time_to_culturetime DOUBLE", [
+    write_table(root, site, "microbial_resistance", f"{IDS}, organism VARCHAR, antibiotic VARCHAR, resistant_time_to_culturetime DOUBLE", [
         ("p1", "e2", "102", "ESCHERICHIA COLI", "Ceftriaxone", 200.0),
         ("p1", "e2", "102", "ESCHERICHIA COLI", "Meropenem", 0.0),
         ("p2", "e3", "103", "STAPH AUREUS {MRSA}", "Erythromycin", 50.0),
@@ -36,24 +34,24 @@ def stanford(tmp_path, monkeypatch):
         ("p3", "e5", "105", "METHICILLIN RESISTANT STAPHYLOCOCCUS LUGDUNENSIS", "Cefoxitin", 10.0),
         ("p3", "e6", "106", "KLEBSIELLA PNEUMONIAE", "Ertapenem", 15.0),
     ])
-    write_table(tmp_path, site, "prior_infecting_organism", f"{IDS}, prior_organism VARCHAR, prior_infecting_organism_days_to_culutre DOUBLE", [
+    write_table(root, site, "prior_infecting_organism", f"{IDS}, prior_organism VARCHAR, prior_infecting_organism_days_to_culutre DOUBLE", [
         ("p1", "e2", "102", "Escherichia", 200.0),
         ("p1", "e2", "102", "Klebsiella", 400.0),
         ("p1", "e2", "102", "CONS", 10.0),
         ("p1", "e2", "102", "Escherichia", 0.2),
     ])
-    write_table(tmp_path, site, "prior_procedures", f"{IDS}, procedure_description VARCHAR, procedure_time_to_culturetime DOUBLE", [
+    write_table(root, site, "prior_procedures", f"{IDS}, procedure_description VARCHAR, procedure_time_to_culturetime DOUBLE", [
         ("p2", "e3", "103", "cvc", 10.0),
         ("p2", "e3", "103", "urethral_catheter", 45.0),
         ("p3", "e6", "106", "parenteral_nutrition", 5.0),
         ("p3", "e6", "106", "dialysis", 0.5),
     ])
-    write_table(tmp_path, site, "nursing_home_visits", f"{IDS}, nursing_home_visit_culture DOUBLE", [
+    write_table(root, site, "nursing_home_visits", f"{IDS}, nursing_home_visit_culture DOUBLE", [
         ("p1", "e1", "101", 0.0),
         ("p1", "e2", "102", None),
         ("p2", "e4", "104", 120.0),
     ])
-    write_table(tmp_path, site, "comorbidity", f"{IDS}, comorbidity_component VARCHAR, comorbidity_component_start_days_culture DOUBLE", [
+    write_table(root, site, "comorbidity", f"{IDS}, comorbidity_component VARCHAR, comorbidity_component_start_days_culture DOUBLE", [
         ("p2", "e3", "103", "Congestive heart failure", 100.0),
         ("p2", "e3", "103", "Heart failure", 100.0),
         ("p2", "e3", "103", "Metastatic cancer", 50.0),
@@ -63,6 +61,12 @@ def stanford(tmp_path, monkeypatch):
         # The catch-all category is not heart failure and does not count as a comorbidity.
         ("p3", "e5", "105", "Congestive heart failure", 5.0),
     ])
+
+
+@pytest.fixture()
+def stanford(tmp_path, monkeypatch):
+    monkeypatch.setenv("ARMD_DATA_ROOT", str(tmp_path))
+    build_stanford_feature_release(tmp_path)
     loader = StanfordLoader(connect())
     built = loader.build()
     return loader, features.build_features(loader, built)

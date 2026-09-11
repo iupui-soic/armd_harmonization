@@ -115,7 +115,7 @@ def _quoted(values) -> str:
     return ", ".join("'" + str(v).replace("'", "''") + "'" for v in values)
 
 
-def _linked(loader, table: str, columns: dict[str, str], where: str = "", distinct: bool = False) -> str:
+def linked_rows(loader, table: str, columns: dict[str, str], where: str = "", distinct: bool = False) -> str:
     """Rows of a staged table (alias f) with culture_id attached through the loader's link."""
     select, on, _ = loader.feature_link(table)
     inner = ", ".join(f"{expr} AS {alias}" for alias, expr in columns.items())
@@ -127,7 +127,7 @@ def _linked(loader, table: str, columns: dict[str, str], where: str = "", distin
     )
 
 
-def _days(loader, table: str) -> str:
+def days_expression(loader, table: str) -> str:
     column = loader.resolve_column(table, loader.feature_time_columns.get(table))
     if column is None:
         raise ValueError(f"{loader.site}.{table} has no days-to-culture column")
@@ -142,7 +142,7 @@ def _antibiotic_source(loader) -> tuple[str, str, str, str] | None:
         table, name_column, mapper = "antibiotic_subtype_exposure", "medication_name", vocab.medication_code
     if table not in loader.staged_tables():
         return None
-    days = "TRY_CAST(f.last_dose_to_culture AS DOUBLE)" if loader.site == "mgb" else _days(loader, table)
+    days = "TRY_CAST(f.last_dose_to_culture AS DOUBLE)" if loader.site == "mgb" else days_expression(loader, table)
     lookup = register_value_lookup(loader.con, f"{loader.site}_lookup_prior_antibiotic", loader.distinct(table, name_column), mapper)
     return table, name_column, days, lookup
 
@@ -152,7 +152,7 @@ def _antibiotic_part(loader) -> str | None:
     if source is None:
         return None
     table, name_column, days, lookup = source
-    src = _linked(loader, table, {"drug": f"f.{name_column}"},
+    src = linked_rows(loader, table, {"drug": f"f.{name_column}"},
                   where=f"WHERE {days} BETWEEN {PRIOR_MIN_DAYS} AND {ANTIBIOTIC_WINDOW_DAYS}", distinct=True)
     flags = ", ".join(f"MAX(CAST(l.value IN ({_quoted(codes)}) AS INTEGER)) AS {name}" for name, codes in ANTIBIOTIC_CLASSES.items())
     return f"SELECT s.culture_id, {flags} FROM ({src}) s JOIN {lookup} l ON l.raw = s.drug GROUP BY s.culture_id"
@@ -168,7 +168,7 @@ def drug_capture(loader) -> dict[str, int]:
     if source is None:
         return {code: 0 for code in codes}
     table, name_column, days, lookup = source
-    src = _linked(loader, table, {"drug": f"f.{name_column}"}, where=f"WHERE {days} >= {PRIOR_MIN_DAYS}", distinct=True)
+    src = linked_rows(loader, table, {"drug": f"f.{name_column}"}, where=f"WHERE {days} >= {PRIOR_MIN_DAYS}", distinct=True)
     counts = dict(loader.con.execute(
         f"SELECT l.value, COUNT(DISTINCT s.culture_id) FROM ({src}) s JOIN {lookup} l ON l.raw = s.drug "
         f"WHERE l.value IN ({_quoted(codes)}) GROUP BY 1"
@@ -194,10 +194,10 @@ def _resistance_part(loader, interpretation: str) -> str | None:
         # Every row in this table is a resistant result.
         abx = register_value_lookup(con, f"{site}_lookup_resistance_antibiotic", loader.distinct(table, "antibiotic"), vocab.antibiotic_code)
         columns = {"organism": "f.organism", "code": "f.antibiotic"}
-        where = f"WHERE {_days(loader, table)} >= {PRIOR_MIN_DAYS}"
+        where = f"WHERE {days_expression(loader, table)} >= {PRIOR_MIN_DAYS}"
         code_expr, abx_join = "a.value", f"LEFT JOIN {abx} a ON a.raw = s.code"
     org = organisms.register_lookup(con, loader.distinct(table, "organism"), table=f"{site}_lookup_resistance_organism")
-    src = _linked(loader, table, columns, where=where, distinct=True)
+    src = linked_rows(loader, table, columns, where=where, distinct=True)
     vre_species = " OR ".join(f"starts_with(o.organism_std, '{s}')" for s in VRE_SPECIES)
     return f"""
         SELECT s.culture_id,
@@ -217,8 +217,8 @@ def _organism_part(loader) -> str | None:
     table, name_column = ("prior_org", "prior_org") if loader.site == "mgb" else ("prior_infecting_organism", "prior_organism")
     if table not in loader.staged_tables():
         return None
-    days = _days(loader, table)
-    src = _linked(loader, table, {"genus": f"upper(split_part(trim(f.{name_column}), ' ', 1))", "days": days},
+    days = days_expression(loader, table)
+    src = linked_rows(loader, table, {"genus": f"upper(split_part(trim(f.{name_column}), ' ', 1))", "days": days},
                   where=f"WHERE {days} >= {PRIOR_MIN_DAYS}", distinct=True)
     return (
         f"SELECT s.culture_id, COUNT(DISTINCT s.genus) AS num_prior_orgs, MIN(s.days) AS days_since_prior_org "
@@ -230,8 +230,8 @@ def _procedure_part(loader) -> str | None:
     table = "prior_procedures"
     if table not in loader.staged_tables():
         return None
-    days = _days(loader, table)
-    src = _linked(loader, table, {"procedure": "f.procedure_description", "days": days},
+    days = days_expression(loader, table)
+    src = linked_rows(loader, table, {"procedure": "f.procedure_description", "days": days},
                   where=f"WHERE {days} >= {PRIOR_MIN_DAYS}", distinct=True)
     flags = ", ".join(f"MAX(CAST(s.procedure = '{value}' AS INTEGER)) AS {name}" for name, value in PROCEDURES.items())
     recent = f"MAX(CAST(s.days <= {PROCEDURE_WINDOW_DAYS} AND s.procedure IN ({_quoted(PROCEDURES.values())}) AS INTEGER)) AS any_proc_30d"
@@ -242,8 +242,8 @@ def _nursing_home_part(loader) -> str | None:
     table = "nursing_home_visits"
     if table not in loader.staged_tables():
         return None
-    days = _days(loader, table)
-    src = _linked(loader, table, {"days": days}, where=f"WHERE {days} BETWEEN 0 AND {NURSING_HOME_WINDOW_DAYS}", distinct=True)
+    days = days_expression(loader, table)
+    src = linked_rows(loader, table, {"days": days}, where=f"WHERE {days} BETWEEN 0 AND {NURSING_HOME_WINDOW_DAYS}", distinct=True)
     return f"SELECT s.culture_id, 1 AS nursing_home_90d FROM ({src}) s GROUP BY s.culture_id"
 
 
@@ -258,7 +258,7 @@ def _comorbidity_part(loader) -> str | None:
     rows = [(n, *[bool(re.search(p, n.lower())) for p in COMORBIDITY_RULES.values()]) for n in loader.distinct(table, column) if n is not None]
     if rows:
         con.executemany(f"INSERT INTO {lookup} VALUES ({', '.join('?' for _ in range(len(COMORBIDITY_RULES) + 1))})", rows)
-    src = _linked(loader, table, {"component": f"f.{column}"},
+    src = linked_rows(loader, table, {"component": f"f.{column}"},
                   where=f"WHERE f.{column} IS NOT NULL AND f.{column} NOT IN ({_quoted(EXCLUDED_COMORBIDITY_CATEGORIES)})", distinct=True)
     flags = ", ".join(f"MAX(CAST(l.{name} AS INTEGER)) AS {name}" for name in COMORBIDITY_RULES)
     return (
