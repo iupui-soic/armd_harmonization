@@ -61,15 +61,24 @@ def g2_g3_tables(con, loader, ep: str, keys: str) -> dict:
         link_select, link_on, link_method = loader.feature_link(table)
         time_column = loader.resolve_column(table, time_candidates)
         order_time = loader.resolve_column(table, loader.order_time_columns)
-        con.execute(f"""
-            CREATE OR REPLACE TEMP TABLE _gate_keys AS
-            SELECT DISTINCT k.culture_id FROM (SELECT DISTINCT {link_select} FROM {raw} f) f JOIN {keys} k ON {link_on}
-        """)
-        n_pos, n_neg, cov_pos, cov_neg = con.execute(f"""
-            SELECT COUNT(*) FILTER (WHERE e.culture_positive), COUNT(*) FILTER (WHERE NOT e.culture_positive),
-                   COUNT(g.culture_id) FILTER (WHERE e.culture_positive), COUNT(g.culture_id) FILTER (WHERE NOT e.culture_positive)
-            FROM {ep} e LEFT JOIN _gate_keys g USING (culture_id)
-        """).fetchone()
+        def coverage(where: str = "") -> tuple[int, int, int, int]:
+            con.execute(f"""
+                CREATE OR REPLACE TEMP TABLE _gate_keys AS
+                SELECT DISTINCT k.culture_id FROM (SELECT DISTINCT {link_select} FROM {raw} f {where}) f JOIN {keys} k ON {link_on}
+            """)
+            return con.execute(f"""
+                SELECT COUNT(*) FILTER (WHERE e.culture_positive), COUNT(*) FILTER (WHERE NOT e.culture_positive),
+                       COUNT(g.culture_id) FILTER (WHERE e.culture_positive), COUNT(g.culture_id) FILTER (WHERE NOT e.culture_positive)
+                FROM {ep} e LEFT JOIN _gate_keys g USING (culture_id)
+            """).fetchone()
+
+        n_pos, n_neg, row_pos, row_neg = coverage()
+        cov_pos, cov_neg, basis = row_pos, row_neg, "rows"
+        if time_column:
+            # Some releases keep a row for every culture and leave the value NULL when nothing happened,
+            # so coverage counts cultures with at least one dated event.
+            _, _, cov_pos, cov_neg = coverage(f"WHERE f.{time_column} IS NOT NULL")
+            basis = "non_null_days_to_culture"
         orphans = con.execute(f"""
             SELECT COUNT(*) FROM (SELECT DISTINCT {link_select} FROM {raw} f) f
             WHERE NOT EXISTS (SELECT 1 FROM {keys} k WHERE {link_on})
@@ -86,8 +95,11 @@ def g2_g3_tables(con, loader, ep: str, keys: str) -> dict:
             "status": "staged",
             "kind": "one_row_per_culture" if one_to_one else "event",
             "link": link_method,
+            "coverage_basis": basis,
             "coverage_positive": rate(cov_pos, n_pos),
             "coverage_negative": rate(cov_neg, n_neg),
+            "row_coverage_positive": rate(row_pos, n_pos),
+            "row_coverage_negative": rate(row_neg, n_neg),
             "negative_to_positive_coverage": round(relative, 3) if relative is not None else None,
             "link_keys_absent_from_cohort": cell(orphans),
             "keyed_to_negatives": keyed,
@@ -248,12 +260,12 @@ def render_report(summary: dict) -> str:
             f"G1: {g1['cultures']} cultures from {g1['patients']} patients. "
             f"Positive {g1['positive']['cultures']}, negative {g1['negative']['cultures']}.",
             "",
-            "| table | kind | link | coverage pos | coverage neg | neg/pos | keyed to negatives | same order day (neg) | days-to-culture p50 pos / neg |",
-            "|---|---|---|---|---|---|---|---|---|",
+            "| table | kind | link | basis | coverage pos | coverage neg | neg/pos | keyed to negatives | same order day (neg) | days-to-culture p50 pos / neg |",
+            "|---|---|---|---|---|---|---|---|---|---|",
         ]
         for table, t in s["g2_g3"].items():
             if t.get("status") != "staged":
-                lines.append(f"| {table} | not in release | | | | | | | |")
+                lines.append(f"| {table} | not in release | | | | | | | | |")
                 continue
             anchor = t.get("order_time_anchor", {}).get("negative", {}).get("same_day")
             timing = t.get("days_to_culture", {})
@@ -262,7 +274,7 @@ def render_report(summary: dict) -> str:
                 return ((timing.get(key) or {}).get("quantiles") or {}).get("p50")
 
             lines.append(
-                f"| {table} | {t['kind']} | {t['link']} | {fmt(t['coverage_positive'])} | {fmt(t['coverage_negative'])} | "
+                f"| {table} | {t['kind']} | {t['link']} | {t['coverage_basis']} | {fmt(t['coverage_positive'])} | {fmt(t['coverage_negative'])} | "
                 f"{fmt(t['negative_to_positive_coverage'])} | {t['keyed_to_negatives']} | {fmt(anchor)} | "
                 f"{fmt(p50('positive'))} / {fmt(p50('negative'))} |"
             )
