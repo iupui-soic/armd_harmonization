@@ -1,0 +1,2582 @@
+{
+  "thresholds": {
+    "one_to_one_min_negative_coverage": 0.9,
+    "event_min_relative_coverage": 0.1,
+    "max_null_order_time": 0.01
+  },
+  "sites": {
+    "stanford": {
+      "schema_problems": {
+        "isolate_ast": [],
+        "enzyme_tests": [],
+        "culture_episodes": [],
+        "culture_keys": []
+      },
+      "g1": {
+        "cultures": 751075,
+        "patients": 283715,
+        "positive": {
+          "cultures": 120277,
+          "patients": 67798
+        },
+        "negative": {
+          "cultures": 630798,
+          "patients": 257661
+        }
+      },
+      "g2_g3": {
+        "demographics": {
+          "status": "staged",
+          "kind": "one_row_per_culture",
+          "link": "culture_id",
+          "coverage_basis": "rows",
+          "coverage_positive": 1.0,
+          "coverage_negative": 1.0,
+          "row_coverage_positive": 1.0,
+          "row_coverage_negative": 1.0,
+          "negative_to_positive_coverage": 1.0,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true
+        },
+        "ward_info": {
+          "status": "staged",
+          "kind": "one_row_per_culture",
+          "link": "culture_id",
+          "coverage_basis": "rows",
+          "coverage_positive": 1.0,
+          "coverage_negative": 1.0,
+          "row_coverage_positive": 1.0,
+          "row_coverage_negative": 1.0,
+          "negative_to_positive_coverage": 1.0,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 630798,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 120277,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          }
+        },
+        "adi_scores": {
+          "status": "staged",
+          "kind": "one_row_per_culture",
+          "link": "culture_id",
+          "coverage_basis": "rows",
+          "coverage_positive": 1.0,
+          "coverage_negative": 1.0,
+          "row_coverage_positive": 1.0,
+          "row_coverage_negative": 1.0,
+          "negative_to_positive_coverage": 1.0,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 630798,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 120277,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          }
+        },
+        "vitals": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "rows",
+          "coverage_positive": 0.7163,
+          "coverage_negative": 0.785,
+          "row_coverage_positive": 0.7163,
+          "row_coverage_negative": 0.785,
+          "negative_to_positive_coverage": 1.096,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true
+        },
+        "labs": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.4605,
+          "coverage_negative": 0.6932,
+          "row_coverage_positive": 0.4605,
+          "row_coverage_negative": 0.6932,
+          "negative_to_positive_coverage": 1.505,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "days_to_culture": {
+            "column": "Period_Day",
+            "negative": {
+              "rows": 1247680,
+              "quantiles": {
+                "p01": 14.0,
+                "p25": 14.0,
+                "p50": 14.0,
+                "p75": 14.0,
+                "p99": 14.0
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 160997,
+              "quantiles": {
+                "p01": 14.0,
+                "p25": 14.0,
+                "p50": 14.0,
+                "p75": 14.0,
+                "p99": 14.0
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        },
+        "antibiotic_class_exposure": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.6963,
+          "coverage_negative": 0.6351,
+          "row_coverage_positive": 0.6963,
+          "row_coverage_negative": 0.6351,
+          "negative_to_positive_coverage": 0.912,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 400626,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 83744,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "time_to_culturetime",
+            "negative": {
+              "rows": 4316431,
+              "quantiles": {
+                "p01": 2.003739718012926,
+                "p25": 163.53316957987408,
+                "p50": 570.7319333227817,
+                "p75": 1386.1957943585483,
+                "p99": 4240.032305550942
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 1086055,
+              "quantiles": {
+                "p01": 6.94436700454338,
+                "p25": 252.90146830466296,
+                "p50": 745.5325992405943,
+                "p75": 1601.5822477655186,
+                "p99": 4315.585036516994
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        },
+        "antibiotic_subtype_exposure": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.6963,
+          "coverage_negative": 0.6351,
+          "row_coverage_positive": 0.6963,
+          "row_coverage_negative": 0.6351,
+          "negative_to_positive_coverage": 0.912,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 400626,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 83744,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "medication_time_to_cultureTime",
+            "positive": {
+              "rows": 1086055,
+              "quantiles": {
+                "p01": 7.008837554472463,
+                "p25": 253.60276154233665,
+                "p50": 742.772952048555,
+                "p75": 1601.1841131069991,
+                "p99": 4331.470164945284
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "negative": {
+              "rows": 4316431,
+              "quantiles": {
+                "p01": 2.0871944088758045,
+                "p25": 163.34787212466873,
+                "p50": 570.8143619929544,
+                "p75": 1387.88789051482,
+                "p99": 4259.4209693873445
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        },
+        "comorbidity": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.9808,
+          "coverage_negative": 0.9642,
+          "row_coverage_positive": 0.9847,
+          "row_coverage_negative": 0.9745,
+          "negative_to_positive_coverage": 0.983,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 614716,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 118433,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "comorbidity_component_start_days_culture",
+            "negative": {
+              "rows": 169066658,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 156.39980354532335,
+                "p50": 557.3825431115492,
+                "p75": 1350.6849117281947,
+                "p99": 4171.218308338474
+              },
+              "share_gt0": 0.9642,
+              "share_eq0": 0.0358,
+              "share_lt0": 0.0,
+              "null_rows": 6492
+            },
+            "positive": {
+              "rows": 37480482,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 240.58621598298078,
+                "p50": 735.6709402751354,
+                "p75": 1575.0763689432822,
+                "p99": 4244.863314963314
+              },
+              "share_gt0": 0.9767,
+              "share_eq0": 0.0233,
+              "share_lt0": 0.0,
+              "null_rows": 462
+            }
+          }
+        },
+        "microbial_resistance": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.3768,
+          "coverage_negative": 0.1922,
+          "row_coverage_positive": 0.3768,
+          "row_coverage_negative": 0.1922,
+          "negative_to_positive_coverage": 0.51,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 121218,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 45319,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "resistant_time_to_culturetime",
+            "negative": {
+              "rows": 1442639,
+              "quantiles": {
+                "p01": 17.072036089990636,
+                "p25": 251.81927934517006,
+                "p50": 745.1324652741934,
+                "p75": 1618.5591981076934,
+                "p99": 4464.0733488424485
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 719009,
+              "quantiles": {
+                "p01": 21.081892064197874,
+                "p25": 293.44673243127755,
+                "p50": 786.8614140645168,
+                "p75": 1614.035983210627,
+                "p99": 4398.323837831619
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        },
+        "nursing_home_visits": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.0102,
+          "coverage_negative": 0.0097,
+          "row_coverage_positive": 0.0102,
+          "row_coverage_negative": 0.0097,
+          "negative_to_positive_coverage": 0.959,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 6147,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 1222,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "nursing_home_visit_culture",
+            "negative": {
+              "rows": 6259,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 0.0,
+                "p50": 0.11196581196581196,
+                "p75": 1.0,
+                "p99": 30.28292314009371
+              },
+              "share_gt0": 0.4927,
+              "share_eq0": 0.5073,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 1369,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 0.0,
+                "p50": 1.0,
+                "p75": 1.0,
+                "p99": 30.301267951726913
+              },
+              "share_gt0": 0.5296,
+              "share_eq0": 0.4704,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        },
+        "prior_infecting_organism": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.4708,
+          "coverage_negative": 0.2427,
+          "row_coverage_positive": 0.4708,
+          "row_coverage_negative": 0.2427,
+          "negative_to_positive_coverage": 0.515,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 153093,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 56630,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "prior_infecting_organism_days_to_culutre",
+            "negative": {
+              "rows": 720087,
+              "quantiles": {
+                "p01": 13.802744401234198,
+                "p25": 241.93628152971982,
+                "p50": 731.8231966980322,
+                "p75": 1618.4542467221913,
+                "p99": 4545.733292084967
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 363652,
+              "quantiles": {
+                "p01": 17.485219526055985,
+                "p25": 282.4410245082925,
+                "p50": 775.8748171538825,
+                "p75": 1622.4447361774867,
+                "p99": 4501.289990242905
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        },
+        "prior_med": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.8249,
+          "coverage_negative": 0.7548,
+          "row_coverage_positive": 0.8249,
+          "row_coverage_negative": 0.7548,
+          "negative_to_positive_coverage": 0.915,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 476131,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 99213,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "medication_time_to_culturetime",
+            "negative": {
+              "rows": 7981990,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 70.7609920210238,
+                "p50": 407.08168879347886,
+                "p75": 1203.6650845901745,
+                "p99": 4191.1756580429765
+              },
+              "share_gt0": 0.8888,
+              "share_eq0": 0.1112,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 1841468,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 154.0442824927119,
+                "p50": 615.548760328727,
+                "p75": 1480.4497774645122,
+                "p99": 4303.306396008254
+              },
+              "share_gt0": 0.9203,
+              "share_eq0": 0.0797,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        },
+        "prior_procedures": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.3438,
+          "coverage_negative": 0.3336,
+          "row_coverage_positive": 0.3438,
+          "row_coverage_negative": 0.3336,
+          "negative_to_positive_coverage": 0.97,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 210407,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 41352,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "procedure_time_to_culturetime",
+            "negative": {
+              "rows": 1411595,
+              "quantiles": {
+                "p01": 1.0,
+                "p25": 75.86819562010054,
+                "p50": 319.7071887615508,
+                "p75": 1031.5651177539778,
+                "p99": 4120.816380664021
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 253020,
+              "quantiles": {
+                "p01": 1.9812134967131383,
+                "p25": 94.24117482108768,
+                "p50": 397.8452846879616,
+                "p75": 1247.0314113100792,
+                "p99": 4176.973492134644
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        }
+      },
+      "g4": {
+        "negative": {
+          "cultures": 630798,
+          "null_order_time": 0,
+          "null_share": 0.0
+        },
+        "positive": {
+          "cultures": 120277,
+          "null_order_time": 0,
+          "null_share": 0.0
+        }
+      },
+      "g5": {
+        "by_specimen": {
+          "all": {
+            "cultures": 751075,
+            "positive_share": 0.1601,
+            "enterobacterales_share": 0.1113,
+            "unidentified_share": 0.002
+          },
+          "blood": {
+            "cultures": 291365,
+            "positive_share": 0.0448,
+            "enterobacterales_share": 0.0193,
+            "unidentified_share": 0.0011
+          },
+          "respiratory": {
+            "cultures": 84533,
+            "positive_share": 0.211,
+            "enterobacterales_share": 0.0278,
+            "unidentified_share": 0.013
+          },
+          "urine": {
+            "cultures": 375177,
+            "positive_share": 0.2383,
+            "enterobacterales_share": 0.2016,
+            "unidentified_share": 0.0002
+          }
+        },
+        "estimands": {
+          "E1_composite_lab": {
+            "evaluable_cultures": 78306,
+            "label_positive": 8713,
+            "prevalence": 0.1113,
+            "reasons": {
+              "culture_negative": 630798,
+              "resistant": 8713,
+              "not_resistant": 69593,
+              "not_tested": 5300,
+              "organism_unidentified": 1510,
+              "organism_absent": 35161
+            }
+          },
+          "E1_idsa_lab": {
+            "evaluable_cultures": 60221,
+            "label_positive": 6896,
+            "prevalence": 0.1145,
+            "reasons": {
+              "culture_negative": 630798,
+              "resistant": 6896,
+              "not_resistant": 53325,
+              "not_tested": 16024,
+              "organism_unidentified": 1510,
+              "organism_absent": 42522
+            }
+          },
+          "E2_decision_time_lab": {
+            "evaluable_cultures": 744265,
+            "label_positive": 8713,
+            "prevalence": 0.0117,
+            "reasons": {
+              "culture_negative": 630798,
+              "resistant": 8713,
+              "not_resistant": 69593,
+              "not_tested": 5300,
+              "organism_unidentified": 1510,
+              "organism_absent": 35161
+            }
+          }
+        }
+      },
+      "verdict": {
+        "feature_tables_keyed_to_negatives": true,
+        "tables_failing": [],
+        "tables_linked_by_date": [],
+        "order_time_available_for_negatives": true,
+        "passes": true
+      }
+    },
+    "mgb": {
+      "schema_problems": {
+        "isolate_ast": [],
+        "enzyme_tests": [],
+        "culture_episodes": [],
+        "culture_keys": []
+      },
+      "g1": {
+        "cultures": 972798,
+        "patients": 226659,
+        "positive": {
+          "cultures": 207105,
+          "patients": 96408
+        },
+        "negative": {
+          "cultures": 765693,
+          "patients": 184107
+        }
+      },
+      "g2_g3": {
+        "demographics": {
+          "status": "staged",
+          "kind": "one_row_per_culture",
+          "link": "culture_id",
+          "coverage_basis": "rows",
+          "coverage_positive": 1.0,
+          "coverage_negative": 1.0,
+          "row_coverage_positive": 1.0,
+          "row_coverage_negative": 1.0,
+          "negative_to_positive_coverage": 1.0,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true
+        },
+        "ward_info": {
+          "status": "staged",
+          "kind": "one_row_per_culture",
+          "link": "culture_id",
+          "coverage_basis": "rows",
+          "coverage_positive": 1.0,
+          "coverage_negative": 1.0,
+          "row_coverage_positive": 1.0,
+          "row_coverage_negative": 1.0,
+          "negative_to_positive_coverage": 1.0,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 765694,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 207105,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          }
+        },
+        "adi_scores": {
+          "status": "staged",
+          "kind": "one_row_per_culture",
+          "link": "culture_id",
+          "coverage_basis": "rows",
+          "coverage_positive": 1.0,
+          "coverage_negative": 1.0,
+          "row_coverage_positive": 1.0,
+          "row_coverage_negative": 1.0,
+          "negative_to_positive_coverage": 1.0,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 765694,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 207105,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          }
+        },
+        "comorbidity": {
+          "status": "staged",
+          "kind": "event",
+          "link": "patient_and_order_date",
+          "coverage_basis": "rows",
+          "coverage_positive": 0.7914,
+          "coverage_negative": 0.6046,
+          "row_coverage_positive": 0.7914,
+          "row_coverage_negative": 0.6046,
+          "negative_to_positive_coverage": 0.764,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true
+        },
+        "nursing_home_visits": {
+          "status": "staged",
+          "kind": "event",
+          "link": "patient_and_order_date",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.0164,
+          "coverage_negative": 0.0115,
+          "row_coverage_positive": 0.7495,
+          "row_coverage_negative": 0.5674,
+          "negative_to_positive_coverage": 0.701,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "days_to_culture": {
+            "column": "nursing_home_visit_culture",
+            "negative": {
+              "rows": 504869,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 0.0,
+                "p50": 0.0,
+                "p75": 1.0,
+                "p99": 30.67316543206869
+              },
+              "share_gt0": 0.3877,
+              "share_eq0": 0.6123,
+              "share_lt0": 0.0,
+              "null_rows": 495972
+            },
+            "positive": {
+              "rows": 174434,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 0.0,
+                "p50": 0.0,
+                "p75": 1.0,
+                "p99": 45.012489997979365
+              },
+              "share_gt0": 0.3869,
+              "share_eq0": 0.6131,
+              "share_lt0": 0.0,
+              "null_rows": 170968
+            }
+          }
+        },
+        "prior_abx": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.8608,
+          "coverage_negative": 0.8679,
+          "row_coverage_positive": 0.8608,
+          "row_coverage_negative": 0.8679,
+          "negative_to_positive_coverage": 1.008,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 664570,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 178270,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "last_dose_to_culture",
+            "negative": {
+              "rows": 7968647,
+              "quantiles": {
+                "p01": -1.0,
+                "p25": 21.965229527923128,
+                "p50": 197.88884881072323,
+                "p75": 706.6484835609251,
+                "p99": 2506.2456119593357
+              },
+              "share_gt0": 0.8941,
+              "share_eq0": 0.0667,
+              "share_lt0": 0.0392,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 2304618,
+              "quantiles": {
+                "p01": -1.0,
+                "p25": 80.07496520895637,
+                "p50": 356.7964183866371,
+                "p75": 927.0945506545046,
+                "p99": 2583.7427797855744
+              },
+              "share_gt0": 0.9286,
+              "share_eq0": 0.0412,
+              "share_lt0": 0.0302,
+              "null_rows": 0
+            }
+          }
+        },
+        "prior_micro": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.5669,
+          "coverage_negative": 0.426,
+          "row_coverage_positive": 1.0,
+          "row_coverage_negative": 1.0,
+          "negative_to_positive_coverage": 0.751,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 765694,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 207105,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "prior_AST_time_to_culture",
+            "negative": {
+              "rows": 27635759,
+              "quantiles": {
+                "p01": 1.0,
+                "p25": 29.64779133598177,
+                "p50": 207.2810093371149,
+                "p75": 711.8364191261282,
+                "p99": 2532.2563106339226
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 510534
+            },
+            "positive": {
+              "rows": 13118448,
+              "quantiles": {
+                "p01": 1.0,
+                "p25": 97.33981504663365,
+                "p50": 371.3529513356128,
+                "p75": 927.217177162059,
+                "p99": 2659.864173285793
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 100336
+            }
+          }
+        },
+        "prior_org": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.5417,
+          "coverage_negative": 0.3788,
+          "row_coverage_positive": 0.5417,
+          "row_coverage_negative": 0.3788,
+          "negative_to_positive_coverage": 0.699,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 290030,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 112194,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "prior_org_days_to_culture",
+            "negative": {
+              "rows": 1506714,
+              "quantiles": {
+                "p01": 1.0,
+                "p25": 35.546279150659004,
+                "p50": 222.55325187309117,
+                "p75": 727.0884136499793,
+                "p99": 2520.783581812563
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 792129,
+              "quantiles": {
+                "p01": 1.0,
+                "p25": 100.79728016613869,
+                "p50": 373.72455070357415,
+                "p75": 919.7229494202046,
+                "p99": 2639.7815551014314
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        },
+        "prior_procedures": {
+          "status": "staged",
+          "kind": "event",
+          "link": "patient_and_order_date",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.1524,
+          "coverage_negative": 0.1331,
+          "row_coverage_positive": 0.1524,
+          "row_coverage_negative": 0.1331,
+          "negative_to_positive_coverage": 0.873,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "days_to_culture": {
+            "column": "procedure_days_culture",
+            "negative": {
+              "rows": 606179,
+              "quantiles": {
+                "p01": 1.0,
+                "p25": 62.8676414606103,
+                "p50": 224.73969403562037,
+                "p75": 645.4921353810314,
+                "p99": 2407.472005135496
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 234977,
+              "quantiles": {
+                "p01": 1.7587085917878997,
+                "p25": 74.28211662414978,
+                "p50": 255.42903386764266,
+                "p75": 703.5129697305498,
+                "p99": 2405.7666169213517
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        }
+      },
+      "g4": {
+        "negative": {
+          "cultures": 765693,
+          "null_order_time": 0,
+          "null_share": 0.0
+        },
+        "positive": {
+          "cultures": 207105,
+          "null_order_time": 0,
+          "null_share": 0.0
+        }
+      },
+      "g5": {
+        "by_specimen": {
+          "all": {
+            "cultures": 972798,
+            "positive_share": 0.2129,
+            "enterobacterales_share": 0.1397,
+            "unidentified_share": 0.0015
+          },
+          "blood": {
+            "cultures": 627651,
+            "positive_share": 0.0527,
+            "enterobacterales_share": 0.0144,
+            "unidentified_share": 0.001
+          },
+          "respiratory": {
+            "cultures": 36821,
+            "positive_share": 0.6834,
+            "enterobacterales_share": 0.1871,
+            "unidentified_share": 0.0074
+          },
+          "urine": {
+            "cultures": 308326,
+            "positive_share": 0.4827,
+            "enterobacterales_share": 0.3892,
+            "unidentified_share": 0.0018
+          }
+        },
+        "estimands": {
+          "E1_composite_lab": {
+            "evaluable_cultures": 135746,
+            "label_positive": 18001,
+            "prevalence": 0.1326,
+            "reasons": {
+              "culture_negative": 765693,
+              "resistant": 18001,
+              "not_resistant": 117745,
+              "not_tested": 183,
+              "organism_unidentified": 1094,
+              "organism_absent": 70082
+            }
+          },
+          "E1_idsa_lab": {
+            "evaluable_cultures": 102701,
+            "label_positive": 13378,
+            "prevalence": 0.1303,
+            "reasons": {
+              "culture_negative": 765693,
+              "resistant": 13378,
+              "not_resistant": 89323,
+              "not_tested": 18096,
+              "organism_unidentified": 1190,
+              "organism_absent": 85118
+            }
+          },
+          "E2_decision_time_lab": {
+            "evaluable_cultures": 971521,
+            "label_positive": 18001,
+            "prevalence": 0.0185,
+            "reasons": {
+              "culture_negative": 765693,
+              "resistant": 18001,
+              "not_resistant": 117745,
+              "not_tested": 183,
+              "organism_unidentified": 1094,
+              "organism_absent": 70082
+            }
+          },
+          "E1_composite_clsi2022": {
+            "evaluable_cultures": 108838,
+            "label_positive": 19791,
+            "prevalence": 0.1818,
+            "reasons": {
+              "culture_negative": 765693,
+              "resistant": 19791,
+              "not_resistant": 89047,
+              "not_tested": 27091,
+              "organism_unidentified": 1094,
+              "organism_absent": 70082
+            }
+          },
+          "E2_decision_time_clsi2022": {
+            "evaluable_cultures": 944613,
+            "label_positive": 19791,
+            "prevalence": 0.021,
+            "reasons": {
+              "culture_negative": 765693,
+              "resistant": 19791,
+              "not_resistant": 89047,
+              "not_tested": 27091,
+              "organism_unidentified": 1094,
+              "organism_absent": 70082
+            }
+          },
+          "E1_enzyme_class": {
+            "evaluable_cultures": 8179,
+            "label_positive": 559,
+            "prevalence": 0.0683,
+            "reasons": {
+              "culture_negative": 765693,
+              "resistant": 559,
+              "not_resistant": 7620,
+              "not_tested": 176,
+              "organism_unidentified": 1433,
+              "organism_absent": 197317
+            }
+          }
+        }
+      },
+      "verdict": {
+        "feature_tables_keyed_to_negatives": true,
+        "tables_failing": [],
+        "tables_linked_by_date": [
+          "comorbidity",
+          "nursing_home_visits",
+          "prior_procedures"
+        ],
+        "order_time_available_for_negatives": true,
+        "passes": true
+      }
+    },
+    "utsw": {
+      "schema_problems": {
+        "isolate_ast": [],
+        "enzyme_tests": [],
+        "culture_episodes": [],
+        "culture_keys": []
+      },
+      "g1": {
+        "cultures": 774149,
+        "patients": 237258,
+        "positive": {
+          "cultures": 101086,
+          "patients": 52051
+        },
+        "negative": {
+          "cultures": 673063,
+          "patients": 223281
+        }
+      },
+      "g2_g3": {
+        "demographics": {
+          "status": "staged",
+          "kind": "one_row_per_culture",
+          "link": "culture_id",
+          "coverage_basis": "rows",
+          "coverage_positive": 1.0,
+          "coverage_negative": 1.0,
+          "row_coverage_positive": 1.0,
+          "row_coverage_negative": 1.0,
+          "negative_to_positive_coverage": 1.0,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true
+        },
+        "ward_info": {
+          "status": "staged",
+          "kind": "one_row_per_culture",
+          "link": "culture_id",
+          "coverage_basis": "rows",
+          "coverage_positive": 1.0,
+          "coverage_negative": 1.0,
+          "row_coverage_positive": 1.0,
+          "row_coverage_negative": 1.0,
+          "negative_to_positive_coverage": 1.0,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 673063,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 101086,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          }
+        },
+        "adi_scores": {
+          "status": "staged",
+          "kind": "one_row_per_culture",
+          "link": "culture_id",
+          "coverage_basis": "rows",
+          "coverage_positive": 1.0,
+          "coverage_negative": 1.0,
+          "row_coverage_positive": 1.0,
+          "row_coverage_negative": 1.0,
+          "negative_to_positive_coverage": 1.0,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 673063,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 101086,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          }
+        },
+        "vitals": {
+          "status": "not in release"
+        },
+        "labs": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.5309,
+          "coverage_negative": 0.6148,
+          "row_coverage_positive": 0.5309,
+          "row_coverage_negative": 0.6148,
+          "negative_to_positive_coverage": 1.158,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "days_to_culture": {
+            "column": "Period_Day",
+            "negative": {
+              "rows": 1234897,
+              "quantiles": {
+                "p01": 14.0,
+                "p25": 14.0,
+                "p50": 14.0,
+                "p75": 14.0,
+                "p99": 14.0
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 160845,
+              "quantiles": {
+                "p01": 14.0,
+                "p25": 14.0,
+                "p50": 14.0,
+                "p75": 14.0,
+                "p99": 14.0
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        },
+        "antibiotic_class_exposure": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.7543,
+          "coverage_negative": 0.6401,
+          "row_coverage_positive": 0.7543,
+          "row_coverage_negative": 0.6401,
+          "negative_to_positive_coverage": 0.849,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "positive": {
+              "culture_time_pairs": 76247,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "negative": {
+              "culture_time_pairs": 430847,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "time_to_culturetime",
+            "negative": {
+              "rows": 5851426,
+              "quantiles": {
+                "p01": 4.5910451042319655,
+                "p25": 210.1918784289711,
+                "p50": 675.113968945187,
+                "p75": 1586.8422552702807,
+                "p99": 4978.735944806798
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 1302595,
+              "quantiles": {
+                "p01": 11.81279890262646,
+                "p25": 299.1406749187098,
+                "p50": 844.2737424985627,
+                "p75": 1815.5661156544672,
+                "p99": 5141.223127346048
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        },
+        "antibiotic_subtype_exposure": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.7543,
+          "coverage_negative": 0.6401,
+          "row_coverage_positive": 0.7543,
+          "row_coverage_negative": 0.6401,
+          "negative_to_positive_coverage": 0.849,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 430847,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 76247,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "medication_time_to_culturetime",
+            "negative": {
+              "rows": 5851426,
+              "quantiles": {
+                "p01": 4.529908756045573,
+                "p25": 210.22659795834002,
+                "p50": 674.6463285892578,
+                "p75": 1589.811324228906,
+                "p99": 4979.559432714327
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 1302595,
+              "quantiles": {
+                "p01": 11.808454036352881,
+                "p25": 299.2936521277397,
+                "p50": 843.2790727187896,
+                "p75": 1819.123081130834,
+                "p99": 5154.80211936993
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        },
+        "comorbidity": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.875,
+          "coverage_negative": 0.8018,
+          "row_coverage_positive": 0.9465,
+          "row_coverage_negative": 0.9202,
+          "negative_to_positive_coverage": 0.916,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 619338,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 95681,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "comorbidity_component_start_days_culture",
+            "positive": {
+              "rows": 2167706,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 286.2747780200245,
+                "p50": 998.9799353761281,
+                "p75": 2257.164159960292,
+                "p99": 8145.105117556456
+              },
+              "share_gt0": 0.9614,
+              "share_eq0": 0.0386,
+              "share_lt0": 0.0,
+              "null_rows": 248494
+            },
+            "negative": {
+              "rows": 11627267,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 199.44295906964103,
+                "p50": 805.6307839968683,
+                "p75": 1985.9237747198074,
+                "p99": 7672.660551096869
+              },
+              "share_gt0": 0.9449,
+              "share_eq0": 0.0551,
+              "share_lt0": 0.0,
+              "null_rows": 1483734
+            }
+          }
+        },
+        "microbial_resistance": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.6193,
+          "coverage_negative": 0.2054,
+          "row_coverage_positive": 1.0,
+          "row_coverage_negative": 1.0,
+          "negative_to_positive_coverage": 0.332,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 673063,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 101086,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "resistant_time_to_culturetime",
+            "negative": {
+              "rows": 2302227,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 245.8342385897343,
+                "p50": 776.0864831591306,
+                "p75": 1727.2011303737127,
+                "p99": 4624.244792471269
+              },
+              "share_gt0": 0.955,
+              "share_eq0": 0.045,
+              "share_lt0": 0.0,
+              "null_rows": 534806
+            },
+            "positive": {
+              "rows": 1153690,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 185.49569362286638,
+                "p50": 700.8814850676561,
+                "p75": 1582.4016709786565,
+                "p99": 4251.542916480498
+              },
+              "share_gt0": 0.8815,
+              "share_eq0": 0.1185,
+              "share_lt0": 0.0,
+              "null_rows": 38479
+            }
+          }
+        },
+        "nursing_home_visits": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.007,
+          "coverage_negative": 0.0035,
+          "row_coverage_positive": 0.9812,
+          "row_coverage_negative": 0.9846,
+          "negative_to_positive_coverage": 0.496,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 662680,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 99186,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "nursing_home_visit_culture",
+            "negative": {
+              "rows": 662680,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 0.0,
+                "p50": 0.0,
+                "p75": 0.17589774802191113,
+                "p99": 51.142872165847606
+              },
+              "share_gt0": 0.243,
+              "share_eq0": 0.757,
+              "share_lt0": 0.0,
+              "null_rows": 660330
+            },
+            "positive": {
+              "rows": 99186,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 0.0,
+                "p50": 0.0,
+                "p75": 0.0,
+                "p99": 83.54005432128906
+              },
+              "share_gt0": 0.2065,
+              "share_eq0": 0.7935,
+              "share_lt0": 0.0,
+              "null_rows": 98474
+            }
+          }
+        },
+        "prior_infecting_organism": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.282,
+          "coverage_negative": 0.1503,
+          "row_coverage_positive": 0.282,
+          "row_coverage_negative": 0.1503,
+          "negative_to_positive_coverage": 0.533,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 101172,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 28511,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "prior_infecting_organism_days_to_culture",
+            "negative": {
+              "rows": 478800,
+              "quantiles": {
+                "p01": 15.107414382495985,
+                "p25": 404.2082575958657,
+                "p50": 1167.6164058221973,
+                "p75": 2339.701540257849,
+                "p99": 5206.180902861423
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 217890,
+              "quantiles": {
+                "p01": 22.317575623150557,
+                "p25": 494.62227890844173,
+                "p50": 1273.8834207260966,
+                "p75": 2425.0123956063176,
+                "p99": 5183.762710004486
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        },
+        "prior_med": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.7543,
+          "coverage_negative": 0.6401,
+          "row_coverage_positive": 0.7543,
+          "row_coverage_negative": 0.6401,
+          "negative_to_positive_coverage": 0.849,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 430847,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 76247,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "medication_time_to_culturetime",
+            "negative": {
+              "rows": 5851426,
+              "quantiles": {
+                "p01": 4.542091061704268,
+                "p25": 210.3703749464449,
+                "p50": 675.0637178136066,
+                "p75": 1588.9073440382665,
+                "p99": 4965.043966718396
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 1302595,
+              "quantiles": {
+                "p01": 11.869883467417697,
+                "p25": 298.89622420820274,
+                "p50": 843.2202050624634,
+                "p75": 1816.0103944187638,
+                "p99": 5153.6030719748
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        },
+        "prior_procedures": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.1938,
+          "coverage_negative": 0.1509,
+          "row_coverage_positive": 0.1938,
+          "row_coverage_negative": 0.1509,
+          "negative_to_positive_coverage": 0.779,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 101552,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 19590,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "procedure_time_to_culturetime",
+            "negative": {
+              "rows": 824563,
+              "quantiles": {
+                "p01": 2.0494245700474245,
+                "p25": 106.6518931779821,
+                "p50": 389.7351103133501,
+                "p75": 1066.3338576755868,
+                "p99": 4207.921675178798
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 160800,
+              "quantiles": {
+                "p01": 3.69529888067099,
+                "p25": 134.49963008691486,
+                "p50": 455.0048605086555,
+                "p75": 1302.0604367803762,
+                "p99": 4401.231798847984
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        }
+      },
+      "g4": {
+        "negative": {
+          "cultures": 673063,
+          "null_order_time": 0,
+          "null_share": 0.0
+        },
+        "positive": {
+          "cultures": 101086,
+          "null_order_time": 0,
+          "null_share": 0.0
+        }
+      },
+      "g5": {
+        "by_specimen": {
+          "all": {
+            "cultures": 774149,
+            "positive_share": 0.1306,
+            "enterobacterales_share": 0.0724,
+            "unidentified_share": 0.0199
+          },
+          "blood": {
+            "cultures": 285359,
+            "positive_share": 0.0541,
+            "enterobacterales_share": 0.0111,
+            "unidentified_share": 0.0251
+          },
+          "respiratory": {
+            "cultures": 35447,
+            "positive_share": 0.3387,
+            "enterobacterales_share": 0.0146,
+            "unidentified_share": 0.0379
+          },
+          "urine": {
+            "cultures": 453343,
+            "positive_share": 0.1625,
+            "enterobacterales_share": 0.1156,
+            "unidentified_share": 0.0152
+          }
+        },
+        "estimands": {
+          "E1_composite_lab": {
+            "evaluable_cultures": 50327,
+            "label_positive": 3973,
+            "prevalence": 0.0789,
+            "reasons": {
+              "culture_negative": 673063,
+              "resistant": 3973,
+              "not_resistant": 46354,
+              "not_tested": 5756,
+              "organism_unidentified": 15284,
+              "organism_absent": 29719
+            }
+          },
+          "E1_idsa_lab": {
+            "evaluable_cultures": 41641,
+            "label_positive": 2057,
+            "prevalence": 0.0494,
+            "reasons": {
+              "culture_negative": 673063,
+              "resistant": 2057,
+              "not_resistant": 39584,
+              "not_tested": 8589,
+              "organism_unidentified": 15296,
+              "organism_absent": 35560
+            }
+          },
+          "E2_decision_time_lab": {
+            "evaluable_cultures": 753109,
+            "label_positive": 3973,
+            "prevalence": 0.0053,
+            "reasons": {
+              "culture_negative": 673063,
+              "resistant": 3973,
+              "not_resistant": 46354,
+              "not_tested": 5756,
+              "organism_unidentified": 15284,
+              "organism_absent": 29719
+            }
+          }
+        }
+      },
+      "verdict": {
+        "feature_tables_keyed_to_negatives": true,
+        "tables_failing": [],
+        "tables_linked_by_date": [],
+        "order_time_available_for_negatives": true,
+        "passes": true
+      }
+    },
+    "ecuh": {
+      "schema_problems": {
+        "isolate_ast": [],
+        "enzyme_tests": [],
+        "culture_episodes": [],
+        "culture_keys": []
+      },
+      "g1": {
+        "cultures": 840776,
+        "patients": 261217,
+        "positive": {
+          "cultures": 112026,
+          "patients": 62710
+        },
+        "negative": {
+          "cultures": 728750,
+          "patients": 245135
+        }
+      },
+      "g2_g3": {
+        "demographics": {
+          "status": "staged",
+          "kind": "one_row_per_culture",
+          "link": "culture_id",
+          "coverage_basis": "rows",
+          "coverage_positive": 1.0,
+          "coverage_negative": 1.0,
+          "row_coverage_positive": 1.0,
+          "row_coverage_negative": 1.0,
+          "negative_to_positive_coverage": 1.0,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true
+        },
+        "ward_info": {
+          "status": "staged",
+          "kind": "one_row_per_culture",
+          "link": "culture_id",
+          "coverage_basis": "rows",
+          "coverage_positive": 1.0,
+          "coverage_negative": 1.0,
+          "row_coverage_positive": 1.0,
+          "row_coverage_negative": 1.0,
+          "negative_to_positive_coverage": 1.0,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "positive": {
+              "culture_time_pairs": 112026,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "negative": {
+              "culture_time_pairs": 728750,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          }
+        },
+        "adi_scores": {
+          "status": "staged",
+          "kind": "one_row_per_culture",
+          "link": "culture_id",
+          "coverage_basis": "rows",
+          "coverage_positive": 1.0,
+          "coverage_negative": 1.0,
+          "row_coverage_positive": 1.0,
+          "row_coverage_negative": 1.0,
+          "negative_to_positive_coverage": 1.0,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 728750,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 112026,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          }
+        },
+        "vitals": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "rows",
+          "coverage_positive": 0.8371,
+          "coverage_negative": 0.8009,
+          "row_coverage_positive": 0.8371,
+          "row_coverage_negative": 0.8009,
+          "negative_to_positive_coverage": 0.957,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true
+        },
+        "labs": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.6916,
+          "coverage_negative": 0.6703,
+          "row_coverage_positive": 0.6916,
+          "row_coverage_negative": 0.6703,
+          "negative_to_positive_coverage": 0.969,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "days_to_culture": {
+            "column": "Period_Day",
+            "positive": {
+              "rows": 232358,
+              "quantiles": {
+                "p01": 14.0,
+                "p25": 14.0,
+                "p50": 30.0,
+                "p75": 180.0,
+                "p99": 180.0
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "negative": {
+              "rows": 1465153,
+              "quantiles": {
+                "p01": 14.0,
+                "p25": 14.0,
+                "p50": 30.0,
+                "p75": 180.0,
+                "p99": 180.0
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        },
+        "antibiotic_class_exposure": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.6671,
+          "coverage_negative": 0.5712,
+          "row_coverage_positive": 0.6671,
+          "row_coverage_negative": 0.5712,
+          "negative_to_positive_coverage": 0.856,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 416240,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 74732,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "time_to_culturetime",
+            "negative": {
+              "rows": 2169668,
+              "quantiles": {
+                "p01": 4.142655900422477,
+                "p25": 252.47641568001484,
+                "p50": 796.6070298898635,
+                "p75": 1749.9250891168701,
+                "p99": 4824.020816875285
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 459861,
+              "quantiles": {
+                "p01": 11.241401017248702,
+                "p25": 262.79389199991266,
+                "p50": 799.3668406997723,
+                "p75": 1733.345148224458,
+                "p99": 4796.204050396501
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        },
+        "antibiotic_subtype_exposure": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.6671,
+          "coverage_negative": 0.5712,
+          "row_coverage_positive": 0.6671,
+          "row_coverage_negative": 0.5712,
+          "negative_to_positive_coverage": 0.856,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "positive": {
+              "culture_time_pairs": 74732,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "negative": {
+              "culture_time_pairs": 416240,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "medication_time_to_culturetime",
+            "negative": {
+              "rows": 2169668,
+              "quantiles": {
+                "p01": 4.031145255975285,
+                "p25": 252.38438505037033,
+                "p50": 793.2462888202215,
+                "p75": 1753.6931632406179,
+                "p99": 4820.852704904918
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 459861,
+              "quantiles": {
+                "p01": 11.225376849569493,
+                "p25": 263.6742142861912,
+                "p50": 798.8557540253613,
+                "p75": 1736.528237193045,
+                "p99": 4780.749280968527
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        },
+        "comorbidity": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.9083,
+          "coverage_negative": 0.9096,
+          "row_coverage_positive": 0.9544,
+          "row_coverage_negative": 0.9547,
+          "negative_to_positive_coverage": 1.001,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 695765,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 106920,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "comorbidity_component_start_days_culture",
+            "negative": {
+              "rows": 14538730,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 343.8661453508915,
+                "p50": 1078.8012146338829,
+                "p75": 2177.7022036817784,
+                "p99": 5012.0289497465765
+              },
+              "share_gt0": 0.9546,
+              "share_eq0": 0.0454,
+              "share_lt0": 0.0,
+              "null_rows": 32859
+            },
+            "positive": {
+              "rows": 2557477,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 374.03413165077535,
+                "p50": 1140.7903802859153,
+                "p75": 2244.0551370954536,
+                "p99": 5095.099315971713
+              },
+              "share_gt0": 0.9675,
+              "share_eq0": 0.0325,
+              "share_lt0": 0.0,
+              "null_rows": 5165
+            }
+          }
+        },
+        "microbial_resistance": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.766,
+          "coverage_negative": 0.2867,
+          "row_coverage_positive": 1.0,
+          "row_coverage_negative": 1.0,
+          "negative_to_positive_coverage": 0.374,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 728750,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 112026,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "resistant_time_to_culturetime",
+            "negative": {
+              "rows": 2172122,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 177.26140213705946,
+                "p50": 697.7695499651492,
+                "p75": 1808.8999872824386,
+                "p99": 5175.388959557514
+              },
+              "share_gt0": 0.9295,
+              "share_eq0": 0.0705,
+              "share_lt0": 0.0,
+              "null_rows": 519786
+            },
+            "positive": {
+              "rows": 807356,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 2.6749277454058333,
+                "p50": 365.7158385933507,
+                "p75": 1316.6586312830425,
+                "p99": 4863.633820305408
+              },
+              "share_gt0": 0.7421,
+              "share_eq0": 0.2579,
+              "share_lt0": 0.0,
+              "null_rows": 26215
+            }
+          }
+        },
+        "nursing_home_visits": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.0676,
+          "coverage_negative": 0.0387,
+          "row_coverage_positive": 0.9439,
+          "row_coverage_negative": 0.9613,
+          "negative_to_positive_coverage": 0.572,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 700582,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 105746,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "nursing_home_visit_culture",
+            "negative": {
+              "rows": 700586,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 0.0,
+                "p50": 0.0,
+                "p75": 0.0,
+                "p99": 14.21742959597512
+              },
+              "share_gt0": 0.1101,
+              "share_eq0": 0.8899,
+              "share_lt0": 0.0,
+              "null_rows": 672403
+            },
+            "positive": {
+              "rows": 105752,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 0.0,
+                "p50": 0.0,
+                "p75": 0.0,
+                "p99": 15.326016134096054
+              },
+              "share_gt0": 0.1243,
+              "share_eq0": 0.8757,
+              "share_lt0": 0.0,
+              "null_rows": 98173
+            }
+          }
+        },
+        "prior_infecting_organism": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.4442,
+          "coverage_negative": 0.2473,
+          "row_coverage_positive": 0.4442,
+          "row_coverage_negative": 0.2473,
+          "negative_to_positive_coverage": 0.557,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 180239,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 49762,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "prior_infecting_organism_days_to_culture",
+            "negative": {
+              "rows": 600594,
+              "quantiles": {
+                "p01": 15.08868595232043,
+                "p25": 321.7910649558377,
+                "p50": 982.8225390196205,
+                "p75": 2169.139560111189,
+                "p99": 5287.146660778015
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 222778,
+              "quantiles": {
+                "p01": 17.001093059037174,
+                "p25": 295.9050495386208,
+                "p50": 883.3978115645912,
+                "p75": 1949.562816161667,
+                "p99": 5118.087721943308
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        },
+        "prior_med": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.6671,
+          "coverage_negative": 0.5712,
+          "row_coverage_positive": 0.6671,
+          "row_coverage_negative": 0.5712,
+          "negative_to_positive_coverage": 0.856,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 416240,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 74732,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "medication_time_to_culturetime",
+            "negative": {
+              "rows": 2169668,
+              "quantiles": {
+                "p01": 4.094771825010942,
+                "p25": 252.43534780668864,
+                "p50": 793.6730111485085,
+                "p75": 1755.3451224052583,
+                "p99": 4826.7486093768675
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            },
+            "positive": {
+              "rows": 459861,
+              "quantiles": {
+                "p01": 11.376026685752079,
+                "p25": 262.0700238584745,
+                "p50": 799.9880601019307,
+                "p75": 1735.3516784830767,
+                "p99": 4811.24115203841
+              },
+              "share_gt0": 1.0,
+              "share_eq0": 0.0,
+              "share_lt0": 0.0,
+              "null_rows": 0
+            }
+          }
+        },
+        "prior_procedures": {
+          "status": "staged",
+          "kind": "event",
+          "link": "culture_id",
+          "coverage_basis": "non_null_days_to_culture",
+          "coverage_positive": 0.1505,
+          "coverage_negative": 0.1342,
+          "row_coverage_positive": 0.9114,
+          "row_coverage_negative": 0.9113,
+          "negative_to_positive_coverage": 0.892,
+          "link_keys_absent_from_cohort": 0,
+          "keyed_to_negatives": true,
+          "order_time_anchor": {
+            "negative": {
+              "culture_time_pairs": 664077,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            },
+            "positive": {
+              "culture_time_pairs": 102096,
+              "same_timestamp": 1.0,
+              "same_day": 1.0
+            }
+          },
+          "days_to_culture": {
+            "column": "procedure_time_to_culturetime",
+            "negative": {
+              "rows": 1163921,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 138.45435832111548,
+                "p50": 626.0552112913514,
+                "p75": 1543.7522793331689,
+                "p99": 4435.237564141609
+              },
+              "share_gt0": 0.9705,
+              "share_eq0": 0.0295,
+              "share_lt0": 0.0,
+              "null_rows": 566244
+            },
+            "positive": {
+              "rows": 185440,
+              "quantiles": {
+                "p01": 0.0,
+                "p25": 133.74957237579963,
+                "p50": 625.5516636888073,
+                "p75": 1593.1219436754695,
+                "p99": 4598.993180125743
+              },
+              "share_gt0": 0.9842,
+              "share_eq0": 0.0158,
+              "share_lt0": 0.0,
+              "null_rows": 85233
+            }
+          }
+        }
+      },
+      "g4": {
+        "negative": {
+          "cultures": 728750,
+          "null_order_time": 0,
+          "null_share": 0.0
+        },
+        "positive": {
+          "cultures": 112026,
+          "null_order_time": 0,
+          "null_share": 0.0
+        }
+      },
+      "g5": {
+        "by_specimen": {
+          "all": {
+            "cultures": 840776,
+            "positive_share": 0.1332,
+            "enterobacterales_share": 0.1031,
+            "unidentified_share": 0.001
+          },
+          "blood": {
+            "cultures": 342503,
+            "positive_share": 0.0506,
+            "enterobacterales_share": 0.0214,
+            "unidentified_share": 0.0002
+          },
+          "respiratory": {
+            "cultures": 23573,
+            "positive_share": 0.1669,
+            "enterobacterales_share": 0.0452,
+            "unidentified_share": "<11"
+          },
+          "urine": {
+            "cultures": 474700,
+            "positive_share": 0.1912,
+            "enterobacterales_share": 0.165,
+            "unidentified_share": 0.0017
+          }
+        },
+        "estimands": {
+          "E1_composite_lab": {
+            "evaluable_cultures": 86680,
+            "label_positive": 8066,
+            "prevalence": 0.0931,
+            "reasons": {
+              "culture_negative": 728750,
+              "resistant": 8066,
+              "not_resistant": 78614,
+              "not_tested": 19,
+              "organism_unidentified": 672,
+              "organism_absent": 24655
+            }
+          },
+          "E1_idsa_lab": {
+            "evaluable_cultures": 77626,
+            "label_positive": 5792,
+            "prevalence": 0.0746,
+            "reasons": {
+              "culture_negative": 728750,
+              "resistant": 5792,
+              "not_resistant": 71834,
+              "not_tested": 111,
+              "organism_unidentified": 705,
+              "organism_absent": 33584
+            }
+          },
+          "E2_decision_time_lab": {
+            "evaluable_cultures": 840085,
+            "label_positive": 8066,
+            "prevalence": 0.0096,
+            "reasons": {
+              "culture_negative": 728750,
+              "resistant": 8066,
+              "not_resistant": 78614,
+              "not_tested": 19,
+              "organism_unidentified": 672,
+              "organism_absent": 24655
+            }
+          }
+        }
+      },
+      "verdict": {
+        "feature_tables_keyed_to_negatives": true,
+        "tables_failing": [],
+        "tables_linked_by_date": [],
+        "order_time_available_for_negatives": true,
+        "passes": true
+      }
+    }
+  },
+  "overall": {
+    "passing_sites": [
+      "stanford",
+      "mgb",
+      "utsw",
+      "ecuh"
+    ],
+    "go": true,
+    "rule": "Go needs at least two passing sites, one of them Stanford or MGB."
+  },
+  "provenance": {
+    "stanford": {
+      "name": "ARMD (Stanford Health Care)",
+      "repository": "Dryad",
+      "doi": "10.5061/dryad.jq2bvq8kp",
+      "url": "https://doi.org/10.5061/dryad.jq2bvq8kp",
+      "version": "20",
+      "version_date": "2025-10-22",
+      "license": "CC0-1.0",
+      "downloaded_on": "2026-02-26",
+      "files_listed": 17,
+      "tables_staged": 16,
+      "gated": true
+    },
+    "mgb": {
+      "name": "ARMD-MGB (Mass General Brigham)",
+      "repository": "PhysioNet",
+      "doi": "10.13026/2r5k-b955",
+      "url": "https://doi.org/10.13026/2r5k-b955",
+      "version": "1.0.0",
+      "version_date": "2025-12-05",
+      "license": "PhysioNet Credentialed Health Data License 1.5.0",
+      "downloaded_on": "2026-02-23",
+      "files_listed": 12,
+      "tables_staged": 10,
+      "gated": true
+    },
+    "utsw": {
+      "name": "ARMD-UTSW (UT Southwestern Medical Center)",
+      "repository": "Dryad",
+      "doi": "10.5061/dryad.0rxwdbsd5",
+      "url": "https://doi.org/10.5061/dryad.0rxwdbsd5",
+      "version": "5",
+      "version_date": "2025-09-26",
+      "license": "CC0-1.0",
+      "downloaded_on": "2026-09-11",
+      "files_listed": 14,
+      "tables_staged": 13,
+      "gated": true
+    },
+    "ecuh": {
+      "name": "ARMD-ECUH (ECU Health)",
+      "repository": "Dryad",
+      "doi": "10.5061/dryad.7sqv9s55x",
+      "url": "https://doi.org/10.5061/dryad.7sqv9s55x",
+      "version": "4",
+      "version_date": "2025-11-10",
+      "license": "CC0-1.0",
+      "downloaded_on": "2026-09-11",
+      "files_listed": 15,
+      "tables_staged": 14,
+      "gated": true
+    }
+  }
+}

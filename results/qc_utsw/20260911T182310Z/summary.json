@@ -1,0 +1,717 @@
+{
+  "site": "utsw",
+  "source": {
+    "name": "ARMD-UTSW (UT Southwestern Medical Center)",
+    "repository": "Dryad",
+    "doi": "10.5061/dryad.0rxwdbsd5",
+    "url": "https://doi.org/10.5061/dryad.0rxwdbsd5",
+    "version": "5",
+    "version_date": "2025-09-26",
+    "license": "CC0-1.0",
+    "downloaded_on": "2026-09-11"
+  },
+  "staged_tables": {
+    "adi_scores": {
+      "rows": 774149,
+      "retried_as_varchar": []
+    },
+    "antibiotic_class_exposure": {
+      "rows": 7154021,
+      "retried_as_varchar": []
+    },
+    "antibiotic_subtype_exposure": {
+      "rows": 7154021,
+      "retried_as_varchar": []
+    },
+    "cohort": {
+      "rows": 1893548,
+      "retried_as_varchar": []
+    },
+    "comorbidity": {
+      "rows": 13794973,
+      "retried_as_varchar": []
+    },
+    "demographics": {
+      "rows": 774149,
+      "retried_as_varchar": []
+    },
+    "labs": {
+      "rows": 1395742,
+      "retried_as_varchar": []
+    },
+    "microbial_resistance": {
+      "rows": 3455917,
+      "retried_as_varchar": []
+    },
+    "nursing_home_visits": {
+      "rows": 761866,
+      "retried_as_varchar": []
+    },
+    "prior_infecting_organism": {
+      "rows": 696690,
+      "retried_as_varchar": []
+    },
+    "prior_med": {
+      "rows": 7154021,
+      "retried_as_varchar": []
+    },
+    "prior_procedures": {
+      "rows": 985363,
+      "retried_as_varchar": []
+    },
+    "ward_info": {
+      "rows": 774149,
+      "retried_as_varchar": []
+    }
+  },
+  "canonical": {
+    "isolate_ast": {
+      "rows": 1189552,
+      "schema_problems": [],
+      "null_share": {
+        "site": 0.0,
+        "patient_id": 0.0,
+        "culture_id": 0.0,
+        "organism_raw": 0.0082,
+        "organism_std": 0.0082,
+        "organism_group": 0.0082,
+        "is_enterobacterales": 0.0082,
+        "idsa_esbl_species": 0.0082,
+        "organism_ambiguous": 0.0082,
+        "antibiotic_raw": 0.0,
+        "antibiotic_code": 0.0066,
+        "sir_raw": 0.0046,
+        "sir": 0.0046,
+        "sir_clsi2022_raw": 1.0,
+        "sir_clsi2022": 1.0,
+        "mic_inequality": 1.0,
+        "mic_value": 1.0,
+        "mic_value2": 1.0,
+        "ast_method": 1.0,
+        "preliminary": 0.0,
+        "n_source_rows": 0.0
+      },
+      "frequencies": {
+        "organism_group": [
+          [
+            "ecoli",
+            593303
+          ],
+          [
+            "non_enterobacterales",
+            293989
+          ],
+          [
+            "klebsiella",
+            176148
+          ],
+          [
+            "proteus",
+            50800
+          ],
+          [
+            "other_enterobacterales",
+            45268
+          ],
+          [
+            "enterobacter",
+            20314
+          ],
+          [
+            null,
+            9730
+          ]
+        ],
+        "antibiotic_code": [
+          [
+            "GEN",
+            80716
+          ],
+          [
+            "SXT",
+            74082
+          ],
+          [
+            "LVX",
+            72004
+          ],
+          [
+            "CIP",
+            71802
+          ],
+          [
+            "TOB",
+            65931
+          ],
+          [
+            "TZP",
+            65054
+          ],
+          [
+            "NIT",
+            64218
+          ],
+          [
+            "MEM",
+            63114
+          ],
+          [
+            "AMP",
+            56094
+          ],
+          [
+            "SAM",
+            50933
+          ],
+          [
+            "TET",
+            48649
+          ],
+          [
+            "ATM",
+            48578
+          ],
+          [
+            "CRO",
+            48544
+          ],
+          [
+            "ETP",
+            48510
+          ],
+          [
+            "FEP",
+            46338
+          ],
+          [
+            "CFZ",
+            42866
+          ],
+          [
+            "CXM",
+            39050
+          ],
+          [
+            "AMC",
+            34110
+          ],
+          [
+            "IPM",
+            23770
+          ],
+          [
+            "CTX",
+            22461
+          ],
+          [
+            "VAN",
+            21616
+          ],
+          [
+            "CAZ",
+            19565
+          ],
+          [
+            "AMK",
+            17755
+          ],
+          [
+            "OXA",
+            13159
+          ],
+          [
+            "CLI",
+            8698
+          ],
+          [
+            "CEF",
+            8226
+          ],
+          [
+            null,
+            7809
+          ],
+          [
+            "ERY",
+            4906
+          ],
+          [
+            "PEN",
+            4646
+          ],
+          [
+            "LZD",
+            4257
+          ],
+          [
+            "TIM",
+            4219
+          ],
+          [
+            "DAP",
+            2618
+          ],
+          [
+            "CPT",
+            844
+          ],
+          [
+            "MXF",
+            629
+          ],
+          [
+            "CLR",
+            618
+          ],
+          [
+            "TGC",
+            449
+          ],
+          [
+            "MIN",
+            411
+          ],
+          [
+            "STR",
+            390
+          ],
+          [
+            "FOX",
+            377
+          ],
+          [
+            "DOX",
+            312
+          ],
+          [
+            "CAZ_AVI",
+            283
+          ],
+          [
+            "CST",
+            221
+          ],
+          [
+            "TOL_TAZ",
+            216
+          ],
+          [
+            "NOR",
+            127
+          ],
+          [
+            "MEM_VAB",
+            70
+          ],
+          [
+            "PIP",
+            50
+          ],
+          [
+            "FDC",
+            37
+          ],
+          [
+            "QUD",
+            37
+          ],
+          [
+            "FOF",
+            27
+          ],
+          [
+            "DOR",
+            21
+          ],
+          [
+            "INH",
+            20
+          ],
+          [
+            "CHL",
+            19
+          ],
+          [
+            "GAT",
+            17
+          ],
+          [
+            "IPM_REL",
+            17
+          ],
+          [
+            "FLC",
+            15
+          ],
+          [
+            "CAS",
+            11
+          ],
+          [
+            "ERV",
+            "<11"
+          ],
+          [
+            "AZM",
+            "<11"
+          ],
+          [
+            "CTT",
+            "<11"
+          ],
+          [
+            "MTZ",
+            "<11"
+          ],
+          [
+            "5FC",
+            "<11"
+          ],
+          [
+            "BDQ",
+            "<11"
+          ],
+          [
+            "KAN",
+            "<11"
+          ],
+          [
+            "CEC",
+            "<11"
+          ],
+          [
+            "MCZ",
+            "<11"
+          ],
+          [
+            "OFX",
+            "<11"
+          ]
+        ],
+        "sir": [
+          [
+            "S",
+            943485
+          ],
+          [
+            "R",
+            196298
+          ],
+          [
+            "I",
+            43001
+          ],
+          [
+            null,
+            5476
+          ],
+          [
+            "other",
+            1292
+          ]
+        ],
+        "sir_clsi2022": [
+          [
+            null,
+            1189552
+          ]
+        ],
+        "preliminary": [
+          [
+            false,
+            1189552
+          ]
+        ],
+        "ast_method": [
+          [
+            null,
+            1189552
+          ]
+        ]
+      }
+    },
+    "enzyme_tests": {
+      "rows": 0,
+      "schema_problems": [],
+      "null_share": {
+        "site": null,
+        "patient_id": null,
+        "culture_id": null,
+        "organism_raw": null,
+        "organism_std": null,
+        "organism_group": null,
+        "is_enterobacterales": null,
+        "idsa_esbl_species": null,
+        "organism_ambiguous": null,
+        "enzyme_class": null,
+        "enzyme": null,
+        "enzyme_result_raw": null,
+        "enzyme_result": null,
+        "ast_method": null,
+        "preliminary": null,
+        "n_source_rows": null
+      },
+      "frequencies": {
+        "enzyme_class": [],
+        "enzyme_result": [],
+        "organism_group": []
+      }
+    },
+    "culture_episodes": {
+      "rows": 774149,
+      "schema_problems": [],
+      "null_share": {
+        "site": 0.0,
+        "patient_id": 0.0,
+        "culture_id": 0.0,
+        "n_encounters": 0.0,
+        "order_time": 0.0,
+        "order_time_resolution": 0.0,
+        "specimen_type": 0.0,
+        "specimen_raw": 0.0,
+        "culture_positive": 0.0,
+        "organism_group": 0.0193,
+        "n_organisms": 0.0,
+        "has_enterobacterales": 0.0,
+        "has_idsa_esbl_species": 0.0,
+        "organism_unidentified": 0.0,
+        "organism_ambiguous": 0.0,
+        "setting_primary": 0.0,
+        "setting_raw_inpatient": 0.0,
+        "setting_raw_outpatient": 0.0,
+        "setting_raw_ed": 0.0,
+        "setting_raw_icu": 0.0,
+        "setting_raw_urgent_care": 1.0,
+        "setting_raw_day_surgery": 1.0,
+        "ordering_mode_raw": 0.0003,
+        "age_band": 0.0,
+        "sex": 1.0,
+        "sex_code_masked": 0.0001,
+        "adi_score": 0.0413,
+        "adi_state_rank": 0.5695,
+        "adi_missing": 0.0
+      },
+      "frequencies": {
+        "specimen_type": [
+          [
+            "urine",
+            453343
+          ],
+          [
+            "blood",
+            285359
+          ],
+          [
+            "respiratory",
+            35447
+          ]
+        ],
+        "culture_positive": [
+          [
+            false,
+            673063
+          ],
+          [
+            true,
+            101086
+          ]
+        ],
+        "organism_group": [
+          [
+            "none",
+            673063
+          ],
+          [
+            "ecoli",
+            37644
+          ],
+          [
+            "non_enterobacterales",
+            30097
+          ],
+          [
+            null,
+            14906
+          ],
+          [
+            "klebsiella",
+            10966
+          ],
+          [
+            "proteus",
+            3116
+          ],
+          [
+            "other_enterobacterales",
+            2915
+          ],
+          [
+            "enterobacter",
+            1442
+          ]
+        ],
+        "has_enterobacterales": [
+          [
+            false,
+            718066
+          ],
+          [
+            true,
+            56083
+          ]
+        ],
+        "organism_unidentified": [
+          [
+            false,
+            758764
+          ],
+          [
+            true,
+            15385
+          ]
+        ],
+        "setting_primary": [
+          [
+            "inpatient",
+            474575
+          ],
+          [
+            "outpatient",
+            299318
+          ],
+          [
+            "unknown",
+            229
+          ],
+          [
+            "ed",
+            27
+          ]
+        ],
+        "age_band": [
+          [
+            "65-74",
+            149570
+          ],
+          [
+            "55-64",
+            136308
+          ],
+          [
+            "25-34",
+            118305
+          ],
+          [
+            "45-54",
+            103423
+          ],
+          [
+            "35-44",
+            98151
+          ],
+          [
+            "75-84",
+            90164
+          ],
+          [
+            "18-24",
+            42767
+          ],
+          [
+            "85-89",
+            21719
+          ],
+          [
+            "90+",
+            13742
+          ]
+        ],
+        "sex": [
+          [
+            null,
+            774149
+          ]
+        ],
+        "sex_code_masked": [
+          [
+            "0",
+            491584
+          ],
+          [
+            "1",
+            282502
+          ],
+          [
+            null,
+            63
+          ]
+        ],
+        "order_time_resolution": [
+          [
+            "second",
+            774149
+          ]
+        ]
+      }
+    },
+    "culture_keys": {
+      "rows": 774149,
+      "schema_problems": [],
+      "null_share": {
+        "culture_id": 0.0,
+        "anon_id": 0.0,
+        "order_proc_id_coded": 0.0,
+        "order_date": 0.0
+      }
+    }
+  },
+  "sentinel_reporting": {
+    "sir": {
+      "CAZ": {
+        "reported_sir": 0.1169,
+        "listed_without_sir": 0.0003,
+        "not_listed": 0.8828
+      },
+      "CRO": {
+        "reported_sir": 0.8147,
+        "listed_without_sir": "<11",
+        "not_listed": 0.1851
+      },
+      "FEP": {
+        "reported_sir": 0.5869,
+        "listed_without_sir": 0.0009,
+        "not_listed": 0.4121
+      },
+      "TZP": {
+        "reported_sir": 0.8733,
+        "listed_without_sir": 0.0253,
+        "not_listed": 0.1014
+      },
+      "any_sentinel_reported_sir": 0.8974,
+      "enterobacterales_cultures": 56083
+    }
+  },
+  "vocab_gaps": {
+    "antibiotic_names_without_code": [],
+    "antibiotic_names_unmapped_by_design": [
+      "Gent screen",
+      "Gentamicin screen",
+      "Isoniazid, high",
+      "Isoniazid, low",
+      "Tobramycin rm",
+      "Vancomycin rm"
+    ],
+    "antibiotic_codes_outside_vocab": [],
+    "susceptibility_values_mapped_to_other": [
+      "Inconclusive"
+    ],
+    "specimen_values_mapped_to_other": [],
+    "age_values_unmapped": [],
+    "sex_values_unmapped": null,
+    "ambiguous_organism_names": [
+      "GRAM NEGATIVE RODS",
+      "GRAM NEGATIVE RODS AND GRAM POSITIVE COCCI",
+      "NON-LACTOSE FERMENTING GRAM NEGATIVE RODS"
+    ]
+  }
+}
