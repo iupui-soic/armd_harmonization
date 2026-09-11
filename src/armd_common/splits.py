@@ -107,13 +107,18 @@ def read_manifest(site: str, include_test: bool = False, path: Path | None = Non
 
 def register_manifest(con, site: str, table: str | None = None, include_test: bool = False, path: Path | None = None) -> str:
     """Load a manifest into DuckDB so it joins to culture_episodes on sha256(patient_id)."""
+    if include_test and not _caller_may_read_test():
+        raise SealedPartitionError(f"only analysis/{SEALED_READER} may read the test partition")
     table = table or f"{site}_split"
-    rows = read_manifest(site, include_test=include_test, path=path)
-    con.execute(f"CREATE OR REPLACE TEMP TABLE {table} (site VARCHAR, patient_id_hash VARCHAR, partition VARCHAR, fold INTEGER)")
-    con.executemany(
-        f"INSERT INTO {table} VALUES (?, ?, ?, ?)",
-        [(r["site"], r["patient_id_hash"], r["partition"], int(r["fold"]) if r["fold"] else None) for r in rows],
-    )
+    source = str(path or manifest_path(site)).replace("'", "''")
+    keep = "TRUE" if include_test else "partition <> 'test'"
+    # DuckDB reads the gzip CSV directly. Row-by-row inserts take minutes for a full site.
+    con.execute(f"""
+        CREATE OR REPLACE TEMP TABLE {table} AS
+        SELECT site, patient_id_hash, partition, TRY_CAST(NULLIF(fold, '') AS INTEGER) AS fold
+        FROM read_csv('{source}', header = true, all_varchar = true)
+        WHERE {keep}
+    """)
     return table
 
 
