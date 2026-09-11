@@ -1,0 +1,106 @@
+# Exact upstream releases used by armd-common (plan gate check G8).
+# armd_common.convert checks every raw CSV against these sizes and digests before staging.
+# Dryad sizes and digests come from the Dryad v2 API. MGB digests come from SHA256SUMS.txt.
+# downloaded_on is inferred from local file timestamps because no download log was kept.
+
+stanford:
+  name: ARMD (Stanford Health Care)
+  repository: Dryad
+  doi: 10.5061/dryad.jq2bvq8kp
+  url: https://doi.org/10.5061/dryad.jq2bvq8kp
+  version: "20"
+  version_date: "2025-10-22"
+  license: CC0-1.0
+  downloaded_on: "2026-02-26"
+  files:
+    README.md: {bytes: 11239, sha256: ed9df03bd51a7cb2a5c418603da01c5cfc448e621a06f46d3e2fba9c485fe68b}
+    implied_susceptibility_rules.csv: {bytes: 2939, sha256: 886f9b15f53628fb26453f50fe2809e9e6280f0cc31d6e3994443652dd23f4b7}
+    microbiology_culture_prior_infecting_organism.csv: {bytes: 81528921, sha256: 232131ad16e3e8d60abff9fcba5a58849dd3e5b8a0e5256735463d83832ba833}
+    microbiology_cultures_adi_scores.csv: {bytes: 48017356, sha256: 196ae4b3b4b5a0a84af1806dbc37a5ec35edff77fa7650acd8789398f9309776}
+    microbiology_cultures_antibiotic_class_exposure.csv: {bytes: 540301997, sha256: eda2bda3ef20b1d00ceb8ae5a33d1db7e8f32f9faceef39464facc8bc6e06015}
+    microbiology_cultures_antibiotic_subtype_exposure.csv: {bytes: 563209654, sha256: b4413755da40e87215bc01c67b251081ef4a6d649ed672efadc45ff8730bf6f4}
+    microbiology_cultures_cohort.csv: {bytes: 257013798, sha256: 631d9f3c35e620b60366a5bcc3e94fd9c031c79c7fd2d042ea6f182a1fcdd871}
+    microbiology_cultures_comorbidity.csv: {bytes: 19666823104, sha256: 5928e959cb1bd79408527ae01bad9a02f2ee700024fbac9f9c4c46665cfd7361}
+    microbiology_cultures_demographics.csv: {bytes: 34784218, sha256: 1d18182aee2af9c34b6a95e1b399241a4cc64d007c8488196b43a97fa58f93ee}
+    microbiology_cultures_implied_susceptibility.csv: {bytes: 160695108, sha256: 58b9e4ea79a9d64b1b8974b23d81501c58d01e6a8580ccb08a9a5dd0e777b855}
+    microbiology_cultures_labs.csv: {bytes: 448776067, sha256: f22e9a8e13f3e2e286b94c7550721c6db9a61a2c62f8646710257ae2c3e07569}
+    microbiology_cultures_microbial_resistance.csv: {bytes: 210857439, sha256: 3409054e1664ad128f1e568e92e275796ba2135849616d04c92b9031313edc70}
+    microbiology_cultures_nursing_home_visits.csv: {bytes: 462728, sha256: cf66ca2bc441f0ad49164587e176720fba1d42a1c3006d2d7f11f5ed9f67aa17}
+    microbiology_cultures_prior_med.csv: {bytes: 840541368, sha256: e6443f9b8b2ec1fefdcc2031e988bad4cda0aafa468cd6ad5b9dab3da9969e8a}
+    microbiology_cultures_priorprocedures.csv: {bytes: 126229633, sha256: e3c58f90eb31333e3acf532f55b313910180810a101024535a3314eab963d8fc}
+    microbiology_cultures_vitals.csv: {bytes: 741901409, sha256: b97775b3e1cca9586439a294c79ec0488d5dd5c3ae086f906f6443fd3448c2f8}
+    microbiology_cultures_ward_info.csv: {bytes: 49894350, sha256: 1f8a1d004d4967b1acea311422fe6a6d0152c4c0ccccedbaaaff0379b771ed46}
+
+mgb:
+  name: ARMD-MGB (Mass General Brigham)
+  repository: PhysioNet
+  doi: 10.13026/2r5k-b955
+  url: https://doi.org/10.13026/2r5k-b955
+  version: "1.0.0"
+  version_date: "2025-12-05"
+  license: PhysioNet Credentialed Health Data License 1.5.0
+  downloaded_on: "2026-02-23"
+  files:
+    ADI_deid_tj.csv: {bytes: 63700036, sha256: 664871b5a7ae2ce17cf21298c192a7b5f6bae8bab2fab179a8c24194063ee364}
+    LICENSE.txt: {bytes: 2518, sha256: ad58b816556b5c0065590c386187b0bcaeebb27da46bdf53f050f02e58b2456c}
+    README.txt: {bytes: 5393, sha256: 5b9c57911789efce2bd83d63fb9eaee003ebaa2068f012ed9b77a44309739d0f}
+    comorbidity_deid_tj.csv: {bytes: 407897227, sha256: a5ff95895e982d4581137cf894bf37d71f9af26a4a82697e79d40c93358a1dcf}
+    demographics_deid_tj.csv: {bytes: 43705045, sha256: 741f60677ae662cc8a20c90c78210995c9c89189c1b8dc28760fba0dc1c15151}
+    microbiology_cohort_deid_tj_updated.csv: {bytes: 586531206, sha256: 76099ebbe1aca384dd4a83cd9e9cdbed1b21bf86294b1a54485cc1e66e453fe5}
+    nursing_home_visits_deid_tj.csv: {bytes: 15252255, sha256: 3d007cbd52998764374358856a9285fa47652d99b158d1d2e0ed800c7307b015}
+    prior_abx_deid_tj.csv: {bytes: 870373723, sha256: eced9eeca1d26caf2f28e464a9aa68a55aa76a47cead83d9de6d8b343a1891c2}
+    prior_micro_deid_tj.csv: {bytes: 4328742140, sha256: 8be10e768e110c024f627eca323967e70240c8a1d9d3ed4cd366b090266aa09d}
+    prior_org_deid_tj.csv: {bytes: 189615382, sha256: b59b10b96683ca2ad00e90a5e11c81109317121cea3ea44d2626cd6b4f66c71b}
+    prior_procedures_deid_tj.csv: {bytes: 21091249, sha256: ceaa08554cea90585a6fd16d0de9f78aab9b97c884f6c6e71091d6d989ba6fb7}
+    ward_type_deid_tj.csv: {bytes: 46083190, sha256: 1ee051bbb566e4bece2a44d7b47f5695c568fa1ca542f084b92d68f7356e3534}
+
+utsw:
+  name: ARMD-UTSW (UT Southwestern Medical Center)
+  repository: Dryad
+  doi: 10.5061/dryad.0rxwdbsd5
+  url: https://doi.org/10.5061/dryad.0rxwdbsd5
+  version: "5"
+  version_date: "2025-09-26"
+  license: CC0-1.0
+  downloaded_on: null
+  files:
+    README.md: {bytes: 10281, sha256: 69a96799a62cefd6a87a0163f52681ffd919bf442f08a9529c07a1dc0bf25d94}
+    microbiology_cultures_adi_scores.csv: {bytes: 46825800, sha256: 1fe6a8649c7d4e2cb502d1437681ee029eb0d2a73b25ad2ba2d06710b6ef68b2}
+    microbiology_cultures_antibiotic_class_exposure.csv: {bytes: 655829127, sha256: d6dc7b9e8cfc2aee4b822c1a57b8c8bb4fef589829dbda103dde3c1d97a96094}
+    microbiology_cultures_antibiotic_subtype_exposure.csv: {bytes: 685043644, sha256: 3470132b75c695a4b7b0f0d30fb7e7535be61f7f05d9759c955197d0bdb5f378}
+    microbiology_cultures_cohort.csv: {bytes: 202293883, sha256: 759bea4771136d90ad1f55c2a737843fbe31e10f1cda8625e141d2c2b00ded9f}
+    microbiology_cultures_comorbidity.csv: {bytes: 1298905910, sha256: 904b29c5c82f7cc543bb17731913fc0e13b2875c8841147d8f6f0d4865f8ce78}
+    microbiology_cultures_demographics.csv: {bytes: 32340584, sha256: aeb71cd81411cb72fe2ab9858536676a9d143deedf45006f15fceb6a434b4876}
+    microbiology_cultures_labs.csv: {bytes: 462234896, sha256: b4fe4e6790a9ce8d1317dce3e8e116aa07a099cf42eb86a2b770d0edc06ddad4}
+    microbiology_cultures_microbial_resistance.csv: {bytes: 302398300, sha256: 3f701865a0974ce855a50ba4b8097f8ecdee9cbc2bf5b454f658db9797a7bc10}
+    microbiology_cultures_nursing_home_visits.csv: {bytes: 44729654, sha256: 9e3b4edf20178c4f400e96f46206cd3c7f4f0cc700617a95c01f82c26d33f16c}
+    microbiology_cultures_prior_infecting_organism.csv: {bytes: 49203132, sha256: d2f2d7774b2827d4319fb292ad79856821ac9c056994a7f4966f603e8301c9cd}
+    microbiology_cultures_prior_med.csv: {bytes: 551608268, sha256: 861472f671a2e56c84b23eee52a811abfda32261982125343430d5ee559eb319}
+    microbiology_cultures_prior_procedures.csv: {bytes: 69777480, sha256: dd6ed407026206a5a95d4677aebe2584d0c3324826356ec78f389a1a12451000}
+    microbiology_cultures_ward_info.csv: {bytes: 47782211, sha256: 20c1da70c0acf08c98979cd2474b0883cddcd39f5ddff2f4de3c0fc8662b0aad}
+
+ecuh:
+  name: ARMD-ECUH (ECU Health)
+  repository: Dryad
+  doi: 10.5061/dryad.7sqv9s55x
+  url: https://doi.org/10.5061/dryad.7sqv9s55x
+  version: "4"
+  version_date: "2025-11-10"
+  license: CC0-1.0
+  downloaded_on: null
+  files:
+    00_microbiology_cultures_cohort.csv: {bytes: 313527383, sha256: 20440f7c32dc0dc60005e10deadf8ed7c14617020264be2fdce3cafd9a2545c7}
+    010_microbiology_cultures_prior_med.csv: {bytes: 194659013, sha256: 9d4b72c84c76e89b66b6a499eab010c7cf5ae0d5e38be5577094a9fe33ae3006}
+    011_microbiology_cultures_prior_procedures.csv: {bytes: 91396425, sha256: f8be81b557f0dd7b5dec799319a2eeb91cf4216bc4f7dc98347407ef50f266eb}
+    012_microbiology_cultures_ward_info.csv: {bytes: 52128234, sha256: 0cffefb49d9009fe780c642ec1b8b3de9e616aa64882f300f358c1ab93bbac69}
+    013_microbiology_cultures_vitals.csv: {bytes: 122548869, sha256: 755ff7bf6a4943d8205ca2d50799cd5d76c66b4b781501b824690995abcc2195}
+    01_microbiology_cultures_adi_scores.csv: {bytes: 51980456, sha256: 798965102351a7272cc038003cc519c4d7fb7fa1db6d7842f34a4015e3970518}
+    02_microbiology_cultures_antibiotic_class_exposure.csv: {bytes: 227753644, sha256: 7773fc4ca8d207ad7fa785099e525222fb01239c3db67db64f370e694e6e9169}
+    03_microbiology_cultures_antibiotic_subtype_exposure.csv: {bytes: 251848004, sha256: 1565f90decc032f81329e1bb4bf0cc974339a2c5c97b8148d2dd64b5c890791c}
+    04_microbiology_cultures_comorbidity.csv: {bytes: 1619204186, sha256: ef9943ff2114b492d0448bf3a4f4ce7832fac81c381059ebbfe301eee9d62466}
+    05_microbiology_cultures_demographics.csv: {bytes: 31194989, sha256: 979ee2c4b95710079bef8dfeb6ab7c4c8d471ffaf5ccacee8f9f666c1eac61a8}
+    06_microbiology_cultures_labs.csv: {bytes: 621805978, sha256: d182d88b6215a7cda366a77bf83c43cbec9041d247feaba409250af046127ef7}
+    07_microbiology_cultures_microbial_resistance.csv: {bytes: 257087964, sha256: cf325c763d2a0eadffe546d8526aa139f377e110e8470f7b62d93a644ef6543c}
+    08_microbiology_cultures_nursing_home_visits.csv: {bytes: 47467234, sha256: 8b69d5a2358a3fe64dee3c2e04621afddea33a589b3cd786675c68d27c6a0b8f}
+    09_microbiology_cultures_prior_infecting_organism.csv: {bytes: 58128846, sha256: 15b2597b199082424e31f9e5d2c9ce37248b539af90bc8e38949d44c7098b104}
+    README.md: {bytes: 11698, sha256: 04b14cc5902d3a2663cdc18608b29b95fbadf87666a37ac6e656033b77a1db72}
