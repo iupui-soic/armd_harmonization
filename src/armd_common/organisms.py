@@ -39,7 +39,7 @@ _ZZ_PREFIX = re.compile(r"^Z{2,}")
 _ANNOTATION = re.compile(r"\s*[({\[][^)}\]]*[)}\]]?")
 _SPACES = re.compile(r"\s+")
 _LIKELY_ENTERIC = re.compile(r"\bENTERIC GRAM NEGATIVE|^LACTOSE FERMENTING GRAM NEGATIVE")
-_GENERIC_GNR = re.compile(r"GRAM NEGATIVE ROD")
+_GENERIC_GNR = re.compile(r"GRAM NEGATIVE (ROD|ORGANISM|BACILL)")
 _NON_FERMENTER = re.compile(r"NON[ -]?FERMENTING|NONFERM")
 
 

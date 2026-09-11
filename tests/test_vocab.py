@@ -27,6 +27,9 @@ from armd_common import organisms, vocab
         ("NON LACTOSE FERMENTING GRAM NEGATIVE RODS", "non_enterobacterales", False, True),
         ("NON FERMENTING GRAM NEGATIVE RODS", "non_enterobacterales", False, False),
         ("GRAM NEGATIVE RODS - NONFERM, UNIDENTIFIED", "non_enterobacterales", False, False),
+        ("GRAM NEGATIVE ORGANISM", "non_enterobacterales", False, True),
+        ("MIXED GENITAL FLORA", "non_enterobacterales", False, False),
+        ("CULTURE POSITIVE GRAM NEGATIVE COCCI", "non_enterobacterales", False, False),
         ("PSEUDOMONAS AERUGINOSA (MUCOID)", "non_enterobacterales", False, False),
         ("STAPH AUREUS {MRSA}", "non_enterobacterales", False, False),
         ("ENTEROCOCCUS FAECALIS", "non_enterobacterales", False, False),
@@ -66,11 +69,34 @@ def test_register_lookup():
         ("Imipenem/Ebactam", "IPM_REL"),
         ("Cephalexin/Cephalothin", "CEF"),
         ("ceftolozane_tazobactam", "TOL_TAZ"),
+        ("Ampicillin/Sulbactam", "SAM"),
+        ("Pip/tazobactam", "TZP"),
+        ("Amox/clavulanate", "AMC"),
+        ("Augmentin", "AMC"),
+        ("Amp/sulbactam", "SAM"),
+        ("Trimeth/sulf", "SXT"),
+        ("Trimeth-sulfamethoxazole", "SXT"),
+        ("Ceftazidime+clavulanic Acid", "CAZ_CLV"),
+        ("Cefotaxime+clavulanic Acid", "CTX_CLV"),
+        ("Mcim", "MCIM"),
+        ("Polymixin e", "CST"),
+        ("5 fluorocytosine", "5FC"),
+        ("Synercid", "QUD"),
+        ("Gentamicin screen", None),
         ("Not A Drug", None),
     ],
 )
 def test_antibiotic_code(name, code):
     assert vocab.antibiotic_code(name) == code
+
+
+def test_unmapped_by_design_names_stay_unmapped():
+    assert all(vocab.antibiotic_code(name.replace("_", " ")) is None for name in vocab.UNMAPPED_BY_DESIGN)
+
+
+def test_sentinel_agents_and_aliases_resolve_to_known_codes():
+    assert set(vocab.SENTINEL_AGENTS) <= set(vocab.CODES)
+    assert set(vocab.ALIASES.values()) <= set(vocab.CODES)
 
 
 @pytest.mark.parametrize(

@@ -41,6 +41,43 @@ SIR = {
 SENTINEL_AGENTS = ("CRO", "CAZ", "FEP", "TZP")
 
 CODES = {
+    "5FC": "flucytosine",
+    "AFG": "anidulafungin",
+    "ATM_AVI": "aztreonam_avibactam",
+    "BDQ": "bedaquiline",
+    "CAP": "capreomycin",
+    "CAS": "caspofungin",
+    # Clavulanate combinations are the CLSI ESBL confirmatory tests.
+    "CAZ_CLV": "ceftazidime_clavulanate",
+    "CLO": "clofazimine",
+    "CTX_CLV": "cefotaxime_clavulanate",
+    "DCS": "cycloserine",
+    # EDTA-modified and modified carbapenem inactivation methods.
+    "ECIM": "ecim",
+    "EMB": "ethambutol",
+    "ETO": "ethionamide",
+    "FLC": "fluconazole",
+    "GAT": "gatifloxacin",
+    "ICR": "inducible_clindamycin_resistance",
+    "INH": "isoniazid",
+    "ISA": "isavuconazole",
+    "ITC": "itraconazole",
+    "MCIM": "mcim",
+    "MCZ": "miconazole",
+    "MFG": "micafungin",
+    "NAL": "nalidixic_acid",
+    "NOR": "norfloxacin",
+    "OFX": "ofloxacin",
+    "OMC": "omadacycline",
+    "PLZ": "plazomicin",
+    "POS": "posaconazole",
+    "PZA": "pyrazinamide",
+    "RFB": "rifabutin",
+    "SAM": "ampicillin_sulbactam",
+    "SPT": "spectinomycin",
+    "TMP": "trimethoprim",
+    "TRB": "terbinafine",
+    "VRC": "voriconazole",
     "AMB": "amphotericin_b",
     "AMC": "amoxicillin_clavulanate",
     "AMK": "amikacin",
@@ -117,6 +154,40 @@ ALIASES = {
     "ticacarcillin_clavulanic_acid": "TIM",
     "ticarcillin_clavulanic_acid": "TIM",
     "rifampicin": "RIF",
+    # UTSW spellings.
+    "pip_tazobactam": "TZP",
+    "amox_clavulanate": "AMC",
+    "amoxicillin_k_clavulanate_aug": "AMC",
+    "trimeth_sulf": "SXT",
+    "ticarcil_clavulanate": "TIM",
+    "amikacin_iv": "AMK",
+    "polymixin_e": "CST",
+    "5_fluorocytosine": "5FC",
+    "caspofungin_acetate": "CAS",
+    "fluconizole": "FLC",
+    "bedaquilline": "BDQ",
+    # ECUH spellings.
+    "amp_sulbactam": "SAM",
+    "augmentin": "AMC",
+    "trimeth_sulfamethoxazole": "SXT",
+    "ticarillin_clavulanic_acid": "TIM",
+    "cefotaxime_clavulanic_acid": "CTX_CLV",
+    "ceftazidime_clavulanic_acid": "CAZ_CLV",
+    "inducible_clindamycin": "ICR",
+    # Both.
+    "synercid": "QUD",
+}
+
+# Names left without a code on purpose, keyed by normalized name. They are screens or method
+# variants whose result is not the drug's own susceptibility.
+UNMAPPED_BY_DESIGN = {
+    "gent_screen": "high-level gentamicin synergy screen for enterococci",
+    "gentamicin_screen": "high-level gentamicin synergy screen for enterococci",
+    "cefoxitin_screen": "staphylococcal mecA surrogate screen",
+    "isoniazid_high": "isoniazid at the high critical concentration",
+    "isoniazid_low": "isoniazid at the low critical concentration",
+    "tobramycin_rm": "UTSW method variant with an undocumented rm suffix",
+    "vancomycin_rm": "UTSW method variant with an undocumented rm suffix",
 }
 
 _BY_NAME = {name: code for code, name in CODES.items()}
