@@ -176,7 +176,7 @@ def mgb(tmp_path, monkeypatch):
             mgb_row("1", enc, "500", "URINE", ecoli, code="CRO", pheno="Susceptible", clsi="Resistant"),
             mgb_row("1", enc, "500", "URINE", ecoli, prelim="X", code="CRO", pheno="Susceptible", clsi="Susceptible"),
             mgb_row("1", enc, "500", "URINE", ecoli, prelim="X", code="FEP", pheno="Susceptible", clsi="Susceptible dose dependent"),
-            mgb_row("1", enc, "500", "URINE", ecoli, enzyme_class="ESBL", pheno="Positive"),
+            mgb_row("1", enc, "500", "URINE", ecoli, enzyme_class="ESBL", code="ESBL", pheno="Positive"),
         ]
     # Patient 2 reuses order_proc_id_coded 500 for a different, negative culture on the same day as culture 501.
     rows.append(mgb_row("2", "20", "500", "BLOOD", neg="X"))

@@ -94,7 +94,8 @@ class MGBLoader(SiteLoader):
                        COALESCE(prelim_AST = 'X', FALSE) AS preliminary,
                        COUNT(*) AS n_source_rows
                 FROM {self.raw('cohort')}
-                WHERE neg_cx IS NULL AND AST_code IS NOT NULL
+                -- Enzyme tests also carry an AST_code (ESBL, CARBA, BLAC, MEC) and belong to enzyme_tests.
+                WHERE neg_cx IS NULL AND AST_code IS NOT NULL AND enzyme_class IS NULL
                 GROUP BY ALL
             ),
             flagged AS (
