@@ -1,0 +1,70 @@
+# Benchmark task registry (plan section 4.5).
+# Each task pins its cohort, label constructor, feature set, split manifest and metrics.
+# Label constructors live in armd_common.labels. The feature set name refers to armd_common.features,
+# which is not built yet.
+
+version: 1
+
+defaults:
+  seed: 20260911
+  split_manifest: benchmarks/manifests/{site}.csv.gz
+  features: harmonized_core
+  sir_column: sir
+  metrics:
+    - auroc
+    - auprc
+    - calibration_intercept
+    - calibration_slope
+    - brier
+    - sensitivity_at_90_sensitivity
+    - specificity_at_90_sensitivity
+    - ppv_at_90_sensitivity
+    - npv_at_90_sensitivity
+    - net_benefit
+  net_benefit_thresholds: [0.05, 0.10, 0.15, 0.20]
+  bootstrap:
+    iterations: 2000
+    resample: patient
+
+tasks:
+  esbl_composite_e1:
+    description: Status quo estimand. Cultures that grew Enterobacterales and had at least one sentinel agent reported.
+    estimand: E1
+    sites: [stanford, mgb, utsw, ecuh]
+    label:
+      constructor: esbl_phenotype_composite
+      agents: [CRO, CAZ, FEP, TZP]
+      nonsusceptible: false
+    cohort: evaluable
+
+  esbl_composite_e2:
+    description: Decision-time estimand. Every ordered culture. Negative and non-Enterobacterales cultures are Y = 0.
+    estimand: E2
+    sites: [stanford, mgb, utsw, ecuh]
+    label:
+      constructor: esbl_decision_time
+      agents: [CRO, CAZ, FEP, TZP]
+      nonsusceptible: false
+    cohort: evaluable
+
+  esbl_idsa_strict:
+    description: Ceftriaxone non-susceptible E. coli, K. pneumoniae, K. oxytoca or P. mirabilis.
+    estimand: E1
+    sites: [stanford, mgb, utsw, ecuh]
+    label:
+      constructor: esbl_phenotype_idsa
+      nonsusceptible: true
+    cohort: evaluable
+
+  esbl_crossite_e1:
+    description: Train on one site and test on another, for every ordered pair, under the E1 composite label.
+    estimand: E1
+    pairs: all_ordered
+    sites: [stanford, mgb, utsw, ecuh]
+    label:
+      constructor: esbl_phenotype_composite
+      agents: [CRO, CAZ, FEP, TZP]
+      nonsusceptible: false
+    cohort: evaluable
+    train_partition: derivation
+    test_partition: test
