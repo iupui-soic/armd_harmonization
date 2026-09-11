@@ -1,0 +1,113 @@
+{
+  "reference_mgb": {
+    "diagnoses": {
+      "f": {
+        "patients": 130566,
+        "male_dx_share": "<11",
+        "female_dx_share": 0.1634,
+        "patients_with_conflicting_codes": 0
+      },
+      "m": {
+        "patients": 96077,
+        "male_dx_share": 0.1525,
+        "female_dx_share": "<11",
+        "patients_with_conflicting_codes": 0
+      }
+    }
+  },
+  "sites": {
+    "stanford": {
+      "diagnoses": {
+        "0": {
+          "patients": 189864,
+          "male_dx_share": 0.0002,
+          "female_dx_share": 0.3218,
+          "patients_with_conflicting_codes": 0
+        },
+        "1": {
+          "patients": 93763,
+          "male_dx_share": 0.242,
+          "female_dx_share": 0.002,
+          "patients_with_conflicting_codes": 0
+        }
+      },
+      "pattern": {
+        "strata_compared": 27,
+        "distance_if_code0_female": 0.099,
+        "distance_if_code0_male": 0.2624,
+        "correlation_code0_share_with_mgb_female_share": 0.8897
+      },
+      "decision": {
+        "female_code_by_diagnoses": "0",
+        "female_code_by_pattern": "0",
+        "evidence_agrees": true,
+        "proposed_mapping": {
+          "0": "f",
+          "1": "m"
+        }
+      }
+    },
+    "utsw": {
+      "diagnoses": {
+        "0": {
+          "patients": 154857,
+          "male_dx_share": "<11",
+          "female_dx_share": 0.1524,
+          "patients_with_conflicting_codes": 0
+        },
+        "1": {
+          "patients": 82379,
+          "male_dx_share": 0.1353,
+          "female_dx_share": 0.0008,
+          "patients_with_conflicting_codes": 0
+        }
+      },
+      "pattern": {
+        "strata_compared": 26,
+        "distance_if_code0_female": 0.0843,
+        "distance_if_code0_male": 0.2484,
+        "correlation_code0_share_with_mgb_female_share": 0.9203
+      },
+      "decision": {
+        "female_code_by_diagnoses": "0",
+        "female_code_by_pattern": "0",
+        "evidence_agrees": true,
+        "proposed_mapping": {
+          "0": "f",
+          "1": "m"
+        }
+      }
+    },
+    "ecuh": {
+      "diagnoses": {
+        "0": {
+          "patients": 171100,
+          "male_dx_share": "<11",
+          "female_dx_share": 0.2088,
+          "patients_with_conflicting_codes": 0
+        },
+        "1": {
+          "patients": 90111,
+          "male_dx_share": 0.1494,
+          "female_dx_share": 0.0011,
+          "patients_with_conflicting_codes": 0
+        }
+      },
+      "pattern": {
+        "strata_compared": 27,
+        "distance_if_code0_female": 0.1066,
+        "distance_if_code0_male": 0.2658,
+        "correlation_code0_share_with_mgb_female_share": 0.896
+      },
+      "decision": {
+        "female_code_by_diagnoses": "0",
+        "female_code_by_pattern": "0",
+        "evidence_agrees": true,
+        "proposed_mapping": {
+          "0": "f",
+          "1": "m"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,110 @@
+{
+  "cultures": 751075,
+  "binary_prevalence": {
+    "gender_male": 0.3623,
+    "age_65plus": 0.3938,
+    "adi_high": 0.0818,
+    "adi_missing": 0.2168,
+    "comorbid_heart_failure": 0.1559,
+    "comorbid_liver_disease": 0.1882,
+    "comorbid_lymphoma": 0.0388,
+    "comorbid_metastatic_cancer": 0.0828,
+    "comorbid_obesity": 0.1923,
+    "comorbid_renal_failure": 0.2789,
+    "hosp_ward_IP": 0.6179,
+    "hosp_ward_OP": 0.3665,
+    "hosp_ward_ER": 0.3864,
+    "hosp_ward_UC": 0.0,
+    "T_fq_90d": 0.1071,
+    "T_ceph3_90d": 0.0194,
+    "T_carb_90d": 0.0058,
+    "T_glyco_90d": 0.0397,
+    "T_sulfa_90d": 0.0667,
+    "T_esp_90d": 0.0789,
+    "T_amino_90d": 0.0111,
+    "prior_ESBL": 0.0327,
+    "prior_MRSA": 0.0147,
+    "prior_CRE": 0.0027,
+    "prior_VRE": 0.0066,
+    "proc_cvc": 0.1851,
+    "proc_mechvent": 0.0746,
+    "proc_dialysis": 0.0242,
+    "proc_urethral": 0.0397,
+    "proc_surgical": 0.2094,
+    "any_proc_30d": 0.0894,
+    "nursing_home_90d": 0.0098,
+    "fq_and_ceph3": 0.0062,
+    "any_immunocomp": 0.1162,
+    "any_invasive_proc": 0.2329,
+    "prior_esbl_and_ceph3": 0.0014,
+    "hospital_multiabx": 0.0189,
+    "renal_urine": 0.0826,
+    "nursing_home_flag": 0.0098,
+    "specimen_urine": 0.4995,
+    "specimen_blood": 0.3879,
+    "specimen_respiratory": 0.1125
+  },
+  "numeric": {
+    "adi_score_clean": {
+      "mean": 6.5364,
+      "median": 2.0,
+      "nonzero_share": 0.7832
+    },
+    "age_encoded": {
+      "mean": 3.7176,
+      "median": 4.0,
+      "nonzero_share": 0.9367
+    },
+    "days_since_prior_org": {
+      "mean": 134.8833,
+      "median": 0.0,
+      "nonzero_share": 0.2724
+    },
+    "elixhauser_count": {
+      "mean": 33.6524,
+      "median": 26.0,
+      "nonzero_share": 0.9669
+    },
+    "multi_prior_resistant": {
+      "mean": 0.0567,
+      "median": 0.0,
+      "nonzero_share": 0.0487
+    },
+    "num_prior_orgs": {
+      "mean": 0.5168,
+      "median": 0.0,
+      "nonzero_share": 0.2724
+    }
+  },
+  "drug_capture_ever": {
+    "AMC": 0.1514,
+    "AMK": 0.0034,
+    "CAZ": 0.0091,
+    "CIP": 0.1745,
+    "CPT": 0.0,
+    "CRO": 0.0685,
+    "CTX": 0.0,
+    "DLX": 0.0,
+    "DOR": 0.0,
+    "ETP": 0.018,
+    "FDC": 0.0,
+    "FEP": 0.019,
+    "GAT": 0.0118,
+    "GEN": 0.0311,
+    "IPM": 0.0,
+    "KAN": 0.0,
+    "LVX": 0.1822,
+    "MEM": 0.0085,
+    "MXF": 0.0517,
+    "NOR": 0.0,
+    "OFX": 0.0161,
+    "PLZ": 0.0,
+    "SAM": 0.0,
+    "STR": 0.0,
+    "SXT": 0.1882,
+    "TMP": 0.0027,
+    "TOB": 0.0069,
+    "TZP": 0.1508,
+    "VAN": 0.1083
+  }
+}
