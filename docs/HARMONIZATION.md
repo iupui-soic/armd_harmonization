@@ -210,11 +210,29 @@ All four sites share the same nine bands: 18-24, 25-34, 35-44, 45-54, 55-64, 65-
 
 - MGB discloses Female, Male, Unknown and X. X covers 11 cultures and maps to unknown because the
   canonical enum has no other slot.
-- Stanford, UTSW and ECUH release a 0 or 1 code and deliberately do not say which is which. The code
-  is kept in `sex_code_masked` and `sex` stays NULL.
-- The mapping could be guessed from published marginals, but that would undo a de-identification
-  choice. **Decision needed:** confirm the mapping with the data creators, or treat sex as
-  site-specific.
+- Stanford, UTSW and ECUH release a 0 or 1 code without saying which is which. The mapping is
+  inferred and recorded in `src/armd_common/mappings/sex_codes.yaml`: code 0 is female and code 1 is
+  male at all three sites. `sex` carries the mapped value, `sex_code_masked` keeps the raw code, and
+  `sex_inferred` is TRUE for every value that came from the inferred mapping. The data creators have
+  not confirmed it.
+- `sex_inference.py` tests each masked code against MGB's disclosed sex with two independent lines of
+  evidence, and a mapping is recorded only when both agree (run
+  `results/sex_inference/20260911T194822Z`, commit 5061385).
+
+| site | male-only diagnosis, code 0 / code 1 | female-only diagnosis, code 0 / code 1 | pattern correlation with MGB |
+|---|---|---|---|
+| Stanford | 0.02% / 24.2% | 32.2% / 0.2% | 0.89 |
+| UTSW | fewer than 11 patients / 13.5% | 15.2% / 0.08% | 0.92 |
+| ECUH | fewer than 11 patients / 14.9% | 20.9% / 0.11% | 0.90 |
+| MGB reference, female / male | fewer than 11 patients / 15.3% | 16.3% / fewer than 11 patients | |
+
+- Male-only diagnoses are prostate hyperplasia, prostate, testis and penis cancers and erectile
+  dysfunction. Female-only diagnoses are female reproductive cancers, endometriosis, ovarian cysts,
+  menstrual disorders and pregnancy. All four releases use the same CCSR names for these.
+- The pattern line compares the share of code 0 with MGB's female share across 26 or 27 specimen
+  and age strata, under both possible mappings.
+- Stanford's code 0 covers 189,864 patients, exactly the female count published in the ARMD-Stanford
+  data descriptor. No patient has conflicting codes at any site.
 
 ## Area Deprivation Index
 
@@ -327,26 +345,40 @@ lab interpretation for 12.3% of Enterobacterales cultures. CLSI 2022 interprets 
 but leaves piperacillin/tazobactam uninterpreted for 18.5%. This is the cascade-reporting layer that
 Analysis 4 quantifies.
 
+## Splits
+
+The splits were frozen on 2026-09-11 with seed 20260911 (`python -m armd_common.splits`).
+
+- **Strata.** Patients fall into three strata: no evaluable E1 culture, evaluable but never
+  resistant, and ever resistant.
+- **Folds.** One of five outer folds is the 20% test partition, and derivation patients get five
+  inner folds.
+- **Balance.** The ever-resistant share is identical in the test and derivation partitions at every
+  site.
+
+| site | patients | strata 0 / 1 / 2 | test patients | ever resistant |
+|---|---|---|---|---|
+| Stanford | 283,715 | 235,358 / 42,287 / 6,070 | 56,743 | 2.14% |
+| MGB | 226,659 | 153,730 / 63,366 / 9,563 | 45,332 | 4.22% |
+| UTSW | 237,258 | 206,305 / 27,937 / 3,016 | 47,452 | 1.27% |
+| ECUH | 261,217 | 210,603 / 45,111 / 5,503 | 52,244 | 2.11% |
+
+- Manifests live in `benchmarks/manifests/`, and `benchmarks/manifests/SHA256SUMS` pins all four.
+- The Stanford, UTSW and ECUH manifests are committed. MGB `anon_id` values are small integers, so
+  its patient hashes can be reversed. Its manifest stays local until PhysioNet's terms allow release.
+- Regenerating a split gives identical bytes, and `splits.py` refuses to overwrite a frozen manifest.
+
 ## Decisions waiting on the project lead
 
-1. **Sex at masked sites.** Leave it site-specific, or seek the 0 and 1 mapping from the data
-   creators.
-2. **Default MGB interpretation.** The lab interpretation (current default) or CLSI 2022 as the plan
-   assumed.
-3. **K. aerogenes grouping.** Klebsiella by taxonomy (current) or Enterobacter by AmpC behaviour.
-4. **E2 denominator at MGB.** Confirm with the authors whether growth-without-AST cultures were
-   excluded.
-5. **The MGB ID defect.** Report it upstream, and accept date linkage in the meantime.
-6. **Split stratification.** Patient strata are no evaluable E1 culture, evaluable but never
-   resistant, and ever resistant. Confirm before manifests are generated and frozen. A dry run with
-   seed 20260911 wrote nothing and balances the ever-resistant share exactly:
-
-   | site | patients | strata 0 / 1 / 2 | test patients | ever resistant, test and derivation |
-   |---|---|---|---|---|
-   | Stanford | 283,715 | 235,358 / 42,287 / 6,070 | 56,743 | 2.14% |
-   | MGB | 226,659 | 153,730 / 63,366 / 9,563 | 45,332 | 4.22% |
-   | UTSW | 237,258 | 206,305 / 27,937 / 3,016 | 47,452 | 1.27% |
-   | ECUH | 261,217 | 210,603 / 45,111 / 5,503 | 52,244 | 2.11% |
-7. **The 48-feature set.** `features.py` needs the exact feature list from the AMIA paper.
-8. **ESBL confirmatory label at ECUH.** ECUH reports clavulanate combination tests, which could
+1. **Default MGB interpretation.** The lab interpretation is the current default. The AMIA model and
+   the plan used CLSI 2022, which raises MGB's E1 prevalence from 13.3% to 18.2%.
+2. **K. aerogenes grouping.** Klebsiella by taxonomy (current) or Enterobacter by AmpC behaviour.
+3. **ESBL confirmatory label at ECUH.** ECUH reports clavulanate combination tests, which could
    support a confirmatory-test label alongside MGB's enzyme label.
+
+## Questions for the ARMD-MGB maintainers
+
+1. Encounter and culture IDs in `comorbidity`, `nursing_home_visits` and `prior_procedures` come
+   from a different mapping than the cohort. Is this intended?
+2. Were cultures that grew an organism without AST excluded? The answer changes MGB's E2
+   denominator.
