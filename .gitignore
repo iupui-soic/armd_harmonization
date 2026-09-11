@@ -1,0 +1,21 @@
+# Environment and tooling
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+*.ipynb
+.env
+
+# Data never enters the repo. Released split manifests are the only exception.
+*.csv
+*.csv.gz
+*.parquet
+data/
+!benchmarks/manifests/*.csv.gz
+
+# Results stay local except per-run summary JSON and the changelog
+results/**
+!results/**/
+!results/**/summary.json
+!results/CHANGELOG.md
