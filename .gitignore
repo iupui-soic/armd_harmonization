@@ -14,6 +14,9 @@ __pycache__/
 *.parquet
 data/
 !benchmarks/manifests/*.csv.gz
+# MGB IDs are small integers, so its patient hashes are reversible. Keep that manifest local until
+# PhysioNet terms allow release. benchmarks/manifests/SHA256SUMS still pins it.
+benchmarks/manifests/mgb.csv.gz
 
 # Results stay local except per-run summary JSON and the changelog
 results/**

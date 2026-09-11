@@ -6,7 +6,8 @@ With one row per patient, StratifiedGroupKFold reduces to StratifiedKFold, which
 One of five outer folds becomes the 20% test partition. The remaining patients get five inner folds.
 Splits are generated once per site with a fixed seed and written as a gzip CSV manifest of
 (site, patient_id_hash, partition, fold). patient_id_hash is the SHA-256 of the site-prefixed
-patient_id, so anyone holding the same release can rebuild the mapping.
+patient_id, so anyone holding the same release can rebuild the mapping. The gzip stream carries no
+timestamp, so regenerating a split gives identical bytes.
 
 The test partition is sealed (CLAUDE.md rule 3). read_manifest drops test rows unless the caller
 is analysis/03_evaluate_ladder.py.
@@ -20,6 +21,8 @@ import argparse
 import csv
 import gzip
 import hashlib
+import io
+import json
 import sys
 from pathlib import Path
 
@@ -34,7 +37,7 @@ MANIFEST_DIR = REPO_ROOT / "benchmarks" / "manifests"
 SEALED_READER = "03_evaluate_ladder.py"
 COLUMNS = ("site", "patient_id_hash", "partition", "fold")
 
-# Patient strata: 0 has no evaluable E1 culture, 1 has one but never resistant, 2 was ever resistant.
+STRATA = {0: "no evaluable E1 culture", 1: "evaluable E1 culture, never resistant", 2: "ever resistant"}
 STRATA_SQL = """
     SELECT e.patient_id,
            CASE WHEN BOOL_OR(l.label = 1) THEN 2 WHEN BOOL_OR(l.evaluable) THEN 1 ELSE 0 END AS stratum
@@ -82,10 +85,11 @@ def write_manifest(site: str, assignments, path: Path | None = None, force: bool
         raise FileExistsError(f"{path} is frozen; pass force=True only if the split must be regenerated")
     path.parent.mkdir(parents=True, exist_ok=True)
     rows = sorted((site, patient_hash(pid), partition, "" if fold is None else fold) for pid, partition, fold in assignments)
-    with gzip.open(path, "wt", newline="") as fh:
-        writer = csv.writer(fh)
-        writer.writerow(COLUMNS)
-        writer.writerows(rows)
+    with open(path, "wb") as raw, gzip.GzipFile(filename="", mode="wb", fileobj=raw, mtime=0) as gz:
+        with io.TextIOWrapper(gz, encoding="utf-8", newline="") as fh:
+            writer = csv.writer(fh)
+            writer.writerow(COLUMNS)
+            writer.writerows(rows)
     return path
 
 
@@ -117,6 +121,7 @@ def main(argv: list[str] | None = None) -> int:
     from . import labels
     from .config import get_site
     from .db import connect
+    from .provenance import RunManifest, sha256_file
     from .sites import get_loader
 
     parser = argparse.ArgumentParser(description="Generate and freeze a site's split manifest.")
@@ -125,12 +130,32 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--force", action="store_true", help="overwrite a frozen manifest")
     args = parser.parse_args(argv)
 
-    loader = get_loader(args.site, connect(get_site(args.site).tmp_dir))
+    if manifest_path(args.site).exists() and not args.force:
+        parser.error(f"{manifest_path(args.site)} is frozen; pass --force only if the split must be regenerated")
+    cfg = get_site(args.site)
+    run = RunManifest(f"splits_{args.site}", seed=args.seed, args=vars(args))
+    conversion = json.loads((cfg.parquet_dir / "_conversion.json").read_text())
+    for table, record in sorted(conversion["tables"].items()):
+        run.add_input(f"{args.site}.{table}", cfg.csv_path(table), record["sha256"])
+
+    loader = get_loader(args.site, connect(cfg.tmp_dir))
     built = loader.build()
     e1 = labels.esbl_phenotype_composite(loader.con, built["culture_episodes"], built["isolate_ast"])
     strata = loader.con.execute(STRATA_SQL.format(episodes=built["culture_episodes"], labels=e1.frame.alias)).fetchall()
-    path = write_manifest(args.site, assign([p for p, _ in strata], [s for _, s in strata], seed=args.seed), force=args.force)
-    print(f"wrote {path} for {len(strata)} patients")
+    assignments = assign([p for p, _ in strata], [s for _, s in strata], seed=args.seed)
+    path = write_manifest(args.site, assignments, force=args.force)
+
+    by_patient = dict(strata)
+    for stratum in STRATA:
+        for partition in ("derivation", "test"):
+            run.count(f"stratum_{stratum}.{partition}", sum(1 for pid, part, _ in assignments if part == partition and by_patient[pid] == stratum))
+    for k in range(1, INNER_FOLDS + 1):
+        run.count(f"derivation.fold_{k}", sum(1 for _, part, fold in assignments if fold == k))
+    run.set("strata", STRATA)
+    run.set("label_provenance", e1.provenance)
+    run.set("manifest", {"path": str(path.relative_to(REPO_ROOT)), "sha256": sha256_file(path), "patients": len(assignments)})
+    print(f"wrote {path} for {len(assignments)} patients; run manifest {run.write()}")
+    loader.con.close()
     return 0
 
 

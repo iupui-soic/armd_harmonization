@@ -60,6 +60,15 @@ def test_manifest_is_frozen_and_test_is_sealed(tmp_path, monkeypatch):
     assert len(splits.read_manifest("stanford", include_test=True, path=path)) == 100
 
 
+def test_manifest_bytes_are_deterministic(tmp_path):
+    ids, strata = fake_patients(100)
+    path = tmp_path / "stanford.csv.gz"
+    splits.write_manifest("stanford", splits.assign(ids, strata), path=path)
+    first = path.read_bytes()
+    splits.write_manifest("stanford", splits.assign(ids[::-1], strata[::-1]), path=path, force=True)
+    assert path.read_bytes() == first
+
+
 def test_hash_matches_duckdb(tmp_path):
     ids, strata = fake_patients(50)
     path = tmp_path / "stanford.csv.gz"
