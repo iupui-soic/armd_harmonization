@@ -28,10 +28,12 @@ Every raw file is checked against the sizes and SHA-256 digests in
 ## Pipeline
 
 ```bash
-python -m armd_common.convert --site stanford   # stage the CSVs as Parquet, once per site
-python analysis/00_gate.py                      # Phase 0 feasibility gate across staged sites
-python -m armd_common.qc --site stanford        # per-site QC report
-python -m armd_common.splits --site stanford    # generate and freeze the split manifest
+python -m armd_common.convert --site stanford    # stage the CSVs as Parquet, once per site
+python analysis/00_gate.py                       # Phase 0 feasibility gate across staged sites
+python -m armd_common.qc --site stanford         # per-site QC report
+python -m armd_common.sex_inference              # evidence behind mappings/sex_codes.yaml
+python -m armd_common.splits --site stanford     # generate and freeze the split manifest
+python -m armd_common.features --site stanford   # harmonized 48 features, written under the site data folder
 .venv/bin/pytest
 ```
 

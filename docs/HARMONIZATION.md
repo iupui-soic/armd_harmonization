@@ -279,6 +279,129 @@ The state rank is not usable at UTSW or ECUH.
 - Stanford's `prior_infecting_organism_days_to_culutre` is misspelled. The loaders resolve column
   names from candidate lists.
 
+## Harmonized features
+
+`features.py` builds 48 features per culture: the 45 features of the AMIA 2026 ARMD-MGB model
+(`~/ebsl-amr`), plus urine, blood and respiratory specimen indicators. Every site gets the same names
+and definitions. The tables are written to `features/harmonized48_<interpretation>/` inside each
+site folder in the data root. The runs are `results/features_<site>/20260911T2007*` and
+`20260911T2008*`, on commit d31b2f2.
+
+### Deliberate departures from the AMIA notebook
+
+- **Links.** The notebook joined comorbidity, prior procedures and nursing home visits on
+  `order_proc_id_coded` alone. Those MGB files use a different culture ID mapping, so 14 notebook
+  features came from unrelated cultures: six comorbidity flags, the category count, five procedure
+  flags, the 30-day procedure flag and nursing home. So did the 4 interactions built on them. Here
+  every table links through the loader.
+- **Heart failure.** The notebook matched "heart failure|congestive heart". ARMD's "Congestive heart
+  failure" category is a catch-all, as shown below. Heart failure now uses the CCSR "Heart failure"
+  category, and the catch-all is left out of every comorbidity feature, including the category count.
+- **Timing.** Prior antibiotics, resistance, organisms and procedures count only events at least one
+  day before the order. The notebook kept MGB antibiotic last doses on or after the culture day,
+  which is 9.9% of distinct MGB exposure rows. UTSW and ECUH put the index culture's own resistance
+  results at day 0. Nursing home visits keep day 0, which marks residence.
+- **Antibiotic classes.** Each class is a fixed set of drug codes taken from MGB's class membership,
+  then applied to every site's medication names. Brand names, salts and formulations are normalized,
+  and topical products are dropped.
+
+| feature | drug codes |
+|---|---|
+| T_fq_90d | CIP, DLX, GAT, LVX, MXF, NOR, OFX |
+| T_ceph3_90d | CAZ, CPT, CRO, CTX, FDC, FEP |
+| T_carb_90d | DOR, ETP, IPM, MEM |
+| T_glyco_90d | VAN |
+| T_sulfa_90d | SXT, TMP |
+| T_esp_90d | AMC, SAM, TZP |
+| T_amino_90d | AMK, GEN, KAN, PLZ, STR, TOB |
+
+- **Prior resistant organisms.** Every site uses one phenotype definition based on prior
+  susceptibility results:
+  - **ESBL:** an Enterobacterales isolate resistant to ceftriaxone, ceftazidime or cefepime.
+  - **CRE:** an Enterobacterales isolate resistant to a carbapenem.
+  - **MRSA:** *S. aureus* resistant to an anti-staphylococcal beta-lactam, or an organism name that
+    says MRSA.
+  - **VRE:** *E. faecalis* or *E. faecium* resistant to vancomycin.
+- **Checks against MGB's own flags.**
+  - MRSA agrees almost exactly: 49,682 cultures are flagged by both, with only 299 and 194
+    disagreements.
+  - The ESBL definition recovers 71% of MGB's flag, so MGB's own flag is broader.
+  - An all-enterococci VRE rule flagged 16,631 cultures that MGB did not. It was then restricted to
+    *E. faecalis* and *E. faecium*. Agreement after the restriction was not re-measured.
+- **Prior organisms.** Genus counts use the 14 genera recorded at all four sites, because the Dryad
+  tables record genus only.
+- **Ward.** Flags are combined across a culture's encounters. The notebook kept the first row.
+
+### The heart failure catch-all
+
+At MGB, the only release with ICD-10 codes, "Congestive heart failure" spans 390 ICD-10 prefixes. The
+next broadest category spans 59. Its most common codes are hyperlipidemia (E78.5), anxiety (F41.9),
+depression (F32.9), hyponatremia, anemia and type 2 diabetes. The CCSR "Heart failure" category holds
+I50, I11.0 and I13.0. The same pattern shows at every site:
+
+| site | "Congestive heart failure", ages 18-24 / 45-54 / 75-84 | "Heart failure", same ages | heart failure feature, notebook rule / fixed |
+|---|---|---|---|
+| Stanford | 61.8% / 82.8% / 91.2% | 3.4% / 11.0% / 25.6% | 81.5% / 15.6% |
+| MGB | 27.9% / 38.5% / 48.1% | 0.9% / 4.7% / 15.1% | 41.6% / 9.0% |
+| UTSW | 40.5% / 61.7% / 73.3% | 2.6% / 8.7% / 15.1% | 61.4% / 9.6% |
+| ECUH | 40.5% / 72.1% / 85.3% | 0.3% / 10.4% / 23.2% | 72.6% / 14.1% |
+
+The other categories the features use hold the right codes: liver disease, lymphoma, metastatic
+cancer, obesity and renal failure.
+
+### What each feature measures depends on the release
+
+| antibiotic class, 90 days | Stanford | MGB | UTSW | ECUH |
+|---|---|---|---|---|
+| T_ceph3_90d | 1.9% | 29.4% | 1.3% | 10.9% |
+| T_esp_90d | 7.9% | 13.6% | 5.1% | 0.01% |
+| T_sulfa_90d | 6.7% | 10.2% | 0.04% | 0.01% |
+| T_fq_90d | 10.7% | 15.7% | 15.1% | 0.9% |
+| T_glyco_90d | 4.0% | 22.1% | 9.7% | 4.2% |
+| T_carb_90d | 0.6% | 5.7% | 0.3% | 0.3% |
+| T_amino_90d | 1.1% | 1.2% | 1.8% | 0.2% |
+
+| drug, any prior exposure | Stanford | MGB | UTSW | ECUH |
+|---|---|---|---|---|
+| ceftriaxone | 6.9% | 28.8% | 3.9% | 37.8% |
+| cefepime | 1.9% | 27.5% | 2.9% | 7.8% |
+| piperacillin/tazobactam | 15.1% | 17.2% | 17.6% | not recorded |
+| vancomycin | 10.8% | 35.2% | 25.6% | 17.2% |
+| meropenem | 0.9% | 8.1% | 0.9% | 0.01% |
+| TMP-SMX | 18.8% | 23.4% | not recorded | 0.3% |
+| amoxicillin/clavulanate | 15.1% | 16.7% | not recorded | 0.2% |
+| ciprofloxacin | 17.5% | 23.6% | 28.4% | 5.5% |
+
+| other features | Stanford | MGB | UTSW | ECUH |
+|---|---|---|---|---|
+| proc_cvc | 18.5% | 1.6% | 5.3% | 0.2% |
+| proc_surgical | 20.9% | 9.5% | 1.9% | 0.2% |
+| elixhauser_count, median | 26 | 2 | 7 | 11 |
+| prior_ESBL | 3.3% | 7.3% | 3.3% | 3.9% |
+| prior_MRSA | 1.5% | 5.1% | 2.7% | 2.5% |
+| nursing_home_90d | 1.0% | 1.3% | 0.4% | 4.3% |
+
+- **Each release records a different drug list.**
+  - Stanford and UTSW barely record IV cephalosporins and carbapenems.
+  - UTSW has no TMP-SMX or amoxicillin/clavulanate.
+  - ECUH has no piperacillin/tazobactam and very few oral drugs.
+  - MGB records inpatient and outpatient drugs alike.
+  - The broader Dryad `prior_med` table holds the same antibiotic rows, so no better source exists.
+- **Procedure and comorbidity capture differ by an order of magnitude,** in line with how much history
+  each release carries.
+- **Definitions match across sites for:** age, sex (inferred at three sites), specimen, the inpatient
+  and outpatient flags, the four prior resistance flags, prior organism counts and the individual
+  comorbidity flags. Their capture still varies with each release's history depth.
+- **Release-limited features:**
+  - the seven antibiotic class features and the interactions built on them;
+  - the procedure features and `elixhauser_count`;
+  - `hosp_ward_ER`, because the Dryad sites flag ED only together with inpatient;
+  - `hosp_ward_UC`, which only MGB records;
+  - the ADI score scale, which differs at MGB, and `adi_high`, because state rank is mostly missing at
+    UTSW and ECUH.
+- **MGB interpretation.** Under CLSI 2022, MGB prior MRSA falls from 5.1% to 3.0%, because many
+  oxacillin results have no CLSI 2022 interpretation.
+
 ## Implied susceptibility
 
 `implied.py` applies Stanford's rules to any site's `isolate_ast`, and it runs only when a caller asks
@@ -375,6 +498,9 @@ The splits were frozen on 2026-09-11 with seed 20260911 (`python -m armd_common.
 2. **K. aerogenes grouping.** Klebsiella by taxonomy (current) or Enterobacter by AmpC behaviour.
 3. **ESBL confirmatory label at ECUH.** ECUH reports clavulanate combination tests, which could
    support a confirmatory-test label alongside MGB's enzyme label.
+4. **Release-limited features in cross-site tasks.** Either keep all 48 features and report per-site
+   capture, or define a portable subset for `esbl_crossite_e1` that drops the antibiotic class,
+   procedure and category-count features.
 
 ## Questions for the ARMD-MGB maintainers
 
