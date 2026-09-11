@@ -9,7 +9,7 @@ from armd_common.schema import validate
 from armd_common.sites import MGBLoader, StanfordLoader, UTSWLoader
 
 
-def write_table(root, site_dir, table, ddl, rows):
+def write_table(root, site_dir, table, ddl, rows, part=0):
     con = duckdb.connect()
     con.execute("SET TimeZone = 'UTC'")
     con.execute(f"CREATE TABLE t ({ddl})")
@@ -17,8 +17,10 @@ def write_table(root, site_dir, table, ddl, rows):
         placeholders = ", ".join("?" for _ in rows[0])
         con.executemany(f"INSERT INTO t VALUES ({placeholders})", rows)
     out = root / site_dir / "parquet" / table
-    out.mkdir(parents=True)
-    con.execute(f"COPY t TO '{out / 'data_0.parquet'}' (FORMAT parquet)")
+    # A later part adds a file to a table that already exists.
+    out.mkdir(parents=True, exist_ok=part > 0)
+    path = out / f"data_{part}.parquet"
+    con.execute(f"COPY t TO '{path}' (FORMAT parquet)")
     con.close()
 
 

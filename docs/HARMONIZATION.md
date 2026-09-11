@@ -402,6 +402,29 @@ cancer, obesity and renal failure.
 - **MGB interpretation.** Under CLSI 2022, MGB prior MRSA falls from 5.1% to 3.0%, because many
   oxacillin results have no CLSI 2022 interpretation.
 
+## Recent antibiotic exposure
+
+SAP sensitivity analysis S2 excludes cultures with recent antibacterial exposure. Every release
+records exposure times in whole days, and day 0 holds different things at each site. Shares are of
+ordered cultures in each release's cohort table, measured on 2026-09-11 without labels:
+
+| cultures with an antibacterial record | Stanford | MGB | UTSW | ECUH |
+|---|---|---|---|---|
+| last dose after the order | none recorded | 23.6% | none recorded | none recorded |
+| day 0 | 41.2% | 36.8% | none | none |
+| days 1 to 3 | 7.1% | 20.8% | 5.0% | 2.2% |
+| day 0 to 3, or last dose up to day 3 at MGB | 45.1% | 61.0% | 5.0% | 2.2% |
+
+- Stanford's `prior_med` holds the day 0 records. Its `antibiotic_subtype_exposure` table starts at
+  day 1 and otherwise matches. At UTSW and ECUH the two tables are identical and start at day 1.
+- MGB's `prior_abx` records the last dose only, so a course cannot be dated by its first dose.
+- A day 0 record cannot be placed before the order, and it includes treatment started after the
+  culture was drawn. Counting it would remove 45% and 61% of cultures at Stanford and MGB, and almost
+  nothing at UTSW and ECUH.
+- S2 therefore counts days 1 to 3 at every site, from the table the antibiotic features use. It misses
+  doses on the order day before the culture, and MGB courses that began earlier and continued past
+  the order. SAP item R6 asks the project lead to confirm this.
+
 ## Implied susceptibility
 
 `implied.py` applies Stanford's rules to any site's `isolate_ast`, and it runs only when a caller asks
@@ -508,6 +531,8 @@ Still open:
 1. **K. aerogenes grouping.** Klebsiella by taxonomy (current) or Enterobacter by AmpC behaviour.
 2. **ESBL confirmatory label at ECUH.** ECUH reports clavulanate combination tests, which could
    support a confirmatory-test label alongside MGB's enzyme label.
+3. **Recent antibiotic window for S2.** Days 1 to 3 at every site, as described under Recent
+   antibiotic exposure (SAP item R6).
 
 ## Questions for the ARMD-MGB maintainers
 

@@ -134,7 +134,7 @@ def days_expression(loader, table: str) -> str:
     return f"TRY_CAST(f.{column} AS DOUBLE)"
 
 
-def _antibiotic_source(loader) -> tuple[str, str, str, str] | None:
+def antibiotic_source(loader) -> tuple[str, str, str, str] | None:
     """Table, drug column, days expression and lookup table for prior antibiotic exposure."""
     if loader.site == "mgb":
         table, name_column, mapper = "prior_abx", "drug_code", vocab.prior_abx_code
@@ -148,7 +148,7 @@ def _antibiotic_source(loader) -> tuple[str, str, str, str] | None:
 
 
 def _antibiotic_part(loader) -> str | None:
-    source = _antibiotic_source(loader)
+    source = antibiotic_source(loader)
     if source is None:
         return None
     table, name_column, days, lookup = source
@@ -163,7 +163,7 @@ def drug_capture(loader) -> dict[str, int]:
 
     Releases record different drug lists, so this shows which class features a site can support.
     """
-    source = _antibiotic_source(loader)
+    source = antibiotic_source(loader)
     codes = sorted({code for members in ANTIBIOTIC_CLASSES.values() for code in members})
     if source is None:
         return {code: 0 for code in codes}

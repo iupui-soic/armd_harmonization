@@ -14,11 +14,12 @@ from test_sites import IDS, write_table
 def stanford(tmp_path, monkeypatch):
     monkeypatch.setenv("ARMD_DATA_ROOT", str(tmp_path))
     build_stanford_feature_release(tmp_path)
-    write_table(tmp_path, "armd-stanford", "prior_med", f"{IDS}, medication_name VARCHAR, medication_time_to_culturetime DOUBLE, medication_category VARCHAR", [
-        ("p1", "e1", "101", "Ceftriaxone", 0.0, "CEF"),
-        ("p3", "e6", "106", "Fluconazole", 1.0, "FLU"),
-        ("p3", "e5", "105", "Cefepime In", 10.0, "CEF"),
-    ])
+    # Recent antibiotic records, added as a second file of the exposure table.
+    write_table(tmp_path, "armd-stanford", "antibiotic_subtype_exposure", f"{IDS}, medication_name VARCHAR, medication_time_to_cultureTime DOUBLE", [
+        ("p1", "e1", "101", "Ceftriaxone", 0.0),
+        ("p1", "e2", "102", "Ceftriaxone", 2.0),
+        ("p3", "e6", "106", "Fluconazole", 1.0),
+    ], part=1)
     # A synthetic rule that exercises implied susceptibility plumbing.
     write_table(tmp_path, "armd-stanford", "implied_susceptibility_rules", "Organism VARCHAR, Antibiotic VARCHAR, Rule VARCHAR", [
         ("KLEBSIELLA", "Cefepime", "Resistant"),
@@ -78,9 +79,10 @@ def test_nonsusceptible_counts_intermediate(stanford):
 def test_recent_antibiotic_exclusion(stanford):
     loader, built, manifest = stanford
     result = cohorts.build_cohort(loader, built, CohortSpec("E2", exclude_recent_antibiotics=True), manifest=manifest)
-    # Ceftriaxone on the order day removes culture 101. Fluconazole is an antifungal and does not count.
-    assert set(rows(loader, result)) == {"stanford:p1:102", "stanford:p3:106"}
-    assert steps(result)[-1] == ("no antibiotics in the 3 days before the order", 2)
+    # Ceftriaxone two days before the order removes culture 102. Culture 101 stays, because a day 0
+    # record cannot be placed before the order. Fluconazole is an antifungal and does not count.
+    assert set(rows(loader, result)) == {"stanford:p1:101", "stanford:p3:106"}
+    assert steps(result)[-1] == ("no antibacterial record 1 to 3 days before the order", 2)
 
 
 def test_implied_susceptibility_strict(stanford):

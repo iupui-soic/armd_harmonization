@@ -20,9 +20,8 @@ import uuid
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from . import features, implied, labels, splits, vocab
+from . import features, implied, labels, splits
 from .provenance import sha256_file
-from .sites.base import register_value_lookup
 
 RECENT_ANTIBIOTIC_DAYS = 3
 # Antifungals do not suppress bacterial growth, so they do not count as recent antibiotics.
@@ -88,25 +87,21 @@ class CohortResult:
 
 
 def recent_antibiotic_cultures(loader) -> str:
-    """TEMP table of cultures with an antibacterial record within 3 days of the order.
+    """TEMP table of cultures with an antibacterial record 1 to 3 days before the order.
 
-    MGB records the last dose, so a last dose on or after the order day also counts. The Stanford
-    layout records the start day in prior_med, which holds nothing after the order.
+    Exposure times are whole days, so a day 0 record cannot be placed before the order. Stanford's
+    prior_med and MGB's last doses on or after the order day include treatment started after the
+    culture was drawn, and UTSW and ECUH hold no day 0 records. Every site therefore counts days 1 to 3
+    only, from the table the antibiotic features use.
     """
     con, site = loader.con, loader.site
     name = f"{site}_recent_antibiotic_cultures"
-    if site == "mgb":
-        table, name_column, mapper = "prior_abx", "drug_code", vocab.prior_abx_code
-    else:
-        table, name_column, mapper = "prior_med", "medication_name", vocab.medication_code
-    if table not in loader.staged_tables():
+    source = features.antibiotic_source(loader)
+    if source is None:
         con.execute(f"CREATE OR REPLACE TEMP TABLE {name} (culture_id VARCHAR)")
         return name
-    if site == "mgb":
-        where = f"WHERE TRY_CAST(f.last_dose_to_culture AS DOUBLE) <= {RECENT_ANTIBIOTIC_DAYS}"
-    else:
-        where = f"WHERE {features.days_expression(loader, table)} BETWEEN 0 AND {RECENT_ANTIBIOTIC_DAYS}"
-    lookup = register_value_lookup(con, f"{site}_lookup_recent_antibiotic", loader.distinct(table, name_column), mapper)
+    table, name_column, days, lookup = source
+    where = f"WHERE {days} BETWEEN {features.PRIOR_MIN_DAYS} AND {RECENT_ANTIBIOTIC_DAYS}"
     src = features.linked_rows(loader, table, {"drug": f"f.{name_column}"}, where=where, distinct=True)
     antifungals = ", ".join(f"'{c}'" for c in sorted(ANTIFUNGAL_CODES))
     con.execute(
@@ -168,7 +163,7 @@ def build_cohort(
     record(f"in partition {', '.join(partitions)}", " AND ".join(conditions), with_split=True)
     if recent:
         conditions.append(f"e.culture_id NOT IN (SELECT culture_id FROM {recent})")
-        record(f"no antibiotics in the {RECENT_ANTIBIOTIC_DAYS} days before the order", " AND ".join(conditions), with_split=True)
+        record(f"no antibacterial record {features.PRIOR_MIN_DAYS} to {RECENT_ANTIBIOTIC_DAYS} days before the order", " AND ".join(conditions), with_split=True)
 
     cuts = con.execute(
         f"SELECT quantile_cont(e.adi_score, [0.2, 0.4, 0.6, 0.8]) FROM {episodes} e "

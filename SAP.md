@@ -72,7 +72,8 @@ when a model is trained under E1 and used under E2, and tests whether recalibrat
 
 - **Cohort builder.** Cohorts come from `cohorts.build_cohort`. The flow per site runs from ordered
   cultures, to cultures evaluable under the estimand, to the partition, and it feeds a TRIPOD+AI
-  diagram.
+  diagram. Labels are counted only from the partition step on, so no step before evaluation counts
+  outcomes in the test partition.
 - **Descriptive timing.** Descriptive statistics before freezing (`analysis/01_build_cohorts.py`) use
   the derivation partition only. The full-cohort Table 1 is produced after freezing, together with
   the test evaluation.
@@ -210,14 +211,22 @@ suppressed.
 | id | variation |
 |---|---|
 | S1 | Intermediate counts as resistant (non-susceptibility) |
-| S2 | Exclude cultures with antibacterial exposure within 3 days before the order, because prior antibiotics can suppress growth in negative cultures |
+| S2 | Exclude cultures with an antibacterial record 1 to 3 days before the order, because prior antibiotics can suppress growth in negative cultures |
 | S3 | CLSI 2022 interpretation at MGB, for labels and prior resistance features |
 | S4 | IDSA definition for E1, and the MGB enzyme label for E1 on the MGB subset that has ESBL tests |
 | S5 | Strict implied susceptibility applied before labelling |
 
-S2 is limited by what the releases record. The Stanford-layout releases record medication start
-days and have no record after the order. MGB records last doses, so a last dose on or after the order
-day also triggers exclusion.
+S2 counts whole days, because every release records exposure times in days (item R6).
+- **Day 0 does not count.** A day 0 record cannot be placed before the order. Stanford has day 0
+  records for 41% of ordered cultures. At MGB, 37% have a last dose on the order day and 24% a last
+  dose after it, and the two groups overlap. These include treatment started after the culture was
+  drawn. UTSW and ECUH hold no day 0 records.
+- **Effect.** Counting day 0 and later would exclude 45% of ordered cultures at Stanford and 61% at
+  MGB, against 5% at UTSW and 2% at ECUH. Records 1 to 3 days before the order exist for 7%, 21%, 5%
+  and 2%.
+- **Missed exposure.** Doses on the order day before the culture, and MGB courses that began earlier
+  and continued past the order.
+- **Source.** The table the antibiotic features use, so the drug list per release matches section 4.
 
 ## 12. What counts as a null result
 
@@ -277,6 +286,7 @@ cohorts and derivation-side summaries only.
 4. **R4.** The uncultured shares and relative-risk ranges for E3, with references.
 5. **R5.** Derivation-only descriptive statistics before freezing, and the full-cohort Table 1 at
    evaluation.
+6. **R6.** S2 counts antibacterial records 1 to 3 days before the order and ignores day 0 (section 11).
 
 ## 17. Deviations log
 
