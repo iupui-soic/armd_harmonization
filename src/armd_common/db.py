@@ -18,6 +18,8 @@ def connect(tmp_dir: Path | None = None, threads: int | None = None, memory_limi
     con.execute(f"SET threads = {int(threads)}")
     con.execute(f"SET memory_limit = '{memory_limit}'")
     con.execute("SET preserve_insertion_order = false")
+    # Casting TIMESTAMPTZ to TIMESTAMP must not depend on the server's local zone.
+    con.execute("SET TimeZone = 'UTC'")
     if tmp_dir is not None:
         Path(tmp_dir).mkdir(parents=True, exist_ok=True)
         con.execute(f"SET temp_directory = '{tmp_dir}'")
