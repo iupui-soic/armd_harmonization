@@ -46,14 +46,18 @@ def specimen_type(raw: str) -> str:
 
 class SiteLoader(ABC):
     site: str = ""
-    order_time_column: str = ""
+    # Candidate names for the culture order time. Releases spell it differently.
+    order_time_columns: tuple[str, ...] = ()
     order_time_resolution: str = "second"
     sex_masked: bool = True
     # Predicate on raw cohort rows that marks a positive culture. Written without a table alias.
     positive_row_sql: str = ""
-    # Staged feature tables and the column holding days between the event and the culture order.
-    feature_time_columns: dict[str, str | None] = {}
+    # Staged feature tables and candidate names for the column holding days between the event and
+    # the culture order. None means the table has no such column.
+    feature_time_columns: dict[str, tuple[str, ...] | None] = {}
     one_row_per_culture: tuple[str, ...] = ("demographics", "ward_info", "adi_scores")
+    # Tables whose encounter and culture IDs do not match the cohort, so they link by patient and order date.
+    date_linked_tables: tuple[str, ...] = ()
 
     def __init__(self, con: duckdb.DuckDBPyConnection | None = None):
         self.cfg = get_site(self.site)
@@ -92,6 +96,39 @@ class SiteLoader(ABC):
     def columns(self, table: str) -> list[str]:
         return [row[0] for row in self.con.execute(f"DESCRIBE {self.raw(table)}").fetchall()]
 
+    def resolve_column(self, table: str, candidates) -> str | None:
+        """Return the first candidate present in a staged table, matching names case-insensitively."""
+        if not candidates:
+            return None
+        actual = {c.lower(): c for c in self.columns(table)}
+        return next((actual[c.lower()] for c in candidates if c.lower() in actual), None)
+
+    def feature_link(self, table: str) -> tuple[str, str, str]:
+        """How a staged feature table (alias f) links to culture_keys (alias k).
+
+        Returns a select list over f that exposes anon_id and link, the join condition, and the
+        method name. Date linkage fans a row out to every culture the patient had that day.
+        """
+        if table in self.date_linked_tables:
+            order_time = self.resolve_column(table, self.order_time_columns)
+            if order_time is None:
+                raise ValueError(f"{self.site}.{table} is date-linked but has no order time column")
+            return (
+                f"f.anon_id, CAST(f.{order_time} AS DATE) AS link",
+                "f.anon_id = k.anon_id AND f.link = k.order_date",
+                "patient_and_order_date",
+            )
+        return ("f.anon_id, f.order_proc_id_coded AS link", "f.anon_id = k.anon_id AND f.link = k.order_proc_id_coded", "culture_id")
+
+    def feature_rows_sql(self, table: str) -> str:
+        """Rows of a staged feature table with the canonical culture_id attached."""
+        select, on, _ = self.feature_link(table)
+        return (
+            f"SELECT k.culture_id, f.* EXCLUDE (link) "
+            f"FROM (SELECT {select}, * EXCLUDE (anon_id) FROM {self.raw(table)} f) f "
+            f"JOIN {self.table('culture_keys')} k ON {on}"
+        )
+
     def distinct(self, table: str, column: str) -> list:
         return [row[0] for row in self.con.execute(f"SELECT DISTINCT {column} FROM {self.raw(table)}").fetchall()]
 
@@ -120,10 +157,12 @@ class SiteLoader(ABC):
         else:
             built["enzyme_tests"] = self._materialize("enzyme_tests", ENZYME_TESTS, enzyme_sql)
         built["culture_episodes"] = self._materialize("culture_episodes", CULTURE_EPISODES, self._culture_episodes_sql(org))
+        order_time = self.resolve_column("cohort", self.order_time_columns)
         built["culture_keys"] = self._materialize(
             "culture_keys",
             CULTURE_KEYS,
-            f"SELECT DISTINCT {self.culture_id_sql()} AS culture_id, anon_id, order_proc_id_coded FROM {self.raw('cohort')}",
+            f"SELECT {self.culture_id_sql()} AS culture_id, anon_id, order_proc_id_coded, CAST(MIN({order_time}) AS DATE) AS order_date "
+            f"FROM {self.raw('cohort')} GROUP BY anon_id, order_proc_id_coded",
         )
         return built
 

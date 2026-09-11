@@ -8,6 +8,10 @@ MGB differs from the Stanford layout in ways that change the SQL:
   * A preliminary result is dropped when a final result exists for the same organism and agent.
   * Enzyme tests (ESBL, carbapenemase, beta-lactamase, PBP2a) are their own rows.
   * Sex is disclosed, and there is no ICU flag.
+  * comorbidity, nursing_home_visits and prior_procedures carry encounter and culture IDs from a
+    different mapping than the cohort. No ordering of the three ID columns links them, yet every
+    (anon_id, order date) pair in those files exists in the cohort. They link by patient and order
+    date instead. Their contents are relative to the order date, so same-day cultures share values.
 """
 
 from __future__ import annotations
@@ -18,7 +22,7 @@ from .base import SiteLoader, register_value_lookup
 
 class MGBLoader(SiteLoader):
     site = "mgb"
-    order_time_column = "order_time_jittered_utc_shifted"
+    order_time_columns = ("order_time_jittered_utc_shifted",)
     order_time_resolution = "day"
     sex_masked = False
     positive_row_sql = "neg_cx IS NULL"
@@ -27,12 +31,13 @@ class MGBLoader(SiteLoader):
         "ward_info": None,
         "adi_scores": None,
         "comorbidity": None,
-        "nursing_home_visits": "nursing_home_visit_culture",
-        "prior_abx": "last_dose_to_culture",
-        "prior_micro": "prior_AST_time_to_culture",
-        "prior_org": "prior_org_days_to_culture",
-        "prior_procedures": "procedure_days_culture",
+        "nursing_home_visits": ("nursing_home_visit_culture",),
+        "prior_abx": ("last_dose_to_culture",),
+        "prior_micro": ("prior_AST_time_to_culture",),
+        "prior_org": ("prior_org_days_to_culture",),
+        "prior_procedures": ("procedure_days_culture",),
     }
+    date_linked_tables = ("comorbidity", "nursing_home_visits", "prior_procedures")
 
     def culture_stage_sql(self) -> str:
         return f"""

@@ -26,7 +26,8 @@ WARD_FLAGS = {
 
 
 class DryadStandardLoader(SiteLoader):
-    order_time_column = "order_time_jittered_utc"
+    # Stanford writes order_time_jittered_utc. UTSW and ECUH write order_time_jittered.
+    order_time_columns = ("order_time_jittered_utc", "order_time_jittered")
     order_time_resolution = "second"
     sex_masked = True
     positive_row_sql = "TRY_CAST(was_positive AS INTEGER) = 1"
@@ -35,20 +36,24 @@ class DryadStandardLoader(SiteLoader):
         "ward_info": None,
         "adi_scores": None,
         "vitals": None,
-        "labs": "Period_Day",
-        "antibiotic_class_exposure": "time_to_culturetime",
-        "antibiotic_subtype_exposure": "medication_time_to_cultureTime",
-        "comorbidity": "comorbidity_component_start_days_culture",
-        "microbial_resistance": "resistant_time_to_culturetime",
-        "nursing_home_visits": "nursing_home_visit_culture",
-        "prior_infecting_organism": "prior_infecting_organism_days_to_culutre",
-        "prior_med": "medication_time_to_culturetime",
-        "prior_procedures": "procedure_time_to_culturetime",
+        "labs": ("Period_Day",),
+        "antibiotic_class_exposure": ("time_to_culturetime",),
+        "antibiotic_subtype_exposure": ("medication_time_to_culturetime",),
+        "comorbidity": ("comorbidity_component_start_days_culture",),
+        "microbial_resistance": ("resistant_time_to_culturetime",),
+        "nursing_home_visits": ("nursing_home_visit_culture",),
+        # Stanford ships the misspelling "culutre".
+        "prior_infecting_organism": ("prior_infecting_organism_days_to_culture", "prior_infecting_organism_days_to_culutre"),
+        "prior_med": ("medication_time_to_culturetime",),
+        "prior_procedures": ("procedure_time_to_culturetime",),
     }
 
     def culture_stage_sql(self) -> str:
         cohort_columns = set(self.columns("cohort"))
         ward_columns = set(self.columns("ward_info"))
+        order_time = self.resolve_column("cohort", self.order_time_columns)
+        if order_time is None:
+            raise ValueError(f"{self.site}: no order time column among {self.order_time_columns}")
         mode = "ANY_VALUE(ordering_mode)" if "ordering_mode" in cohort_columns else "CAST(NULL AS VARCHAR)"
         flags = ",\n                       ".join(
             f"MAX(TRY_CAST({col} AS INTEGER)) = 1 AS {key}" if col in ward_columns else f"CAST(NULL AS BOOLEAN) AS {key}"
@@ -58,7 +63,7 @@ class DryadStandardLoader(SiteLoader):
             WITH c AS (
                 SELECT anon_id, order_proc_id_coded,
                        COUNT(DISTINCT pat_enc_csn_id_coded) AS n_encounters,
-                       CAST(MIN({self.order_time_column}) AS TIMESTAMP) AS order_time,
+                       CAST(MIN({order_time}) AS TIMESTAMP) AS order_time,
                        ANY_VALUE(culture_description) AS specimen_raw,
                        BOOL_OR({self.positive_row_sql}) AS culture_positive,
                        BOOL_OR({self.positive_row_sql} AND organism IS NULL) AS any_unidentified,

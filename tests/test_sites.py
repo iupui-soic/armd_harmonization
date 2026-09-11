@@ -4,8 +4,9 @@ import duckdb
 import pytest
 
 from armd_common import labels
+from armd_common.db import connect
 from armd_common.schema import validate
-from armd_common.sites import MGBLoader, StanfordLoader
+from armd_common.sites import MGBLoader, StanfordLoader, UTSWLoader
 
 
 def write_table(root, site_dir, table, ddl, rows):
@@ -21,14 +22,23 @@ def write_table(root, site_dir, table, ddl, rows):
     con.close()
 
 
+def rows_by_id(con, table, columns):
+    return {r[0]: r[1:] for r in con.execute(f"SELECT culture_id, {columns} FROM {table} ORDER BY 1").fetchall()}
+
+
+def reasons(result):
+    return {cid: (label, reason) for cid, label, _, reason in result.frame.order("culture_id").fetchall()}
+
+
 IDS = "anon_id VARCHAR, pat_enc_csn_id_coded VARCHAR, order_proc_id_coded VARCHAR"
 
 
-@pytest.fixture()
-def stanford(tmp_path, monkeypatch):
-    monkeypatch.setenv("ARMD_DATA_ROOT", str(tmp_path))
-    cohort = f"{IDS}, order_time_jittered_utc TIMESTAMPTZ, ordering_mode VARCHAR, culture_description VARCHAR, was_positive BIGINT, organism VARCHAR, antibiotic VARCHAR, susceptibility VARCHAR"
-    write_table(tmp_path, "armd-stanford", "cohort", cohort, [
+def build_dryad_release(root, site_dir, time_column):
+    cohort = (
+        f"{IDS}, {time_column} TIMESTAMPTZ, ordering_mode VARCHAR, culture_description VARCHAR, was_positive BIGINT, "
+        "organism VARCHAR, antibiotic VARCHAR, susceptibility VARCHAR"
+    )
+    write_table(root, site_dir, "cohort", cohort, [
         ("p1", "e1", "101", "2020-01-01 10:00:00+00", "Outpatient", "URINE", 0, None, None, None),
         ("p1", "e2", "102", "2020-02-01 08:30:00+00", "Inpatient", "URINE", 1, "ESCHERICHIA COLI", "Ceftriaxone", "Resistant"),
         ("p1", "e2", "102", "2020-02-01 08:30:00+00", "Inpatient", "URINE", 1, "ESCHERICHIA COLI", "Ampicillin", "Resistant"),
@@ -38,7 +48,7 @@ def stanford(tmp_path, monkeypatch):
         ("p3", "e6", "106", "2021-04-04 12:00:00+00", "Inpatient", "URINE", 1, "ZZZENTEROBACTER AEROGENES", "Cefepime", "Intermediate"),
         ("p3", "e6", "106", "2021-04-04 12:00:00+00", "Inpatient", "URINE", 1, "PSEUDOMONAS AERUGINOSA", "Ceftazidime", "Resistant"),
     ])
-    write_table(tmp_path, "armd-stanford", "ward_info", f"{IDS}, hosp_ward_IP BIGINT, hosp_ward_OP BIGINT, hosp_ward_ER BIGINT, hosp_ward_ICU BIGINT", [
+    write_table(root, site_dir, "ward_info", f"{IDS}, hosp_ward_IP BIGINT, hosp_ward_OP BIGINT, hosp_ward_ER BIGINT, hosp_ward_ICU BIGINT", [
         ("p1", "e1", "101", 0, 1, 0, 0),
         ("p1", "e2", "102", 1, 0, 1, 0),
         ("p2", "e3", "103", 1, 0, 0, 1),
@@ -46,7 +56,7 @@ def stanford(tmp_path, monkeypatch):
         ("p3", "e5", "105", 0, 1, 0, 0),
         ("p3", "e6", "106", 1, 0, 0, 0),
     ])
-    write_table(tmp_path, "armd-stanford", "demographics", f"{IDS}, age VARCHAR, gender BIGINT", [
+    write_table(root, site_dir, "demographics", f"{IDS}, age VARCHAR, gender BIGINT", [
         ("p1", "e1", "101", "18-24 years", 0),
         ("p1", "e2", "102", "18-24 years", 0),
         ("p2", "e3", "103", "above 90", 1),
@@ -54,7 +64,7 @@ def stanford(tmp_path, monkeypatch):
         ("p3", "e5", "105", "55-64 years", None),
         ("p3", "e6", "106", "55-64 years", None),
     ])
-    write_table(tmp_path, "armd-stanford", "adi_scores", f"{IDS}, adi_score BIGINT, adi_state_rank BIGINT", [
+    write_table(root, site_dir, "adi_scores", f"{IDS}, adi_score BIGINT, adi_state_rank BIGINT", [
         ("p1", "e1", "101", 5, 1),
         ("p1", "e2", "102", 5, 1),
         ("p2", "e3", "103", None, None),
@@ -62,13 +72,14 @@ def stanford(tmp_path, monkeypatch):
         ("p3", "e5", "105", 88, 9),
         ("p3", "e6", "106", 88, 9),
     ])
-    loader = StanfordLoader(duckdb.connect())
-    loader.con.execute("SET TimeZone = 'UTC'")
+
+
+@pytest.fixture()
+def stanford(tmp_path, monkeypatch):
+    monkeypatch.setenv("ARMD_DATA_ROOT", str(tmp_path))
+    build_dryad_release(tmp_path, "armd-stanford", "order_time_jittered_utc")
+    loader = StanfordLoader(connect())
     return loader, loader.build()
-
-
-def rows_by_id(con, table, columns):
-    return {r[0]: r[1:] for r in con.execute(f"SELECT culture_id, {columns} FROM {table} ORDER BY 1").fetchall()}
 
 
 def test_stanford_schema(stanford):
@@ -111,18 +122,32 @@ def test_stanford_isolate_ast(stanford):
     ]
 
 
+STANFORD_E2 = {
+    "p1:101": (0, "culture_negative"),
+    "p1:102": (1, "resistant"),
+    "p2:103": (0, "organism_absent"),
+    "p2:104": (None, "organism_unidentified"),
+    "p3:105": (None, "not_tested"),
+    "p3:106": (0, "not_resistant"),
+}
+
+
 def test_stanford_decision_time_labels(stanford):
     loader, built = stanford
-    result = labels.esbl_decision_time(loader.con, built["culture_episodes"], built["isolate_ast"])
-    got = {cid: (label, reason) for cid, label, _, reason in result.frame.order("culture_id").fetchall()}
-    assert got == {
-        "stanford:p1:101": (0, "culture_negative"),
-        "stanford:p1:102": (1, "resistant"),
-        "stanford:p2:103": (0, "organism_absent"),
-        "stanford:p2:104": (None, "organism_unidentified"),
-        "stanford:p3:105": (None, "not_tested"),
-        "stanford:p3:106": (0, "not_resistant"),
-    }
+    got = reasons(labels.esbl_decision_time(loader.con, built["culture_episodes"], built["isolate_ast"]))
+    assert got == {f"stanford:{k}": v for k, v in STANFORD_E2.items()}
+
+
+def test_utsw_order_time_spelling(tmp_path, monkeypatch):
+    monkeypatch.setenv("ARMD_DATA_ROOT", str(tmp_path))
+    build_dryad_release(tmp_path, "armd-utsw", "order_time_jittered")
+    loader = UTSWLoader(connect())
+    built = loader.build()
+    for kind, table in built.items():
+        assert validate(loader.con, table, kind) == [], kind
+    got = reasons(labels.esbl_decision_time(loader.con, built["culture_episodes"], built["isolate_ast"]))
+    assert got == {f"utsw:{k}": v for k, v in STANFORD_E2.items()}
+    assert loader.con.execute(f"SELECT CAST(order_date AS VARCHAR) FROM {built['culture_keys']} WHERE culture_id = 'utsw:p1:102'").fetchone()[0] == "2020-02-01"
 
 
 MGB_COHORT = (
@@ -153,7 +178,7 @@ def mgb(tmp_path, monkeypatch):
             mgb_row("1", enc, "500", "URINE", ecoli, prelim="X", code="FEP", pheno="Susceptible", clsi="Susceptible dose dependent"),
             mgb_row("1", enc, "500", "URINE", ecoli, enzyme_class="ESBL", pheno="Positive"),
         ]
-    # Patient 2 reuses order_proc_id_coded 500 for a different, negative culture.
+    # Patient 2 reuses order_proc_id_coded 500 for a different, negative culture on the same day as culture 501.
     rows.append(mgb_row("2", "20", "500", "BLOOD", neg="X"))
     rows.append(mgb_row("2", "21", "501", "RESPIRATORY_TRACT", code="CAZ", pheno="Resistant", clsi="Resistant"))
     write_table(tmp_path, "armd-mgb", "cohort", MGB_COHORT, rows)
@@ -176,7 +201,13 @@ def mgb(tmp_path, monkeypatch):
         ("2", "20", "500", None, None, "2090-05-01"),
         ("2", "21", "501", 50.0, 7.0, "2090-05-01"),
     ])
-    loader = MGBLoader(duckdb.connect())
+    # Comorbidity uses encounter and culture IDs from another mapping, as in the real release.
+    write_table(tmp_path, "armd-mgb", "comorbidity", f"{IDS}, ICD10 VARCHAR, category VARCHAR, order_time_jittered_utc_shifted DATE", [
+        ("1", "77", "9001", "N39.0", "renal", "2090-05-01"),
+        ("2", "78", "9002", "E11.9", "diabetes", "2090-05-01"),
+        ("2", "79", "9003", "E11.9", "diabetes", "2090-05-01"),
+    ])
+    loader = MGBLoader(connect())
     return loader, loader.build()
 
 
@@ -213,13 +244,24 @@ def test_mgb_isolate_ast_collapses_encounters_and_preliminary(mgb):
 def test_mgb_labels(mgb):
     loader, built = mgb
     ep, ast, enz = built["culture_episodes"], built["isolate_ast"], built["enzyme_tests"]
-
-    def reasons(result):
-        return {cid: (label, reason) for cid, label, _, reason in result.frame.order("culture_id").fetchall()}
-
     assert reasons(labels.esbl_phenotype_composite(loader.con, ep, ast))["mgb:1:500"] == (0, "not_resistant")
     assert reasons(labels.esbl_phenotype_composite(loader.con, ep, ast, sir_column="sir_clsi2022"))["mgb:1:500"] == (1, "resistant")
     assert reasons(labels.esbl_enzyme_class(loader.con, ep, enz))["mgb:1:500"] == (1, "resistant")
     e2 = reasons(labels.esbl_decision_time(loader.con, ep, ast))
     assert e2["mgb:2:500"] == (0, "culture_negative")
     assert e2["mgb:2:501"] == (None, "organism_unidentified")
+
+
+def test_mgb_date_linked_feature_table(mgb):
+    loader, _ = mgb
+    assert loader.feature_link("comorbidity")[2] == "patient_and_order_date"
+    assert loader.feature_link("ward_info")[2] == "culture_id"
+    rows = loader.con.execute(f"SELECT culture_id, ICD10 FROM ({loader.feature_rows_sql('comorbidity')}) ORDER BY 1, 2").fetchall()
+    # Patient 2 had two cultures that day, so both receive the patient's comorbidity rows.
+    assert rows == [
+        ("mgb:1:500", "N39.0"),
+        ("mgb:2:500", "E11.9"),
+        ("mgb:2:500", "E11.9"),
+        ("mgb:2:501", "E11.9"),
+        ("mgb:2:501", "E11.9"),
+    ]

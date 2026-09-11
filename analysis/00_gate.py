@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 
 from armd_common import labels
 from armd_common.config import DEFAULT_SEED, SITES, get_site, load_sources
@@ -54,15 +53,17 @@ def g1_counts(con, ep: str) -> dict:
 def g2_g3_tables(con, loader, ep: str, keys: str) -> dict:
     out = {}
     staged_tables = set(loader.staged_tables())
-    for table, time_column in loader.feature_time_columns.items():
+    for table, time_candidates in loader.feature_time_columns.items():
         if table not in staged_tables:
             out[table] = {"status": "not in release"}
             continue
         raw = loader.raw(table)
-        columns = loader.columns(table)
+        link_select, link_on, link_method = loader.feature_link(table)
+        time_column = loader.resolve_column(table, time_candidates)
+        order_time = loader.resolve_column(table, loader.order_time_columns)
         con.execute(f"""
             CREATE OR REPLACE TEMP TABLE _gate_keys AS
-            SELECT DISTINCT k.culture_id FROM {raw} f JOIN {keys} k USING (anon_id, order_proc_id_coded)
+            SELECT DISTINCT k.culture_id FROM (SELECT DISTINCT {link_select} FROM {raw} f) f JOIN {keys} k ON {link_on}
         """)
         n_pos, n_neg, cov_pos, cov_neg = con.execute(f"""
             SELECT COUNT(*) FILTER (WHERE e.culture_positive), COUNT(*) FILTER (WHERE NOT e.culture_positive),
@@ -70,8 +71,8 @@ def g2_g3_tables(con, loader, ep: str, keys: str) -> dict:
             FROM {ep} e LEFT JOIN _gate_keys g USING (culture_id)
         """).fetchone()
         orphans = con.execute(f"""
-            SELECT COUNT(*) FROM (SELECT DISTINCT anon_id, order_proc_id_coded FROM {raw}) f
-            ANTI JOIN {keys} k USING (anon_id, order_proc_id_coded)
+            SELECT COUNT(*) FROM (SELECT DISTINCT {link_select} FROM {raw} f) f
+            WHERE NOT EXISTS (SELECT 1 FROM {keys} k WHERE {link_on})
         """).fetchone()[0]
         one_to_one = table in loader.one_row_per_culture
         pos_rate = cov_pos / n_pos if n_pos else 0.0
@@ -84,35 +85,36 @@ def g2_g3_tables(con, loader, ep: str, keys: str) -> dict:
         entry = {
             "status": "staged",
             "kind": "one_row_per_culture" if one_to_one else "event",
+            "link": link_method,
             "coverage_positive": rate(cov_pos, n_pos),
             "coverage_negative": rate(cov_neg, n_neg),
             "negative_to_positive_coverage": round(relative, 3) if relative is not None else None,
-            "keys_absent_from_cohort": cell(orphans),
+            "link_keys_absent_from_cohort": cell(orphans),
             "keyed_to_negatives": keyed,
         }
-        if loader.order_time_column in columns:
+        if order_time and link_method == "culture_id":
             anchor = {}
             for positive, n, same_ts, same_day in con.execute(f"""
-                WITH f AS (SELECT DISTINCT anon_id, order_proc_id_coded, CAST({loader.order_time_column} AS TIMESTAMP) AS t FROM {raw})
+                WITH f AS (SELECT DISTINCT {link_select}, CAST(f.{order_time} AS TIMESTAMP) AS t FROM {raw} f)
                 SELECT e.culture_positive, COUNT(*),
                        COUNT(*) FILTER (WHERE f.t = e.order_time),
                        COUNT(*) FILTER (WHERE CAST(f.t AS DATE) = CAST(e.order_time AS DATE))
-                FROM f JOIN {keys} k USING (anon_id, order_proc_id_coded) JOIN {ep} e USING (culture_id)
+                FROM f JOIN {keys} k ON {link_on} JOIN {ep} e USING (culture_id)
                 GROUP BY 1
             """).fetchall():
                 anchor["positive" if positive else "negative"] = {
                     "culture_time_pairs": cell(n), "same_timestamp": rate(same_ts, n), "same_day": rate(same_day, n)
                 }
             entry["order_time_anchor"] = anchor
-        if time_column and time_column in columns:
+        if time_column:
             timing = {}
             q_sql = "[" + ", ".join(str(q) for q in QUANTILES) + "]"
             for positive, n, quantiles, gt0, eq0, lt0, nulls in con.execute(f"""
                 SELECT e.culture_positive, COUNT(*), approx_quantile(v, {q_sql}),
                        AVG(CAST(v > 0 AS DOUBLE)), AVG(CAST(v = 0 AS DOUBLE)), AVG(CAST(v < 0 AS DOUBLE)),
                        COUNT(*) - COUNT(v)
-                FROM (SELECT anon_id, order_proc_id_coded, TRY_CAST({time_column} AS DOUBLE) AS v FROM {raw}) f
-                JOIN {keys} k USING (anon_id, order_proc_id_coded) JOIN {ep} e USING (culture_id)
+                FROM (SELECT {link_select}, TRY_CAST(f.{time_column} AS DOUBLE) AS v FROM {raw} f) f
+                JOIN {keys} k ON {link_on} JOIN {ep} e USING (culture_id)
                 GROUP BY 1
             """).fetchall():
                 timing["positive" if positive else "negative"] = {
@@ -124,8 +126,8 @@ def g2_g3_tables(con, loader, ep: str, keys: str) -> dict:
                     "null_rows": cell(nulls),
                 }
             entry["days_to_culture"] = {"column": time_column, **timing}
-        elif time_column:
-            entry["days_to_culture"] = {"column": time_column, "status": "column not in release"}
+        elif time_candidates:
+            entry["days_to_culture"] = {"column": list(time_candidates), "status": "column not in release"}
         out[table] = entry
     return out
 
@@ -178,12 +180,12 @@ def site_verdict(site_summary: dict) -> dict:
     tables = site_summary["g2_g3"]
     staged_tables = {k: v for k, v in tables.items() if v.get("status") == "staged"}
     failing = sorted(k for k, v in staged_tables.items() if not v["keyed_to_negatives"])
-    negative_order = site_summary["g4"].get("negative", {})
-    null_share = negative_order.get("null_share")
-    order_ok = isinstance(null_share, float) and null_share <= MAX_NULL_ORDER_TIME or null_share == 0
+    null_share = site_summary["g4"].get("negative", {}).get("null_share")
+    order_ok = null_share == 0 or (isinstance(null_share, float) and null_share <= MAX_NULL_ORDER_TIME)
     return {
         "feature_tables_keyed_to_negatives": not failing,
         "tables_failing": failing,
+        "tables_linked_by_date": sorted(k for k, v in staged_tables.items() if v["link"] != "culture_id"),
         "order_time_available_for_negatives": bool(order_ok),
         "passes": not failing and bool(order_ok),
     }
@@ -234,30 +236,49 @@ def render_report(summary: dict) -> str:
     lines = ["# Phase 0 gate report", "", f"Overall go: **{summary['overall']['go']}**. {summary['overall']['rule']}", ""]
     for site, s in summary["sites"].items():
         v = s["verdict"]
-        lines += [f"## {site}", "", f"Passes: **{v['passes']}**. Tables failing G2: {v['tables_failing'] or 'none'}.", ""]
+        lines += [
+            f"## {site}",
+            "",
+            f"Passes: **{v['passes']}**. Tables failing G2: {v['tables_failing'] or 'none'}. "
+            f"Tables linked by patient and order date: {v['tables_linked_by_date'] or 'none'}.",
+            "",
+        ]
         g1 = s["g1"]
         lines += [
             f"G1: {g1['cultures']} cultures from {g1['patients']} patients. "
             f"Positive {g1['positive']['cultures']}, negative {g1['negative']['cultures']}.",
             "",
-            "| table | kind | coverage pos | coverage neg | neg/pos | keyed to negatives | same order day (neg) | days-to-culture p50 pos / neg |",
-            "|---|---|---|---|---|---|---|---|",
+            "| table | kind | link | coverage pos | coverage neg | neg/pos | keyed to negatives | same order day (neg) | days-to-culture p50 pos / neg |",
+            "|---|---|---|---|---|---|---|---|---|",
         ]
         for table, t in s["g2_g3"].items():
             if t.get("status") != "staged":
-                lines.append(f"| {table} | not in release | | | | | | |")
+                lines.append(f"| {table} | not in release | | | | | | | |")
                 continue
             anchor = t.get("order_time_anchor", {}).get("negative", {}).get("same_day")
             timing = t.get("days_to_culture", {})
-            p50 = lambda key: (timing.get(key) or {}).get("quantiles", {}) or {}
+
+            def p50(key):
+                return ((timing.get(key) or {}).get("quantiles") or {}).get("p50")
+
             lines.append(
-                f"| {table} | {t['kind']} | {fmt(t['coverage_positive'])} | {fmt(t['coverage_negative'])} | "
+                f"| {table} | {t['kind']} | {t['link']} | {fmt(t['coverage_positive'])} | {fmt(t['coverage_negative'])} | "
                 f"{fmt(t['negative_to_positive_coverage'])} | {t['keyed_to_negatives']} | {fmt(anchor)} | "
-                f"{fmt(p50('positive').get('p50'))} / {fmt(p50('negative').get('p50'))} |"
+                f"{fmt(p50('positive'))} / {fmt(p50('negative'))} |"
             )
-        lines += ["", f"G4 order time: {s['g4']}", "", "G5 by specimen:", "", "| specimen | cultures | positive | Enterobacterales | unidentified |", "|---|---|---|---|---|"]
+        lines += [
+            "",
+            f"G4 order time: {s['g4']}",
+            "",
+            "G5 by specimen:",
+            "",
+            "| specimen | cultures | positive | Enterobacterales | unidentified |",
+            "|---|---|---|---|---|",
+        ]
         for spec, row in s["g5"]["by_specimen"].items():
-            lines.append(f"| {spec} | {row['cultures']} | {fmt(row['positive_share'])} | {fmt(row['enterobacterales_share'])} | {fmt(row['unidentified_share'])} |")
+            lines.append(
+                f"| {spec} | {row['cultures']} | {fmt(row['positive_share'])} | {fmt(row['enterobacterales_share'])} | {fmt(row['unidentified_share'])} |"
+            )
         lines += ["", "| estimand | evaluable | label = 1 | prevalence |", "|---|---|---|---|"]
         for name, row in s["g5"]["estimands"].items():
             lines.append(f"| {name} | {row['evaluable_cultures']} | {row['label_positive']} | {fmt(row['prevalence'])} |")
@@ -265,7 +286,10 @@ def render_report(summary: dict) -> str:
         lines += ["", f"Schema problems: {problems or 'none'}", ""]
     lines += ["## Provenance (G7, G8)", ""]
     for site, p in summary["provenance"].items():
-        lines.append(f"- {site}: {p['repository']} {p['doi']} version {p['version']} ({p['version_date']}), downloaded {p['downloaded_on']}, {p['tables_staged']} tables staged.")
+        lines.append(
+            f"- {site}: {p['repository']} {p['doi']} version {p['version']} ({p['version_date']}), "
+            f"downloaded {p['downloaded_on']}, {p['tables_staged']} tables staged."
+        )
     return "\n".join(lines) + "\n"
 
 

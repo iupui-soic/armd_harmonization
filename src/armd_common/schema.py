@@ -3,7 +3,7 @@
 culture_episodes  one row per culture, keyed by culture_id
 isolate_ast       one row per distinct culture, organism, antibiotic and result
 enzyme_tests      one row per distinct culture, organism and enzyme test (ARMD-MGB only)
-culture_keys      culture_id with the raw anon_id and order_proc_id_coded, for joining staged feature tables
+culture_keys      culture_id with the raw anon_id, order_proc_id_coded and order date, for joining staged feature tables
 
 IDs are strings prefixed with the site. culture_id is '<site>:<anon_id>:<order_proc_id_coded>'
 because ARMD-MGB reuses order_proc_id_coded across patients.
@@ -90,7 +90,7 @@ ENZYME_TESTS = {
     "n_source_rows": "BIGINT",
 }
 
-CULTURE_KEYS = {"culture_id": "VARCHAR", "anon_id": "VARCHAR", "order_proc_id_coded": "VARCHAR"}
+CULTURE_KEYS = {"culture_id": "VARCHAR", "anon_id": "VARCHAR", "order_proc_id_coded": "VARCHAR", "order_date": "DATE"}
 
 SPECS = {
     "culture_episodes": CULTURE_EPISODES,
@@ -118,7 +118,7 @@ NOT_NULL = {
     "culture_episodes": ("site", "patient_id", "culture_id", "culture_positive", "specimen_type", "setting_primary", "order_time_resolution"),
     "isolate_ast": ("site", "patient_id", "culture_id", "preliminary"),
     "enzyme_tests": ("site", "patient_id", "culture_id", "enzyme_class", "enzyme_result"),
-    "culture_keys": ("culture_id", "anon_id", "order_proc_id_coded"),
+    "culture_keys": ("culture_id", "anon_id", "order_proc_id_coded", "order_date"),
 }
 
 UNIQUE = {"culture_episodes": "culture_id", "culture_keys": "culture_id"}
