@@ -5,10 +5,13 @@
 
 version: 1
 
+# Decided on 2026-09-11: every task uses all 48 harmonized features, cross-site pairs included, and
+# MGB uses the lab interpretation (CLSI 2022 is a sensitivity analysis).
 defaults:
   seed: 20260911
   split_manifest: benchmarks/manifests/{site}.csv.gz
-  features: harmonized_core
+  features: harmonized48
+  interpretation: lab
   sir_column: sir
   metrics:
     - auroc

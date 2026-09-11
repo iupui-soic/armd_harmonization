@@ -491,16 +491,23 @@ The splits were frozen on 2026-09-11 with seed 20260911 (`python -m armd_common.
   its patient hashes can be reversed. Its manifest stays local until PhysioNet's terms allow release.
 - Regenerating a split gives identical bytes, and `splits.py` refuses to overwrite a frozen manifest.
 
-## Decisions waiting on the project lead
+## Decisions
 
-1. **Default MGB interpretation.** The lab interpretation is the current default. The AMIA model and
-   the plan used CLSI 2022, which raises MGB's E1 prevalence from 13.3% to 18.2%.
-2. **K. aerogenes grouping.** Klebsiella by taxonomy (current) or Enterobacter by AmpC behaviour.
-3. **ESBL confirmatory label at ECUH.** ECUH reports clavulanate combination tests, which could
+The project lead decided the following on 2026-09-11:
+
+- **MGB interpretation.** The lab interpretation is the primary definition at MGB, and CLSI 2022 is
+  a sensitivity analysis. The AMIA model used CLSI 2022, which raises MGB's E1 prevalence from 13.3%
+  to 18.2%.
+- **Features in cross-site tasks.** Every task uses all 48 features, cross-site pairs included, and
+  per-site capture is reported alongside the results.
+- **Masked sex codes.** They are mapped by inference, as described under Sex.
+- **Splits.** They are frozen with the stratification described under Splits.
+
+Still open:
+
+1. **K. aerogenes grouping.** Klebsiella by taxonomy (current) or Enterobacter by AmpC behaviour.
+2. **ESBL confirmatory label at ECUH.** ECUH reports clavulanate combination tests, which could
    support a confirmatory-test label alongside MGB's enzyme label.
-4. **Release-limited features in cross-site tasks.** Either keep all 48 features and report per-site
-   capture, or define a portable subset for `esbl_crossite_e1` that drops the antibiotic class,
-   procedure and category-count features.
 
 ## Questions for the ARMD-MGB maintainers
 
