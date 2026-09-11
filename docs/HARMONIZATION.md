@@ -56,7 +56,8 @@ the CSV reader quote raw lines, so the converter reports only a line number and 
 - **The MGB defect is in the release, not our copy.** It reproduces on the raw CSVs read with
   Python's csv module, outside the staging pipeline, and every row has the header's field count.
   All 12 local files match PhysioNet's SHA256SUMS.txt and the byte sizes in the server's directory
-  listing. The three files also share one alternative ID set: every triple in
+  listing. A fresh copy of SHA256SUMS.txt fetched from PhysioNet on 2026-09-11 is byte-identical to
+  the one in the local release, and all 12 files verify against it. The three files also share one alternative ID set: every triple in
   `nursing_home_visits` (446,041) and `prior_procedures` (92,171) appears in `comorbidity`. Random
   corruption would not produce consistent IDs across files.
 
