@@ -1,7 +1,8 @@
 # Exact upstream releases used by armd-common (plan gate check G8).
 # armd_common.convert checks every raw CSV against these sizes and digests before staging.
 # Dryad sizes and digests come from the Dryad v2 API. MGB digests come from SHA256SUMS.txt.
-# downloaded_on is inferred from local file timestamps because no download log was kept.
+# Stanford and MGB downloaded_on is inferred from local file timestamps because no download log was kept.
+# UTSW and ECUH were fetched with armd_common.download, which logs to _download.json in each site folder.
 
 stanford:
   name: ARMD (Stanford Health Care)
@@ -62,7 +63,7 @@ utsw:
   version: "5"
   version_date: "2025-09-26"
   license: CC0-1.0
-  downloaded_on: null
+  downloaded_on: "2026-09-11"
   files:
     README.md: {bytes: 10281, sha256: 69a96799a62cefd6a87a0163f52681ffd919bf442f08a9529c07a1dc0bf25d94}
     microbiology_cultures_adi_scores.csv: {bytes: 46825800, sha256: 1fe6a8649c7d4e2cb502d1437681ee029eb0d2a73b25ad2ba2d06710b6ef68b2}
@@ -87,7 +88,7 @@ ecuh:
   version: "4"
   version_date: "2025-11-10"
   license: CC0-1.0
-  downloaded_on: null
+  downloaded_on: "2026-09-11"
   files:
     00_microbiology_cultures_cohort.csv: {bytes: 313527383, sha256: 20440f7c32dc0dc60005e10deadf8ed7c14617020264be2fdce3cafd9a2545c7}
     010_microbiology_cultures_prior_med.csv: {bytes: 194659013, sha256: 9d4b72c84c76e89b66b6a499eab010c7cf5ae0d5e38be5577094a9fe33ae3006}
