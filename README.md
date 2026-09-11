@@ -34,6 +34,7 @@ python -m armd_common.qc --site stanford         # per-site QC report
 python -m armd_common.sex_inference              # evidence behind mappings/sex_codes.yaml
 python -m armd_common.splits --site stanford     # generate and freeze the split manifest
 python -m armd_common.features --site stanford   # harmonized 48 features, written under the site data folder
+python analysis/01_build_cohorts.py              # E1, E2 and sensitivity cohorts plus Analysis 1, derivation only
 .venv/bin/pytest
 ```
 
