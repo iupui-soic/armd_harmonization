@@ -26,6 +26,10 @@ from .db import connect, sql_list
 from .provenance import RunManifest, sha256_file
 
 SAMPLE_SIZE = 500_000
+# Releases quote only the rare fields that need it, so the sniffer often sees no quotes in its sample.
+# It then either fails on a quoted comma or keeps literal quote characters, so quoting is set explicitly.
+QUOTE = '"'
+ESCAPE = '"'
 ROW_GROUP_SIZE = 500_000
 FILE_SIZE = "512MB"
 MAX_COLUMN_RETRIES = 8
@@ -58,6 +62,8 @@ def _safe_message(exc: duckdb.Error) -> str:
 def _read_csv_sql(path: Path, varchar_columns: set[str]) -> str:
     options = [
         "header = true",
+        f"quote = '{QUOTE}'",
+        f"escape = '{ESCAPE}'",
         f"nullstr = {sql_list(NULL_TOKENS)}",
         f"sample_size = {SAMPLE_SIZE}",
     ]
@@ -85,6 +91,7 @@ def convert_table(con: duckdb.DuckDBPyConnection, cfg: SiteConfig, table: str, f
     out = cfg.parquet_dir / table
     if out.exists() and not force:
         return {"table": table, "status": "exists"}
+    cfg.parquet_dir.mkdir(parents=True, exist_ok=True)
     tmp = out.with_name(f"{table}.tmp")
     header = _header(src)
     varchar = {c for c in ID_COLUMNS if c in header}
@@ -117,6 +124,7 @@ def convert_table(con: duckdb.DuckDBPyConnection, cfg: SiteConfig, table: str, f
         "rows": rows,
         "columns": [[name, typ] for name, typ, *_ in schema],
         "retried_as_varchar": retried,
+        "csv_options": {"quote": QUOTE, "escape": ESCAPE, "null_tokens": list(NULL_TOKENS), "sample_size": SAMPLE_SIZE},
         "seconds": round(time.time() - started, 1),
     }
 
@@ -144,10 +152,16 @@ def main(argv: list[str] | None = None) -> int:
     manifest = RunManifest(f"convert_{cfg.site}", seed=args.seed, args=vars(args))
     con = connect(cfg.tmp_dir)
 
+    failures: dict[str, str] = {}
     for table in tables:
         digest = verify_source(cfg, table)
         manifest.add_input(table, cfg.csv_path(table), digest)
-        result = convert_table(con, cfg, table, force=args.force)
+        try:
+            result = convert_table(con, cfg, table, force=args.force)
+        except ConversionError as exc:
+            failures[table] = str(exc)
+            print(f"{cfg.site}.{table}: FAILED {exc}", flush=True)
+            continue
         if result["status"] == "converted":
             result["sha256"] = digest
             record["tables"][table] = result
@@ -160,7 +174,11 @@ def main(argv: list[str] | None = None) -> int:
         )
 
     manifest.set("parquet_dir", str(cfg.parquet_dir))
+    manifest.set("failures", failures)
     print("manifest:", manifest.write())
+    if failures:
+        print(f"{len(failures)} table(s) failed: {sorted(failures)}", flush=True)
+        return 1
     return 0
 
 
