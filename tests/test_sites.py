@@ -102,9 +102,11 @@ def test_stanford_culture_episodes(stanford):
     }
     details = rows_by_id(loader.con, built["culture_episodes"],
                          "CAST(order_time AS VARCHAR), setting_raw_ed, setting_raw_icu, age_band, sex, sex_code_masked, adi_score, adi_missing")
-    assert details["stanford:p1:102"] == ("2020-02-01 08:30:00", True, False, "18-24", None, "0", 5.0, False)
-    assert details["stanford:p2:103"] == ("2019-05-05 00:00:00", False, True, "90+", None, "1", None, True)
-    assert details["stanford:p3:105"][3:6] == ("55-64", None, None)
+    assert details["stanford:p1:102"] == ("2020-02-01 08:30:00", True, False, "18-24", "f", "0", 5.0, False)
+    assert details["stanford:p2:103"] == ("2019-05-05 00:00:00", False, True, "90+", "m", "1", None, True)
+    assert details["stanford:p3:105"][3:6] == ("55-64", "unknown", None)
+    inferred = rows_by_id(loader.con, built["culture_episodes"], "sex_inferred")
+    assert inferred["stanford:p1:102"] == (True,) and inferred["stanford:p3:105"] == (False,)
 
 
 def test_stanford_isolate_ast(stanford):

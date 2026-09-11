@@ -1,0 +1,30 @@
+# Masked sex codes at releases that publish sex as 0 or 1 without saying which is which.
+# The mapping is inferred, not disclosed by the data creators. Canonical tables set sex_inferred to
+# TRUE for every value that comes from this file.
+#
+# Evidence comes from python -m armd_common.sex_inference, which compares each masked code with
+# MGB's disclosed sex on sex-specific diagnoses and on the specimen and age pattern. A mapping is
+# recorded only when both lines agree. See docs/HARMONIZATION.md, section Sex.
+
+status: inferred
+evidence_run: results/sex_inference/20260911T194822Z
+evidence_commit: 5061385
+reference: ARMD-MGB disclosed sex
+
+sites:
+  stanford:
+    mapping: {"0": "f", "1": "m"}
+    male_only_diagnosis_share: {"0": 0.0002, "1": 0.242}
+    female_only_diagnosis_share: {"0": 0.3218, "1": 0.002}
+    pattern_correlation_with_mgb: 0.8897
+    note: Code 0 covers 189,864 patients, the female count published in the ARMD-Stanford data descriptor.
+  utsw:
+    mapping: {"0": "f", "1": "m"}
+    male_only_diagnosis_share: {"0": "<11 patients", "1": 0.1353}
+    female_only_diagnosis_share: {"0": 0.1524, "1": 0.0008}
+    pattern_correlation_with_mgb: 0.9203
+  ecuh:
+    mapping: {"0": "f", "1": "m"}
+    male_only_diagnosis_share: {"0": "<11 patients", "1": 0.1494}
+    female_only_diagnosis_share: {"0": 0.2088, "1": 0.0011}
+    pattern_correlation_with_mgb: 0.896

@@ -175,10 +175,19 @@ class SiteLoader(ABC):
         specimen = self.lookup("specimen", "cohort", "culture_description", specimen_type)
         age = self.lookup("age", "demographics", "age", vocab.age_band)
         if self.sex_masked:
-            sex_join, sex_sql, masked_sql = "", "NULL", "s.gender_raw"
+            sex_join, masked_sql = "", "s.gender_raw"
+            mapping = vocab.masked_sex_mapping(self.site)
+            if mapping:
+                whens = " ".join(f"WHEN '{code}' THEN '{value}'" for code, value in mapping.items())
+                codes = ", ".join(f"'{code}'" for code in mapping)
+                sex_sql = f"CASE s.gender_raw {whens} ELSE 'unknown' END"
+                inferred_sql = f"COALESCE(s.gender_raw IN ({codes}), FALSE)"
+            else:
+                sex_sql, inferred_sql = "NULL", "FALSE"
         else:
             sex = self.lookup("sex", "demographics", "gender", vocab.sex)
             sex_join, sex_sql, masked_sql = f"LEFT JOIN {sex} sx ON sx.raw = s.gender_raw", "COALESCE(sx.value, 'unknown')", "NULL"
+            inferred_sql = "FALSE"
         precedence = " ".join(f"WHEN list_contains(o.groups, '{g}') THEN '{g}'" for g in organisms.GROUP_PRECEDENCE)
         return f"""
             WITH s AS ({self.culture_stage_sql()}),
@@ -227,6 +236,7 @@ class SiteLoader(ABC):
                    ag.value AS age_band,
                    {sex_sql} AS sex,
                    {masked_sql} AS sex_code_masked,
+                   {inferred_sql} AS sex_inferred,
                    s.adi_score,
                    s.adi_state_rank,
                    s.adi_score IS NULL AS adi_missing

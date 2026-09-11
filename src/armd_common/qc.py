@@ -25,7 +25,7 @@ SMALL = f"<{MIN_CELL}"
 CATEGORICAL = {
     "culture_episodes": (
         "specimen_type", "culture_positive", "organism_group", "has_enterobacterales", "organism_unidentified",
-        "setting_primary", "age_band", "sex", "sex_code_masked", "order_time_resolution",
+        "setting_primary", "age_band", "sex", "sex_code_masked", "sex_inferred", "order_time_resolution",
     ),
     "isolate_ast": ("organism_group", "antibiotic_code", "sir", "sir_clsi2022", "preliminary", "ast_method"),
     "enzyme_tests": ("enzyme_class", "enzyme_result", "organism_group"),

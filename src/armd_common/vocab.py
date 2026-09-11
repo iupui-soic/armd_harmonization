@@ -9,6 +9,12 @@ mapped through normalized names and a short alias list.
 from __future__ import annotations
 
 import re
+from functools import lru_cache
+from pathlib import Path
+
+import yaml
+
+MAPPINGS_DIR = Path(__file__).with_name("mappings")
 
 SPECIMEN_TYPES = ("urine", "blood", "respiratory", "other")
 SPECIMEN = {"URINE": "urine", "BLOOD": "blood", "RESPIRATORY": "respiratory", "RESPIRATORY_TRACT": "respiratory"}
@@ -42,6 +48,18 @@ SENTINEL_AGENTS = ("CRO", "CAZ", "FEP", "TZP")
 
 CODES = {
     "5FC": "flucytosine",
+    "CDR": "cefdinir",
+    "CFR": "cefadroxil",
+    "DAL": "dalbavancin",
+    "DCX": "dicloxacillin",
+    "DLX": "delafloxacin",
+    "DPS": "dapsone",
+    "FDX": "fidaxomicin",
+    "LEX": "cephalexin",
+    "MTH": "methenamine",
+    "NAF": "nafcillin",
+    "RFX": "rifaximin",
+    "TZD": "tedizolid",
     "AFG": "anidulafungin",
     "ATM_AVI": "aztreonam_avibactam",
     "BDQ": "bedaquiline",
@@ -176,7 +194,44 @@ ALIASES = {
     "inducible_clindamycin": "ICR",
     # Both.
     "synercid": "QUD",
+    "sulfamethoxazole_trimethoprim": "SXT",
 }
+
+# ARMD-MGB prior_abx spells some combinations differently from its AST_code column.
+PRIOR_ABX_CODE_ALIASES = {"CZA": "CAZ_AVI", "C/T": "TOL_TAZ", "I-R": "IPM_REL", "MVB": "MEM_VAB"}
+
+# Brand names seen in prior medication tables.
+MEDICATION_BRANDS = {
+    "augmentin": "AMC",
+    "avelox": "MXF",
+    "bactrim": "SXT",
+    "cipro": "CIP",
+    "flagyl": "MTZ",
+    "hiprex": "MTH",
+    "keflex": "LEX",
+    "levaquin": "LVX",
+    "macrobid": "NIT",
+    "macrodantin": "NIT",
+    "monurol": "FOF",
+    "rocephin": "CRO",
+    "septra": "SXT",
+    "vancocin": "VAN",
+    "xifaxan": "RFX",
+    "zithromax": "AZM",
+    "zosyn": "TZP",
+    "zyvox": "LZD",
+}
+
+# Salt, strength and formulation words dropped from medication names before lookup.
+_FORMULATION_TOKENS = frozenset({
+    "acetate", "aug", "axetil", "calcium", "chloride", "citrate", "combo", "dextrose", "dextrs", "diluent", "ds",
+    "er", "ethylsuccinate", "hcl", "hippurate", "hyclate", "in", "iso", "iv", "k", "macrocrystal", "macrocrystals",
+    "mandelate", "monohydrate", "nacl", "phosphate", "po", "pot", "potassium", "sod", "sodium", "sulfate",
+    "tromethamine", "xr",
+})
+
+# Topical, otic and ophthalmic products do not count as systemic antibiotic exposure.
+_TOPICAL_MARKERS = frozenset({"dexamethasone", "hydrocortisone", "ophthalmic", "otic", "silver", "topical"})
 
 # Names left without a code on purpose, keyed by normalized name. They are screens or method
 # variants whose result is not the drug's own susceptibility.
@@ -205,6 +260,41 @@ def antibiotic_code(name: str | None) -> str | None:
         return None
     key = normalize_antibiotic(name)
     return ALIASES.get(key) or _BY_NAME.get(key)
+
+
+def medication_code(name: str | None) -> str | None:
+    """Map a prior medication name (brand, salt or formulation included) to a canonical code.
+
+    Topical, otic and ophthalmic products return None.
+    """
+    if name is None:
+        return None
+    tokens = _NON_ALNUM.sub(" ", name.lower()).split()
+    if not tokens or _TOPICAL_MARKERS.intersection(tokens):
+        return None
+    for token in tokens:
+        if token in MEDICATION_BRANDS:
+            return MEDICATION_BRANDS[token]
+    core = [t for t in tokens if t not in _FORMULATION_TOKENS]
+    return antibiotic_code("_".join(core)) if core else None
+
+
+def prior_abx_code(code: str | None) -> str | None:
+    """Canonical code for an ARMD-MGB prior_abx drug_code."""
+    if code is None:
+        return None
+    return PRIOR_ABX_CODE_ALIASES.get(code, code)
+
+
+@lru_cache(maxsize=1)
+def _sex_code_file() -> dict:
+    return yaml.safe_load((MAPPINGS_DIR / "sex_codes.yaml").read_text())
+
+
+def masked_sex_mapping(site: str) -> dict[str, str] | None:
+    """Inferred code-to-sex mapping for a site that masks sex, or None when there is none."""
+    entry = (_sex_code_file().get("sites") or {}).get(site)
+    return {str(code): sex for code, sex in entry["mapping"].items()} if entry else None
 
 
 def sir(raw: str | None) -> str | None:

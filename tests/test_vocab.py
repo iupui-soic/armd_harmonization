@@ -132,3 +132,39 @@ def test_sql_case_matches_python():
     expr = vocab.sql_case("v", vocab.SIR, default="'other'")
     for raw in ("Susceptible", " RESISTANT ", "Susceptible dose dependent", "Inconclusive", "weird"):
         assert con.execute(f"SELECT {expr} FROM (SELECT ? AS v)", [raw]).fetchone()[0] == vocab.sir(raw)
+
+
+@pytest.mark.parametrize(
+    "name, code",
+    [
+        ("Amoxicillin-Pot Clavulanate", "AMC"),
+        ("Piperacillin-Tazobactam-Dextrs", "TZP"),
+        ("Sulfamethoxazole-Trimethoprim", "SXT"),
+        ("Bactrim Ds", "SXT"),
+        ("Cefepime In", "FEP"),
+        ("Ceftazidime-Dextrose", "CAZ"),
+        ("Cefuroxime Axetil", "CXM"),
+        ("Vancomycin-Diluent Combo", "VAN"),
+        ("Vancomycin in dextrose ", "VAN"),
+        ("Moxifloxacin-Sod.Chloride(Iso)", "MXF"),
+        ("Nitrofurantoin Macrocrystal", "NIT"),
+        ("Macrobid", "NIT"),
+        ("Methenamine Hippurate", "MTH"),
+        ("Keflex", "LEX"),
+        ("Cephalexin", "LEX"),
+        ("Cefdinir", "CDR"),
+        ("Doxycycline Hyclate", "DOX"),
+        ("Levaquin", "LVX"),
+        ("Ciprofloxacin-Dexamethasone", None),
+        ("Tobramycin-Dexamethasone", None),
+        ("Silver Sulfadiazine", None),
+        (None, None),
+    ],
+)
+def test_medication_code(name, code):
+    assert vocab.medication_code(name) == code
+
+
+def test_prior_abx_code():
+    assert [vocab.prior_abx_code(c) for c in ("CZA", "C/T", "I-R", "MVB", "CRO", None)] == ["CAZ_AVI", "TOL_TAZ", "IPM_REL", "MEM_VAB", "CRO", None]
+    assert {vocab.prior_abx_code(c) for c in vocab.PRIOR_ABX_CODE_ALIASES} <= set(vocab.CODES)

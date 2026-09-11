@@ -43,6 +43,7 @@ CULTURE_EPISODES = {
     "age_band": "VARCHAR",
     "sex": "VARCHAR",
     "sex_code_masked": "VARCHAR",
+    "sex_inferred": "BOOLEAN",
     "adi_score": "DOUBLE",
     "adi_state_rank": "DOUBLE",
     "adi_missing": "BOOLEAN",
