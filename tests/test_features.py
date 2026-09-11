@@ -60,6 +60,8 @@ def stanford(tmp_path, monkeypatch):
         ("p2", "e3", "103", "Renal failure", 20.0),
         ("p3", "e6", "106", "Obesity", 300.0),
         ("p3", "e6", "106", "Acute and unspecified renal failure", 10.0),
+        # The catch-all category is not heart failure and does not count as a comorbidity.
+        ("p3", "e5", "105", "Congestive heart failure", 5.0),
     ])
     loader = StanfordLoader(connect())
     built = loader.build()
@@ -86,7 +88,7 @@ def test_stanford_features(stanford):
         },
         "stanford:p2:103": {
             "age_encoded": 8, "age_65plus": 1, "gender_male": 1, "adi_missing": 1, "hosp_ward_IP": 1,
-            "comorbid_heart_failure": 1, "comorbid_metastatic_cancer": 1, "comorbid_renal_failure": 1, "elixhauser_count": 4,
+            "comorbid_heart_failure": 1, "comorbid_metastatic_cancer": 1, "comorbid_renal_failure": 1, "elixhauser_count": 3,
             "T_carb_90d": 1, "T_glyco_90d": 1, "T_sulfa_90d": 1, "prior_MRSA": 1, "prior_VRE": 1, "multi_prior_resistant": 2,
             "proc_cvc": 1, "proc_urethral": 1, "any_proc_30d": 1, "any_immunocomp": 1, "any_invasive_proc": 1,
             "hospital_multiabx": 1, "specimen_blood": 1,
@@ -106,6 +108,13 @@ def test_stanford_features(stanford):
         if diff:
             mismatches[culture_id] = diff
     assert mismatches == {}, f"(got, expected) per feature: {mismatches}"
+
+
+def test_drug_capture_counts_prior_exposures(stanford):
+    loader, _ = stanford
+    capture = features.drug_capture(loader)
+    # Levofloxacin at half a day and the topical ciprofloxacin combination do not count.
+    assert {code: n for code, n in capture.items() if n} == {"FEP": 1, "TZP": 1, "SXT": 1, "VAN": 1, "ETP": 1}
 
 
 @pytest.fixture()

@@ -73,8 +73,14 @@ ANTIBIOTIC_CLASSES = {
     "T_amino_90d": ("AMK", "GEN", "KAN", "PLZ", "STR", "TOB"),
 }
 
+# ARMD's "Congestive heart failure" category is a catch-all. At MGB it spans 390 ICD-10 prefixes, led by
+# hyperlipidemia, anxiety and depression, and it covers most young adults at every site. The CCSR
+# "Heart failure" category holds the I50, I11.0 and I13.0 codes, so heart failure uses that category
+# alone and the catch-all is left out of every comorbidity feature.
+EXCLUDED_COMORBIDITY_CATEGORIES = ("Congestive heart failure",)
+
 COMORBIDITY_RULES = {
-    "comorbid_heart_failure": "heart failure|congestive heart",
+    "comorbid_heart_failure": "^heart failure$",
     "comorbid_liver_disease": "liver disease",
     "comorbid_lymphoma": "lymphoma",
     "comorbid_metastatic_cancer": "metastatic cancer",
@@ -128,22 +134,46 @@ def _days(loader, table: str) -> str:
     return f"TRY_CAST(f.{column} AS DOUBLE)"
 
 
-def _antibiotic_part(loader) -> str | None:
-    con, site = loader.con, loader.site
-    if site == "mgb":
-        table, name_column, days, mapper = "prior_abx", "drug_code", "TRY_CAST(f.last_dose_to_culture AS DOUBLE)", vocab.prior_abx_code
+def _antibiotic_source(loader) -> tuple[str, str, str, str] | None:
+    """Table, drug column, days expression and lookup table for prior antibiotic exposure."""
+    if loader.site == "mgb":
+        table, name_column, mapper = "prior_abx", "drug_code", vocab.prior_abx_code
     else:
         table, name_column, mapper = "antibiotic_subtype_exposure", "medication_name", vocab.medication_code
-        if table not in loader.staged_tables():
-            return None
-        days = _days(loader, table)
     if table not in loader.staged_tables():
         return None
-    lookup = register_value_lookup(con, f"{site}_lookup_prior_antibiotic", loader.distinct(table, name_column), mapper)
+    days = "TRY_CAST(f.last_dose_to_culture AS DOUBLE)" if loader.site == "mgb" else _days(loader, table)
+    lookup = register_value_lookup(loader.con, f"{loader.site}_lookup_prior_antibiotic", loader.distinct(table, name_column), mapper)
+    return table, name_column, days, lookup
+
+
+def _antibiotic_part(loader) -> str | None:
+    source = _antibiotic_source(loader)
+    if source is None:
+        return None
+    table, name_column, days, lookup = source
     src = _linked(loader, table, {"drug": f"f.{name_column}"},
                   where=f"WHERE {days} BETWEEN {PRIOR_MIN_DAYS} AND {ANTIBIOTIC_WINDOW_DAYS}", distinct=True)
     flags = ", ".join(f"MAX(CAST(l.value IN ({_quoted(codes)}) AS INTEGER)) AS {name}" for name, codes in ANTIBIOTIC_CLASSES.items())
     return f"SELECT s.culture_id, {flags} FROM ({src}) s JOIN {lookup} l ON l.raw = s.drug GROUP BY s.culture_id"
+
+
+def drug_capture(loader) -> dict[str, int]:
+    """Cultures with any prior exposure (days >= 1) to each antibiotic-class drug. Raw counts.
+
+    Releases record different drug lists, so this shows which class features a site can support.
+    """
+    source = _antibiotic_source(loader)
+    codes = sorted({code for members in ANTIBIOTIC_CLASSES.values() for code in members})
+    if source is None:
+        return {code: 0 for code in codes}
+    table, name_column, days, lookup = source
+    src = _linked(loader, table, {"drug": f"f.{name_column}"}, where=f"WHERE {days} >= {PRIOR_MIN_DAYS}", distinct=True)
+    counts = dict(loader.con.execute(
+        f"SELECT l.value, COUNT(DISTINCT s.culture_id) FROM ({src}) s JOIN {lookup} l ON l.raw = s.drug "
+        f"WHERE l.value IN ({_quoted(codes)}) GROUP BY 1"
+    ).fetchall())
+    return {code: counts.get(code, 0) for code in codes}
 
 
 def _resistance_part(loader, interpretation: str) -> str | None:
@@ -228,7 +258,8 @@ def _comorbidity_part(loader) -> str | None:
     rows = [(n, *[bool(re.search(p, n.lower())) for p in COMORBIDITY_RULES.values()]) for n in loader.distinct(table, column) if n is not None]
     if rows:
         con.executemany(f"INSERT INTO {lookup} VALUES ({', '.join('?' for _ in range(len(COMORBIDITY_RULES) + 1))})", rows)
-    src = _linked(loader, table, {"component": f"f.{column}"}, where=f"WHERE f.{column} IS NOT NULL", distinct=True)
+    src = _linked(loader, table, {"component": f"f.{column}"},
+                  where=f"WHERE f.{column} IS NOT NULL AND f.{column} NOT IN ({_quoted(EXCLUDED_COMORBIDITY_CATEGORIES)})", distinct=True)
     flags = ", ".join(f"MAX(CAST(l.{name} AS INTEGER)) AS {name}" for name in COMORBIDITY_RULES)
     return (
         f"SELECT s.culture_id, COUNT(DISTINCT s.component) AS elixhauser_count, {flags} "
@@ -340,7 +371,9 @@ def main(argv: list[str] | None = None) -> int:
     tmp_dir.rename(out_dir)
 
     summary = summarize(loader.con, table)
-    run.count("cultures", loader.con.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
+    n_cultures = loader.con.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+    summary["drug_capture_ever"] = {code: rate(n, n_cultures) for code, n in drug_capture(loader).items()}
+    run.count("cultures", n_cultures)
     run.set("output", str(out_dir))
     run.write()
     (run.dir / "summary.json").write_text(json.dumps(summary, indent=2))
