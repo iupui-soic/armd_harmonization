@@ -18,6 +18,10 @@ data/
 # PhysioNet terms allow release. benchmarks/manifests/SHA256SUMS still pins it.
 benchmarks/manifests/mgb.csv.gz
 
+# Agent instructions and the project plan stay local
+CLAUDE.md
+PAPER_A_PLAN.md
+
 # Results stay local except per-run summary JSON and the changelog
 results/**
 !results/**/
