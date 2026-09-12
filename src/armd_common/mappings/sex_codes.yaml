@@ -8,7 +8,7 @@
 
 status: inferred
 evidence_run: results/sex_inference/20260911T194822Z
-evidence_commit: 5061385
+evidence_commit: 38ca855
 reference: ARMD-MGB disclosed sex
 
 sites:

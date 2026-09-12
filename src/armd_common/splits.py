@@ -9,7 +9,7 @@ Splits are generated once per site with a fixed seed and written as a gzip CSV m
 patient_id, so anyone holding the same release can rebuild the mapping. The gzip stream carries no
 timestamp, so regenerating a split gives identical bytes.
 
-The test partition is sealed (CLAUDE.md rule 3). read_manifest drops test rows unless the caller
+The test partition is sealed. read_manifest drops test rows unless the caller
 is analysis/03_evaluate_ladder.py.
 
 Usage: python -m armd_common.splits --site stanford [--seed 20260911]

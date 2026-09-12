@@ -217,7 +217,7 @@ All four sites share the same nine bands: 18-24, 25-34, 35-44, 45-54, 55-64, 65-
   not confirmed it.
 - `sex_inference.py` tests each masked code against MGB's disclosed sex with two independent lines of
   evidence, and a mapping is recorded only when both agree (run
-  `results/sex_inference/20260911T194822Z`, commit 5061385).
+  `results/sex_inference/20260911T194822Z`, commit 38ca855).
 
 | site | male-only diagnosis, code 0 / code 1 | female-only diagnosis, code 0 / code 1 | pattern correlation with MGB |
 |---|---|---|---|
@@ -285,7 +285,7 @@ The state rank is not usable at UTSW or ECUH.
 (`~/ebsl-amr`), plus urine, blood and respiratory specimen indicators. Every site gets the same names
 and definitions. The tables are written to `features/harmonized48_<interpretation>/` inside each
 site folder in the data root. The runs are `results/features_<site>/20260911T2007*` and
-`20260911T2008*`, on commit d31b2f2.
+`20260911T2008*`, on commit 2fefb4e.
 
 ### Deliberate departures from the AMIA notebook
 
@@ -447,7 +447,7 @@ is not used.
 
 ## Phase 0 gate
 
-Run `results/00_gate/20260911T182159Z` on commit 2954e1b. All four sites pass, so the verdict is go.
+Run `results/00_gate/20260911T182159Z` on commit d96f9fc. All four sites pass, so the verdict is go.
 
 - Demographics, ward and ADI cover every negative culture at every site.
 - Every event table records dated events for negative cultures, and none falls below the 10%
