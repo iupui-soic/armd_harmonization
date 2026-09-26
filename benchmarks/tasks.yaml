@@ -1,8 +1,8 @@
 # Benchmark task registry (plan section 4.5).
 # Each task pins its cohort, label constructor, feature set, split manifest and metrics.
 # Label constructors live in armd_common.labels. The feature set name refers to
-# armd_common.features.FEATURES_48. The repeat rule and unit of analysis await SAP items R7 and R8,
-# so tasks use the release as is, one row per culture, until those are settled.
+# armd_common.features.FEATURES_48. Tasks use the default repeat rule and unit, one row per culture as
+# released, until the proposed defaults in docs/HARMONIZATION.md are confirmed.
 
 version: 1
 

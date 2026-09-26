@@ -353,8 +353,8 @@ This evidence has three limits.
 
 ### Options in armd-common
 
-These are proposed and not yet implemented. The project lead is asked to confirm them as SAP items R7
-and R8.
+They are the `repeat_rule` and `unit` options of `cohorts.CohortSpec`. Until the project lead confirms
+the proposed defaults, the defaults stay `release` and `culture`, one row per culture as released.
 
 **Repeat rule.**
 
@@ -564,7 +564,8 @@ cancer, obesity and renal failure.
 
 ## Recent antibiotic exposure
 
-SAP sensitivity analysis S2 excludes cultures with recent antibacterial exposure. Every release
+A sensitivity analysis excludes cultures with recent antibacterial exposure
+(`CohortSpec(exclude_recent_antibiotics=True)`). Every release
 records exposure times in whole days, and day 0 holds different things at each site. Shares are of
 ordered cultures in each release's cohort table, measured on 2026-09-11 without labels:
 
@@ -581,9 +582,9 @@ ordered cultures in each release's cohort table, measured on 2026-09-11 without 
 - A day 0 record cannot be placed before the order, and it includes treatment started after the
   culture was drawn. Counting it would remove 45% and 61% of cultures at Stanford and MGB, and almost
   nothing at UTSW and ECUH.
-- S2 therefore counts days 1 to 3 at every site, from the table the antibiotic features use. It misses
+- The exclusion therefore counts days 1 to 3 at every site, from the table the antibiotic features use. It misses
   doses on the order day before the culture, and MGB courses that began earlier and continued past
-  the order. SAP item R6 asks the project lead to confirm this.
+  the order. The project lead has yet to confirm this.
 
 ## Implied susceptibility
 
@@ -691,12 +692,12 @@ Still open:
 1. **K. aerogenes grouping.** Klebsiella by taxonomy (current) or Enterobacter by AmpC behaviour.
 2. **ESBL confirmatory label at ECUH.** ECUH reports clavulanate combination tests, which could
    support a confirmatory-test label alongside MGB's enzyme label.
-3. **Recent antibiotic window for S2.** Days 1 to 3 at every site, as described under Recent
-   antibiotic exposure (SAP item R6).
+3. **Recent antibiotic window.** Days 1 to 3 at every site, as described under Recent antibiotic
+   exposure.
 4. **Repeat rule.** The proposed default is `chained_14d`, as described under Repeat cultures and the
-   unit of analysis (SAP item R8).
+   unit of analysis.
 5. **Unit of analysis.** The proposed default is `specimen_day`, with `order_event` as a sensitivity
-   analysis (SAP item R7).
+   analysis.
 
 ## Questions for the ARMD-MGB maintainers
 

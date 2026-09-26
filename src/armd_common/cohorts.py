@@ -6,7 +6,7 @@ E2  Decision time. Every ordered culture. Negative cultures and cultures without
     are Y = 0. Label: labels.esbl_decision_time. Cultures with Enterobacterales but no sentinel
     result, and cultures whose isolates are unidentified, are not evaluable and leave the cohort.
 E3  Population. Not a cohort. ARMD holds cultured patients only, so E3 is analysed as bounds and a
-    tipping point on E2 results (SAP.md).
+    tipping point on E2 results.
 
 A cohort table has one row per evaluable unit of analysis with identifiers, partition and fold, the
 label and reason, subgroup columns and the 48 harmonized features. The repeat rule and the unit are
