@@ -257,7 +257,155 @@ The state rank is not usable at UTSW or ECUH.
 - Dates are shifted per patient. MGB dates run from 1931 to 2108, and UTSW and ECUH shift by up to
   two months. Calendar time is not usable, so every temporal feature must use the release's
   days-to-culture columns.
-- Every release excludes repeat cultures from the same patient within 14 days.
+- Stanford, UTSW and ECUH exclude repeat cultures within 14 days, and MGB does not. See the next
+  section.
+
+## Repeat cultures and the unit of analysis
+
+An earlier version of this document said every release excludes repeat cultures within 14 days. That
+is true of three releases and not of MGB. This section records what each release documents, what the
+data show, what published rules do, and the options armd-common proposes. Figures come from aggregate
+profiling of all ordered cultures on 2026-09-26, without labels.
+
+### What the releases document
+
+| site | documented rule | source |
+|---|---|---|
+| Stanford | "repeated cultures from the same patient within a two-week period were excluded". The Dryad page adds: "Patients with prior microbiological cultures within two weeks before the current culture were excluded to avoid overlapping data and ensure distinct clinical events." | Nateghi Haredasht 2025, Methods; Dryad Methods |
+| UTSW | "we accounted for patients with an active infection that might have multiple cultures taken in a short time period by excluding patients with prior microbiological cultures within the two weeks before the encounter" | Dryad Methods |
+| ECUH | "Patients with possible active infections were identified by having multiple cultures within the previous two weeks from the encounter and were thus excluded from the data set" | Dryad Methods |
+| MGB | "Exclusion: Microbiology cultures with no previous culture within the last 14 days." Read literally, this is the reverse of the other three rules. | PhysioNet, Cohort Selection |
+
+- No release says how it handles same-day cultures, different specimen types or blood culture sets.
+- UTSW and ECUH anchor the window on the encounter and word it as excluding patients. Stanford
+  anchors it on the culture. The data below show the same result at all three.
+- MGB says dates "are randomly shifted for each patient, encounter, and microbiology culture". The
+  three Dryad releases shift dates per patient.
+
+### What the data show
+
+- **Stanford, UTSW and ECUH.** No patient has a culture 1 to 13 days after another culture. Gaps start
+  at exactly 14 days.
+- **Same-day cultures at those three sites share one order time.** 166,672 Stanford, 201,732 UTSW and
+  194,810 ECUH cultures share an exact order time with another culture of the same patient, and no
+  patient has two different order times on one day. The Dryad rule therefore acts on order events and
+  keeps every culture in the index order.
+- **MGB applies no repeat rule.** 35.5% of MGB cultures have a culture from the same patient 1 to 14
+  days earlier. The gaps peak at one day (155,950 cultures) and fall smoothly after that.
+- **MGB intervals look preserved.** 66.2% of MGB cultures share an order date with another culture of
+  the same patient. Random shifts per culture would erase that clustering and the peak at one day. The
+  maintainers have not confirmed this.
+- **Blood cultures come in sets.** Among blood cultures, 90% at Stanford, 86% at MGB, 91% at UTSW and
+  93% at ECUH share a patient and day with another blood culture.
+
+### What published rules do
+
+The surveillance standards count isolates.
+- **CLSI M39.** Duplicates are eliminated "by including only the first isolate of a species, patient,
+  and/or analysis period, regardless of specimen source or antimicrobial susceptibility profile"
+  (CLSI M39, 5th edition, as summarised in Simner 2022, Table 1).
+- **NHSN Repeat Infection Timeframe.** The RIT is "a 14-day timeframe during which no new infections
+  of the same type are reported". "Additional pathogens recovered during the RIT from the same type of
+  infection are added to the event", and for BSI, UTI and PNEU "the RIT will apply at the major type of
+  infection" (NHSN 2026a).
+- **NHSN AR Option.** For invasive specimens "there should be 14 days with no positive culture result
+  from the laboratory for the patient and specific organism" before another event is entered. The
+  manual's worked example chains the window: a culture that was not reported still restarts the 14
+  days (NHSN 2026b, Table 1). Same-day duplicates are defined within the invasive or non-invasive
+  source type.
+- **WHO GLASS.** GLASS reports "only one result for each surveillance period (for example, 12 months)
+  ... for each patient per surveyed specimen type and surveyed pathogen". Blood and urine from the
+  same patient are both kept. "Repeated negative results for the same specimen type in the same
+  patient should also be de-duplicated" (WHO 2023, section 9.5.1).
+
+Blood culture guidance treats sets drawn together as one episode.
+- IDSA and ASM define a set as all bottles from one venipuncture and recommend several sets for each
+  septic episode (Baron 2013; Miller 2018).
+- A blood culture series is "All BC sets collected from the same patient over a period of time",
+  usually 24 or 48 hours (Palavecino 2024).
+
+Prediction studies use several units.
+- **AMR-UTI, the MGB urinary tract infection dataset (Oberst 2020).** "To mimic the empiric treatment
+  setting, we restrict to the first specimen from an infection and exclude any specimens taken within
+  a 14 day period from the same body site as duplicates. Specimens taken on the same day are merged or
+  kept separate, depending on whether they come from the same or different body sites
+  (respectively)."
+- **Deelen 2021.** "Multiple sets of blood cultures obtained on the same calendar day were considered
+  part of the same infection episode." Its comparison group includes episodes whose blood cultures were
+  negative, and episodes are anchored to the start of empiric antibiotics. It is the closest published
+  design to the E2 estimand.
+- **Yuan 2025.** The first positive blood culture with an Enterobacterales species per 14-day period.
+- **Amrollahi 2024, on ARMD-Stanford.** "we excluded culture orders if the patient had a positive
+  result within the preceding 14 days".
+- **Goodman 2016, Tumbarello 2011, Hebert 2020 and Howard 2024.** One episode or culture per patient.
+
+This evidence has three limits.
+- Every standard above counts positive isolates. Only GLASS mentions negative results, and it
+  de-duplicates them in the same way. No published rule defines the unit for a cohort of culture orders
+  that includes negatives, so the choice below extends the ARMD rule and says so.
+- The standards disagree on specimen type. M39 pools specimen sources. The NHSN RIT, the NHSN AR Option
+  and GLASS keep infection or specimen types apart.
+- Most published models keep one culture per patient or per episode. TRIPOD+AI requires every record
+  of one individual to stay in one partition (Collins 2024). The patient-level splits already meet
+  that, whatever unit is chosen.
+
+### Options in armd-common
+
+These are proposed and not yet implemented. The project lead is asked to confirm them as SAP items R7
+and R8.
+
+**Repeat rule.**
+
+| value | rule | support |
+|---|---|---|
+| `chained_14d` (proposed default) | An order date is an index if the patient has no culture 1 to 13 days earlier, whether or not that earlier culture was kept. | The Stanford Dryad wording and the NHSN AR Option worked example. A 14-day window is also used by the NHSN RIT, AMR-UTI, Yuan 2025 and Amrollahi 2024. |
+| `release` | Keep cultures as released. | MGB then keeps repeat cultures that the other releases drop. |
+| `first_per_patient` | Keep each patient's first index order only. | Goodman 2016, Tumbarello 2011, Hebert 2020, Howard 2024. Sensitivity analysis only. |
+
+- **Why a chained window.** It is what the Stanford release describes. It also reproduces all three
+  Dryad releases exactly, so it changes only MGB.
+- **Why every culture counts.** The rule looks at any earlier culture, not only positive ones. The
+  outcome is unknown at order time, and GLASS de-duplicates negatives as well. Only then can E1 and E2
+  be drawn from one cohort.
+- **Effect at MGB.** 632,625 of 972,798 cultures are kept (65.0%), on 410,763 order dates, and no
+  patient drops out. Positivity rises from 21.3% to 26.2% and the blood share falls from 64.5% to
+  57.4%. Enterobacterales cultures fall from 135,929 to 120,154.
+- **MGB is still the outlier after the rule.** The other sites are 16.0%, 13.1% and 13.3% positive,
+  with blood shares of 38.8%, 36.9% and 40.7%. Repeat cultures explain only part of the gap described
+  under Culture positivity.
+
+**Unit of analysis.**
+
+| value | one row per | support |
+|---|---|---|
+| `specimen_day` (proposed default) | patient, specimen type and order date | Sets drawn together belong to one septic episode (Baron 2013; Miller 2018; Deelen 2021). AMR-UTI merges same-day specimens from one body site and keeps different sites apart. The NHSN RIT, the NHSN AR Option and GLASS all keep infection or specimen types apart. |
+| `order_event` | patient and order date | One empiric decision covers every culture ordered together. Deelen 2021 anchors episodes on the start of empiric antibiotics. No standard pools specimen types like this, so it is a sensitivity analysis. |
+| `culture` | culture, as released | The release grain. Each blood culture set counts separately. |
+
+The order date is the finest grain every site shares. MGB records dates only, and at the Dryad sites
+all same-day cultures share one order time. Counts after `chained_14d`:
+
+| site | cultures | specimen-days | order events | order events with two or more specimen types |
+|---|---|---|---|---|
+| Stanford | 751,075 | 596,787 | 584,403 | 12,072 |
+| MGB | 632,625 | 457,123 | 410,763 | 44,744 |
+| UTSW | 774,149 | 629,476 | 572,417 | 56,943 |
+| ECUH | 840,776 | 678,420 | 645,966 | 30,896 |
+
+**Labels for units with several cultures.**
+- A unit is labelled 1 if any of its cultures is labelled 1. This matches how isolates are already
+  pooled within a culture.
+- A unit is labelled 0 only when every culture in it is evaluable and none is labelled 1. Otherwise
+  the unit is non-evaluable.
+- Under E1, cultures that are negative or grew no Enterobacterales are left out of the unit instead of
+  making it non-evaluable.
+- Features are already measured from the order date, so they agree within a unit. Specimen indicators
+  describe the unit's specimen type under `specimen_day`, and any specimen present under
+  `order_event`.
+
+**Still depends on MGB.** The maintainers are being asked which repeat rule they applied and whether
+intervals between a patient's cultures are preserved. If intervals are not preserved, no window rule
+can be applied at MGB.
 
 ## Feature tables
 
@@ -533,6 +681,10 @@ Still open:
    support a confirmatory-test label alongside MGB's enzyme label.
 3. **Recent antibiotic window for S2.** Days 1 to 3 at every site, as described under Recent
    antibiotic exposure (SAP item R6).
+4. **Repeat rule.** The proposed default is `chained_14d`, as described under Repeat cultures and the
+   unit of analysis (SAP item R8).
+5. **Unit of analysis.** The proposed default is `specimen_day`, with `order_event` as a sensitivity
+   analysis (SAP item R7).
 
 ## Questions for the ARMD-MGB maintainers
 
@@ -540,3 +692,64 @@ Still open:
    from a different mapping than the cohort. Is this intended?
 2. Were cultures that grew an organism without AST excluded? The answer changes MGB's E2
    denominator.
+3. Which repeat-culture exclusion, if any, was applied? The project page says "Exclusion:
+   Microbiology cultures with no previous culture within the last 14 days", but 35.5% of cultures have
+   a culture from the same patient 1 to 14 days earlier.
+4. Are intervals between one patient's cultures preserved, given that dates are shifted "for each
+   patient, encounter, and microbiology culture"?
+
+## References
+
+- Amrollahi F, Nateghi Haredasht F, Vansomphone A, et al. Machine learning-based prediction of
+  antimicrobial susceptibility: a step towards precision antimicrobial stewardship. AMIA Annu Symp
+  Proc. 2024;2024:138-146. PMID 41726396.
+- Baron EJ, Miller JM, Weinstein MP, et al. A guide to utilization of the microbiology laboratory for
+  diagnosis of infectious diseases: 2013 recommendations by IDSA and ASM. Clin Infect Dis.
+  2013;57(4):e22-e121. doi:10.1093/cid/cit278
+- CDC NHSN (2026a). Patient Safety Component Manual, chapter 2: Identifying healthcare-associated
+  infections for NHSN surveillance. January 2026.
+  https://www.cdc.gov/nhsn/pdfs/pscmanual/2psc_identifyinghais_nhsncurrent.pdf
+- CDC NHSN (2026b). Antimicrobial Use and Resistance (AUR) Module. July 2026.
+  https://www.cdc.gov/nhsn/pdfs/pscmanual/11pscaurcurrent.pdf
+- CLSI. M39: Analysis and Presentation of Cumulative Antimicrobial Susceptibility Test Data. 5th ed.
+  Clinical and Laboratory Standards Institute; 2022. Not read directly. Quoted through Simner 2022.
+- Collins GS, Moons KGM, Dhiman P, et al. TRIPOD+AI statement: updated guidance for reporting clinical
+  prediction models that use regression or machine learning methods. BMJ. 2024;385:e078378.
+  doi:10.1136/bmj-2023-078378
+- Cooper LN, et al. Antimicrobial Resistance Microbiological Dataset (ARMD-ECUH). Dryad, version 4.
+  doi:10.5061/dryad.7sqv9s55x
+- Cooper LN, et al. Antimicrobial Resistance Microbiological Dataset (ARMD-UTSW). Dryad, version 5.
+  doi:10.5061/dryad.0rxwdbsd5
+- Deelen JWT, et al. An international prospective cohort study to validate 2 prediction rules for
+  infections caused by third-generation cephalosporin-resistant Enterobacterales. Clin Infect Dis.
+  2021;73(11):e4475-e4483. doi:10.1093/cid/ciaa950
+- Goodman KE, et al. A clinical decision tree to predict whether a bacteremic patient is infected with
+  an extended-spectrum beta-lactamase-producing organism. Clin Infect Dis. 2016;63(7):896-903.
+  doi:10.1093/cid/ciw425
+- Hebert C, et al. Prediction of antibiotic susceptibility for urinary tract infection in a hospital
+  setting. Antimicrob Agents Chemother. 2020;64(7):e02236-19. doi:10.1128/aac.02236-19
+- Howard A, et al. Personalised antimicrobial susceptibility testing with clinical prediction modelling
+  informs appropriate antibiotic use. Nat Commun. 2024;15:9924. doi:10.1038/s41467-024-54192-3
+- Miller JM, Binnicker MJ, Campbell S, et al. A guide to utilization of the microbiology laboratory for
+  diagnosis of infectious diseases: 2018 update by IDSA and ASM. Clin Infect Dis. 2018;67(6):e1-e94.
+  doi:10.1093/cid/ciy381
+- Nateghi Haredasht F, et al. Antibiotic Resistance Microbiology Dataset (ARMD): a resource for
+  antimicrobial resistance from EHRs. Sci Data. 2025;12:1299. doi:10.1038/s41597-025-05649-7. Dryad,
+  version 20. doi:10.5061/dryad.jq2bvq8kp
+- Oberst M, Boominathan S, Zhou H, Kanjilal S, Sontag D. AMR-UTI: antimicrobial resistance in urinary
+  tract infections (version 1.0.0). PhysioNet. 2020. doi:10.13026/se6w-f455
+- Palavecino EL, Campodonico VL, She RC. Laboratory approaches to determining blood culture
+  contamination rates: an ASM Laboratory Practices Subcommittee report. J Clin Microbiol.
+  2024;62(2):e01028-23. doi:10.1128/jcm.01028-23
+- Simner PJ, Hindler JA, et al. What's new in antibiograms? Updating CLSI M39 guidance with current
+  trends. J Clin Microbiol. 2022;60(10):e02210-21. doi:10.1128/jcm.02210-21
+- Tumbarello M, et al. Identifying patients harboring extended-spectrum-beta-lactamase-producing
+  Enterobacteriaceae on hospital admission: derivation and validation of a scoring system. Antimicrob
+  Agents Chemother. 2011;55(7):3485-3490. doi:10.1128/aac.00009-11
+- Wei Z, Kanjilal S. Antibiotic Resistance Microbiology Dataset Mass General Brigham (ARMD-MGB)
+  (version 1.0.0). PhysioNet. 2025. doi:10.13026/2r5k-b955
+- WHO. GLASS manual for antimicrobial resistance surveillance in common bacteria causing human
+  infection. Geneva: World Health Organization; 2023. ISBN 978-92-4-007660-0
+- Yuan K, et al. Machine learning and clinician predictions of antibiotic resistance in
+  Enterobacterales bloodstream infections. J Infect. 2025;90(2):106388.
+  doi:10.1016/j.jinf.2024.106388
