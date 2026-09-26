@@ -23,3 +23,19 @@
 - E2 is younger and has fewer prior cultures than E1 at every site. Blood specimens rise (SMD 0.81 to 1.52) and urine specimens fall (SMD -0.83 to -1.41).
 - S2 now counts antibacterial records 1 to 3 days before the order. It removes 7.1%, 20.8%, 5.0% and 2.2% of E2 derivation cultures, where counting day 0 had removed 45.1% and 60.9% at Stanford and MGB. Flow steps before the partition no longer count labels.
 - Flagged: the plan expected E2 to add low-acuity outpatients, but E2 is more inpatient than E1 at Stanford, MGB and UTSW (SMD 0.14 to 0.78) and only ECUH shifts toward outpatients. Cultures S2 removes have E2 prevalence of 1.03%, 1.05%, 0.52% and 1.13%, against 1.18%, 2.07%, 0.53% and 0.95% for those kept.
+
+## 2026-09-26 qc (results/qc_<site>/20260926T1204*, commit 5909480, documentation edits uncommitted)
+
+- The QC report now profiles repeat and same-day cultures. Stanford, UTSW and ECUH have no culture 1 to 13 days after another from the same patient, and gaps start at exactly 14 days.
+- MGB applies no repeat rule. 35.0% of its cultures follow another culture of the same patient by 1 to 13 days, and 155,950 follow by one day.
+- At the Dryad sites every same-day culture of a patient shares one order time. Blood cultures come in same-day sets: 90%, 86%, 91% and 93% of them at Stanford, MGB, UTSW and ECUH.
+- The chained 14-day rule changes nothing at the three Dryad sites and keeps 632,625 of 972,798 MGB cultures (65.0%). MGB positivity rises from 21.3% to 26.2% and its blood share falls from 64.5% to 57.4%.
+- Flagged: MGB's documented rule reads as the reverse of the other releases, and its data show no rule at all. Asked of the maintainers.
+
+## 2026-09-26 01_build_cohorts (results/01_build_cohorts/20260926T120230Z, commit 5909480, documentation edits uncommitted)
+
+- Added cohorts under the proposed chained 14-day rule with one row per specimen-day (SAP R7, R8), plus order events (S6) and first index order per patient (S7). Per-culture cohorts are unchanged.
+- Under the proposed unit, E1 prevalence is 11.1%, 10.7%, 8.1% and 9.2% at Stanford, MGB, UTSW and ECUH, and E2 prevalence is 1.48%, 2.74%, 0.65% and 1.17%. E2 rises because each blood culture set now counts once.
+- MGB E1 prevalence falls from 13.3% to 10.7% once repeat cultures go, so repeats after a resistant culture inflated it. Keeping each patient's first index order lowers E1 prevalence to 8.0%, 6.8%, 5.8% and 5.1%.
+- The E2 minus E1 inpatient SMD moves from +0.18 to +0.04 at Stanford and from +0.14 to +0.02 at UTSW, so most of the earlier "E2 is more inpatient" surprise came from counting blood sets separately. MGB stays more inpatient (+0.78 to +0.47) and ECUH shifts further to outpatients (-0.32 to -0.45).
+- Flow counts within 10 of another published count are now withheld. This hides the S5 counts at MGB and UTSW, which differed from the primary cohorts by fewer than 11.
