@@ -81,7 +81,10 @@ def test_publish_flows_withholds_counts_exposed_by_subtraction():
     ]
     out = qc.publish_flows({"primary": primary, "sensitivity": sensitivity})
     assert out["primary"][2] == {"step": "in partition", "units": 320, "cultures": 320, "patients": 240, "label_positive": 40, "prevalence": 0.125}
-    assert out["primary"][3]["units"] == qc.WITHHELD and out["primary"][3]["prevalence"] == qc.WITHHELD
+    # Each count that sits within 10 of an earlier one is withheld, and prevalence goes with it.
+    # The label count is unchanged, so it stays.
+    assert out["primary"][3] == {"step": "no recent antibiotics", "units": qc.WITHHELD, "cultures": qc.WITHHELD,
+                                 "patients": qc.WITHHELD, "label_positive": 40, "prevalence": qc.WITHHELD}
     # One more evaluable culture than the primary cohort is withheld. Identical counts are not.
     assert out["sensitivity"][0]["cultures"] == 5000
     assert out["sensitivity"][1]["cultures"] == qc.WITHHELD

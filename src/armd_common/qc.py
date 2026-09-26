@@ -56,10 +56,10 @@ def publish_flows(flows: dict[str, list[dict]]) -> dict[str, list[dict]]:
 
     Counts of 11 or more can still expose a small cell by subtraction, for example when a
     sensitivity cohort differs from the primary cohort by a few cultures. Flows are read in order,
-    so primary cohorts should come first. A step is withheld when any of its counts is within
-    MIN_CELL - 1 of the same count at an earlier published step of its own flow, or at the step of
-    the same name in an earlier flow. Only published counts are compared, since a withheld count
-    cannot be subtracted.
+    so primary cohorts should come first. A count is withheld when it is within MIN_CELL - 1 of the
+    same count at an earlier published step of its own flow, or at the step of the same name in an
+    earlier flow. Only published counts are compared, since a withheld count cannot be subtracted.
+    Prevalence is withheld with either of its terms.
     """
     published: dict[tuple[str, str], list[int]] = {}
     out = {}
@@ -67,23 +67,25 @@ def publish_flows(flows: dict[str, list[dict]]) -> dict[str, list[dict]]:
         own: dict[str, list[int]] = {}
         rows = []
         for step in flow:
-            values = {k: step.get(k) for k in FLOW_COUNTS}
-            clash = any(
-                v is not None and any(0 < abs(v - w) < MIN_CELL for w in own.get(k, []) + published.get((step["step"], k), []))
-                for k, v in values.items()
-            )
-            if clash:
-                rows.append({"step": step["step"], **{k: None if v is None else WITHHELD for k, v in values.items()},
-                             "prevalence": None if values["label_positive"] is None else WITHHELD})
-                continue
-            for k, v in values.items():
+            row = {"step": step["step"]}
+            for k in FLOW_COUNTS:
+                v = step.get(k)
+                if v is not None and any(0 < abs(v - w) < MIN_CELL for w in own.get(k, []) + published.get((step["step"], k), [])):
+                    row[k] = WITHHELD
+                    continue
                 if v is not None:
                     own.setdefault(k, []).append(v)
                     published.setdefault((step["step"], k), []).append(v)
-            denominator = values["units"] if values["units"] is not None else values["cultures"]
-            positive = values["label_positive"]
-            rows.append({"step": step["step"], **{k: cell(v) for k, v in values.items()},
-                         "prevalence": None if positive is None else rate(positive, denominator)})
+                row[k] = cell(v)
+            denominator_key = "units" if step.get("units") is not None else "cultures"
+            positive = step.get("label_positive")
+            if positive is None:
+                row["prevalence"] = None
+            elif WITHHELD in (row["label_positive"], row[denominator_key]):
+                row["prevalence"] = WITHHELD
+            else:
+                row["prevalence"] = rate(positive, step[denominator_key])
+            rows.append(row)
         out[name] = rows
     return out
 
