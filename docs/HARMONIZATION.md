@@ -264,8 +264,9 @@ The state rank is not usable at UTSW or ECUH.
 
 An earlier version of this document said every release excludes repeat cultures within 14 days. That
 is true of three releases and not of MGB. This section records what each release documents, what the
-data show, what published rules do, and the options armd-common proposes. Figures come from aggregate
-profiling of all ordered cultures on 2026-09-26, without labels.
+data show, what published rules do, and the options armd-common proposes. Figures come from the QC
+runs `results/qc_<site>/20260926T1204*` (`qc.repeat_profile`), over all ordered cultures and without
+labels, unless stated otherwise.
 
 ### What the releases document
 
@@ -286,12 +287,13 @@ profiling of all ordered cultures on 2026-09-26, without labels.
 
 - **Stanford, UTSW and ECUH.** No patient has a culture 1 to 13 days after another culture. Gaps start
   at exactly 14 days.
-- **Same-day cultures at those three sites share one order time.** 166,672 Stanford, 201,732 UTSW and
-  194,810 ECUH cultures share an exact order time with another culture of the same patient, and no
+- **Same-day cultures at those three sites share one order time.** 321,658 Stanford, 345,365 UTSW and
+  359,625 ECUH cultures share an exact order time with another culture of the same patient, and no
   patient has two different order times on one day. The Dryad rule therefore acts on order events and
   keeps every culture in the index order.
-- **MGB applies no repeat rule.** 35.5% of MGB cultures have a culture from the same patient 1 to 14
-  days earlier. The gaps peak at one day (155,950 cultures) and fall smoothly after that.
+- **MGB applies no repeat rule.** 35.0% of MGB cultures have a culture from the same patient 1 to 13
+  days earlier, and 35.5% counting 14 days. The gaps peak at one day (155,950 cultures) and fall
+  smoothly after that.
 - **MGB intervals look preserved.** 66.2% of MGB cultures share an order date with another culture of
   the same patient. Random shifts per culture would erase that clustering and the peak at one day. The
   maintainers have not confirmed this.
@@ -399,9 +401,19 @@ all same-day cultures share one order time. Counts after `chained_14d`:
   the unit is non-evaluable.
 - Under E1, cultures that are negative or grew no Enterobacterales are left out of the unit instead of
   making it non-evaluable.
-- Features are already measured from the order date, so they agree within a unit. Specimen indicators
-  describe the unit's specimen type under `specimen_day`, and any specimen present under
-  `order_event`.
+- Features are measured from the order date, so they mostly agree within a unit. A unit takes the
+  maximum of each flag and count, so it has a history if any of its cultures records one.
+  `days_since_prior_org` is 0 when there is no prior organism, so a unit takes its most recent
+  non-zero value (`cohorts.unit_feature_sql`).
+- Specimen indicators describe the unit's specimen type under `specimen_day`, and any specimen present
+  under `order_event`. Ward flags differ within a few hundred order events, where same-day cultures
+  came from different encounters, and the unit takes any ward present.
+- **Flagged: MGB history differs between cultures ordered on the same date.** Across all MGB cultures,
+  276,054 order events hold more than one culture. In 8,246 of them the cultures disagree on
+  `days_since_prior_org`, in 737 on `num_prior_orgs` and in 76 on `prior_ESBL`. These counts come from a
+  one-off aggregate check on 2026-09-26 that is not yet part of QC. MGB links these tables
+  by culture ID, and same-day cultures should share their history at day resolution, so MGB seems to
+  compute each culture's history separately. The Dryad sites show no such disagreement.
 
 **Still depends on MGB.** The maintainers are being asked which repeat rule they applied and whether
 intervals between a patient's cultures are preserved. If intervals are not preserved, no window rule

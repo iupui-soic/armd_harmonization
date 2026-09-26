@@ -1,7 +1,8 @@
 # Benchmark task registry (plan section 4.5).
 # Each task pins its cohort, label constructor, feature set, split manifest and metrics.
-# Label constructors live in armd_common.labels. The feature set name refers to armd_common.features,
-# which is not built yet.
+# Label constructors live in armd_common.labels. The feature set name refers to
+# armd_common.features.FEATURES_48. The repeat rule and unit of analysis await SAP items R7 and R8,
+# so tasks use the release as is, one row per culture, until those are settled.
 
 version: 1
 
