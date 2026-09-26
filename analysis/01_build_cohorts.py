@@ -6,8 +6,9 @@ to cohorts/<cohort name>/derivation.parquet inside the site folder in the data r
 
 results/01_build_cohorts/<timestamp>/ receives manifest.json, summary.json and report.md with the
 TRIPOD+AI flow counts, label prevalence, the share of ordered cultures that were negative or grew no
-Enterobacterales, and covariate means with standardized mean differences between E2 and E1.
-Counts from 1 to 10 are suppressed.
+Enterobacterales, and covariate means with standardized mean differences between E2 and E1, per
+culture as released and under the proposed repeat rule and unit (SAP items R7 and R8). Counts from 1
+to 10 are suppressed, and so is any flow count within 10 of another published count (qc.publish_flows).
 
 Usage: python analysis/01_build_cohorts.py [--sites stanford,mgb] [--seed 20260911]
 """
@@ -24,7 +25,7 @@ from armd_common.cohorts import PRIMARY_SPECS, CohortSpec, build_cohort
 from armd_common.config import DEFAULT_SEED, SITES, get_site
 from armd_common.db import connect
 from armd_common.provenance import RunManifest, sha256_file
-from armd_common.qc import cell, rate
+from armd_common.qc import cell, publish_flows, rate
 from armd_common.sites import get_loader
 
 SENSITIVITY_SPECS = (
@@ -35,6 +36,13 @@ SENSITIVITY_SPECS = (
     CohortSpec("E2", implied_susceptibility="strict"),
     CohortSpec("E2", exclude_recent_antibiotics=True),
 )
+# Proposed repeat rule and unit (R7, R8), then S6 (specimen types pooled) and S7 (first index order).
+UNIT_SPECS = tuple(
+    CohortSpec(estimand, repeat_rule=rule, unit=unit)
+    for rule, unit in (("chained_14d", "specimen_day"), ("chained_14d", "order_event"), ("first_per_patient", "specimen_day"))
+    for estimand in ("E1", "E2")
+)
+PROPOSED = ("e1_composite_chained_14d_specimen_day", "e2_composite_chained_14d_specimen_day")
 MGB_SPECS = (
     CohortSpec("E1", interpretation="clsi2022"),
     CohortSpec("E2", interpretation="clsi2022"),
@@ -70,19 +78,9 @@ def write_parquet(con, table: str, out_dir) -> None:
     tmp = out_dir.with_name(out_dir.name + ".tmp")
     shutil.rmtree(tmp, ignore_errors=True)
     tmp.mkdir(parents=True)
-    con.execute(f"COPY (SELECT * FROM {table} ORDER BY culture_id) TO '{tmp / 'derivation.parquet'}' (FORMAT parquet, COMPRESSION zstd)")
+    con.execute(f"COPY (SELECT * FROM {table} ORDER BY unit_id) TO '{tmp / 'derivation.parquet'}' (FORMAT parquet, COMPRESSION zstd)")
     shutil.rmtree(out_dir, ignore_errors=True)
     tmp.rename(out_dir)
-
-
-def suppressed_flow(flow: list[dict]) -> list[dict]:
-    out = []
-    for s in flow:
-        positive = s["label_positive"]
-        out.append({"step": s["step"], "cultures": cell(s["cultures"]), "patients": cell(s["patients"]),
-                    "label_positive": None if positive is None else cell(positive),
-                    "prevalence": None if positive is None else rate(positive, s["cultures"])})
-    return out
 
 
 def run_site(site: str, run: RunManifest) -> dict:
@@ -96,21 +94,27 @@ def run_site(site: str, run: RunManifest) -> dict:
     built = loader.build()
     con = loader.con
     feature_tables = {"lab": features.build_features(loader, built, "lab")}
-    specs = PRIMARY_SPECS + SENSITIVITY_SPECS
+    specs = PRIMARY_SPECS + SENSITIVITY_SPECS + UNIT_SPECS
     if site == "mgb":
         feature_tables["clsi2022"] = features.build_features(loader, built, "clsi2022")
         specs = specs + MGB_SPECS
 
     out = {"cohorts": {}}
     results = {}
+    flows = {}
     for spec in specs:
         result = build_cohort(loader, built, spec, features_table=feature_tables[spec.interpretation])
         results[spec.name] = result
         write_parquet(con, result.table, cfg.parquet_dir.parent / "cohorts" / spec.name)
         for step in result.flow:
             run.count(f"{site}.{spec.name}.{step['step']}", step["cultures"])
-        out["cohorts"][spec.name] = {"flow": suppressed_flow(result.flow), "provenance": result.provenance}
-        print(f"  {site}.{spec.name}: {cell(result.flow[-1]['cultures'])} cultures", flush=True)
+            if step["units"] is not None and spec.unit != "culture":
+                run.count(f"{site}.{spec.name}.{step['step']}.units", step["units"])
+        flows[spec.name] = result.flow
+        out["cohorts"][spec.name] = {"provenance": result.provenance}
+        print(f"  {site}.{spec.name}: {cell(result.flow[-1]['units'])} units", flush=True)
+    for name, flow in publish_flows(flows).items():
+        out["cohorts"][name]["flow"] = flow
 
     e1, e2 = results["e1_composite"], results["e2_composite"]
     split = splits.register_manifest(con, site, table=f"{site}_split_descriptive")
@@ -120,17 +124,22 @@ def run_site(site: str, run: RunManifest) -> dict:
         FROM {built['culture_episodes']} e JOIN {split} s ON s.patient_id_hash = sha256(e.patient_id)
         WHERE s.partition = 'derivation'
     """).fetchone()
-    m1, m2 = moments(con, e1.table), moments(con, e2.table)
     out["analysis_1"] = {
         "ordered_derivation_cultures": cell(n_all),
         "negative_share": rate(negative, n_all),
         "positive_without_enterobacterales_share": rate(no_entero, n_all),
-        "covariates": {c: {"E1_mean": round(m1[c][0], 4) if m1[c][0] is not None else None,
-                           "E2_mean": round(m2[c][0], 4) if m2[c][0] is not None else None,
-                           "smd_E2_minus_E1": smd(m1[c], m2[c])} for c in COVARIATES},
+        "covariates": covariate_table(con, e1.table, e2.table),
+        "covariates_proposed_unit": covariate_table(con, results[PROPOSED[0]].table, results[PROPOSED[1]].table),
     }
     con.close()
     return out
+
+
+def covariate_table(con, e1_table: str, e2_table: str) -> dict:
+    m1, m2 = moments(con, e1_table), moments(con, e2_table)
+    return {c: {"E1_mean": round(m1[c][0], 4) if m1[c][0] is not None else None,
+                "E2_mean": round(m2[c][0], 4) if m2[c][0] is not None else None,
+                "smd_E2_minus_E1": smd(m1[c], m2[c])} for c in COVARIATES}
 
 
 def render(summary: dict) -> str:
@@ -143,17 +152,21 @@ def render(summary: dict) -> str:
             f"Ordered derivation cultures: {a1['ordered_derivation_cultures']}. Negative: {a1['negative_share']}. "
             f"Positive without Enterobacterales: {a1['positive_without_enterobacterales_share']}.",
             "",
-            "| cohort | step | cultures | patients | label = 1 | prevalence |",
-            "|---|---|---|---|---|---|",
+            "| cohort | step | units | cultures | patients | label = 1 | prevalence |",
+            "|---|---|---|---|---|---|---|",
         ]
         for name, c in s["cohorts"].items():
             for step in c["flow"]:
                 positive, prevalence = ("n/a", "n/a") if step["label_positive"] is None else (step["label_positive"], step["prevalence"])
-                lines.append(f"| {name} | {step['step']} | {step['cultures']} | {step['patients']} | {positive} | {prevalence} |")
-        lines += ["", "Labels are counted from the partition step on, because earlier steps include the sealed test partition."]
-        lines += ["", "| covariate | E1 mean | E2 mean | SMD (E2 minus E1) |", "|---|---|---|---|"]
-        for cov, v in a1["covariates"].items():
-            lines.append(f"| {cov} | {v['E1_mean']} | {v['E2_mean']} | {v['smd_E2_minus_E1']} |")
+                units = "n/a" if step["units"] is None else step["units"]
+                lines.append(f"| {name} | {step['step']} | {units} | {step['cultures']} | {step['patients']} | {positive} | {prevalence} |")
+        lines += ["", "Labels are counted from the partition step on, because earlier steps include the sealed test partition.",
+                  "Prevalence is per unit. A withheld step is within 10 of another published count."]
+        for key, title in (("covariates", "one row per culture as released"),
+                           ("covariates_proposed_unit", "chained_14d repeat rule, one row per specimen-day")):
+            lines += ["", f"Covariates, {title}:", "", "| covariate | E1 mean | E2 mean | SMD (E2 minus E1) |", "|---|---|---|---|"]
+            for cov, v in a1[key].items():
+                lines.append(f"| {cov} | {v['E1_mean']} | {v['E2_mean']} | {v['smd_E2_minus_E1']} |")
         lines.append("")
     return "\n".join(lines) + "\n"
 
