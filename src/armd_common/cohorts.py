@@ -8,9 +8,10 @@ E2  Decision time. Every ordered culture. Negative cultures and cultures without
 E3  Population. Not a cohort. ARMD holds cultured patients only, so E3 is analysed as bounds and a
     tipping point on E2 results (SAP.md).
 
-A cohort table has one row per evaluable culture with identifiers, partition and fold, the label and
-reason, subgroup columns and the 48 harmonized features. Each build also returns the counts at every
-filter step for the TRIPOD+AI flow diagram. The test partition is sealed, so asking for it raises
+A cohort table has one row per evaluable unit of analysis with identifiers, partition and fold, the
+label and reason, subgroup columns and the 48 harmonized features. The repeat rule and the unit are
+set by the spec (episodes.py). The defaults, release and culture, give one row per culture as
+released. Each build also returns the counts at every filter step for the TRIPOD+AI flow diagram. The test partition is sealed, so asking for it raises
 unless the caller is analysis/03_evaluate_ladder.py.
 """
 
@@ -20,6 +21,7 @@ import uuid
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+from . import episodes as units_mod
 from . import features, implied, labels, splits
 from .provenance import sha256_file
 
@@ -37,6 +39,8 @@ class CohortSpec:
     interpretation: str = "lab"
     implied_susceptibility: str | None = None
     exclude_recent_antibiotics: bool = False
+    repeat_rule: str = "release"
+    unit: str = "culture"
 
     @property
     def name(self) -> str:
@@ -49,6 +53,10 @@ class CohortSpec:
             parts.append(f"implied_{self.implied_susceptibility}")
         if self.exclude_recent_antibiotics:
             parts.append(f"no_antibiotics_{RECENT_ANTIBIOTIC_DAYS}d")
+        if self.repeat_rule != "release":
+            parts.append(self.repeat_rule)
+        if self.unit != "culture":
+            parts.append(self.unit)
         return "_".join(parts)
 
     def validate(self, site: str) -> None:
@@ -71,6 +79,10 @@ class CohortSpec:
             problems.append("implied_susceptibility must be None, strict or full")
         if self.implied_susceptibility and (self.interpretation != "lab" or self.label == "enzyme"):
             problems.append("implied susceptibility applies to lab S, I and R results only")
+        if self.repeat_rule not in units_mod.REPEAT_RULES:
+            problems.append(f"repeat_rule must be one of {', '.join(units_mod.REPEAT_RULES)}")
+        if self.unit not in units_mod.UNITS:
+            problems.append(f"unit must be one of {', '.join(units_mod.UNITS)}")
         if problems:
             raise ValueError("; ".join(problems))
 
@@ -125,6 +137,21 @@ def _label(con, built: dict, spec: CohortSpec) -> labels.LabelResult:
     return labels.esbl_decision_time(con, episodes, ast, nonsusceptible=spec.nonsusceptible, sir_column=sir_column)
 
 
+SETTING_PRECEDENCE = ("inpatient", "ed", "urgent_care", "outpatient", "unknown")
+
+
+def unit_feature_sql(name: str, alias: str = "m") -> str:
+    """How a unit combines one feature across its cultures.
+
+    Flags and counts take the maximum, so a unit has a history if any culture records it.
+    days_since_prior_org is 0 when there is no prior organism, so the unit takes the most recent
+    non-zero value instead.
+    """
+    if name == "days_since_prior_org":
+        return f"COALESCE(MIN(NULLIF({alias}.{name}, 0)), 0)"
+    return f"MAX({alias}.{name})"
+
+
 def build_cohort(
     loader,
     built: dict,
@@ -133,67 +160,95 @@ def build_cohort(
     manifest: Path | None = None,
     features_table: str | None = None,
 ) -> CohortResult:
-    """Materialize <site>_cohort_<spec name> with one row per evaluable culture in the partitions."""
+    """Materialize <site>_cohort_<spec name> with one row per evaluable unit in the partitions.
+
+    Features are measured from the order date, so they mostly agree within a unit. unit_feature_sql
+    combines them, which makes specimen and setting flags mean "any culture in the unit".
+    specimen_type is 'multiple' for an order event with more than one specimen type, and
+    setting_primary takes the first setting present in SETTING_PRECEDENCE.
+    """
     spec.validate(loader.site)
     con, site = loader.con, loader.site
     episodes = built["culture_episodes"]
     manifest = manifest or splits.manifest_path(site)
-    split = splits.register_manifest(con, site, table=f"_split_{uuid.uuid4().hex[:12]}", include_test="test" in partitions, path=manifest)
+    tag = uuid.uuid4().hex[:12]
+    split = splits.register_manifest(con, site, table=f"_split_{tag}", include_test="test" in partitions, path=manifest)
     label = _label(con, built, spec)
-    label_table = label.frame.alias
+    kept = units_mod.kept_cultures(con, episodes, spec.repeat_rule, f"_kept_{tag}")
+    units = units_mod.unit_labels(con, label.frame.alias, episodes, kept, spec.unit, spec.estimand, f"_units_{tag}")
     feats = features_table or features.build_features(loader, built, spec.interpretation)
     recent = recent_antibiotic_cultures(loader) if spec.exclude_recent_antibiotics else None
     in_partitions = ", ".join(f"'{p}'" for p in partitions)
+    unit_key = units_mod.unit_key_sql(spec.unit)
 
-    joins = f"JOIN {label_table} l USING (culture_id) JOIN {split} s ON s.patient_id_hash = sha256(e.patient_id)"
+    split_join = f"JOIN {split} s ON s.patient_id_hash = sha256(u.patient_id)"
     flow: list[dict] = []
 
     def record(step: str, where: str, with_split: bool) -> None:
         # Steps before the partition filter include sealed test patients, so they count no labels.
-        join = joins if with_split else f"JOIN {label_table} l USING (culture_id)"
-        label_count = "COUNT(*) FILTER (WHERE l.label = 1)" if with_split else "NULL"
-        n, patients, positive = con.execute(
-            f"SELECT COUNT(*), COUNT(DISTINCT e.patient_id), {label_count} FROM {episodes} e {join} WHERE {where}"
+        join = split_join if with_split else ""
+        label_count = "COUNT(*) FILTER (WHERE u.label = 1)" if with_split else "NULL"
+        n_units, n_cultures, patients, positive = con.execute(
+            f"SELECT COUNT(*), SUM(u.n_cultures), COUNT(DISTINCT u.patient_id), {label_count} FROM {units} u {join} WHERE {where}"
         ).fetchone()
-        flow.append({"step": step, "cultures": n, "patients": patients, "label_positive": positive})
+        flow.append({"step": step, "units": n_units, "cultures": n_cultures or 0, "patients": patients, "label_positive": positive})
 
-    conditions = ["l.evaluable", f"s.partition IN ({in_partitions})"]
-    record("ordered cultures", "TRUE", with_split=False)
-    record(f"evaluable for {spec.estimand}", "l.evaluable", with_split=False)
+    n, patients = con.execute(f"SELECT COUNT(*), COUNT(DISTINCT patient_id) FROM {episodes}").fetchone()
+    flow.append({"step": "ordered cultures", "units": None, "cultures": n, "patients": patients, "label_positive": None})
+    if spec.repeat_rule != "release":
+        record(f"index orders under {spec.repeat_rule}", "TRUE", with_split=False)
+    conditions = ["u.evaluable", f"s.partition IN ({in_partitions})"]
+    record(f"evaluable for {spec.estimand}", "u.evaluable", with_split=False)
     record(f"in partition {', '.join(partitions)}", " AND ".join(conditions), with_split=True)
     if recent:
-        conditions.append(f"e.culture_id NOT IN (SELECT culture_id FROM {recent})")
+        conditions.append(f"u.unit_id NOT IN (SELECT {unit_key} FROM {episodes} e JOIN {recent} r USING (culture_id))")
         record(f"no antibacterial record {features.PRIOR_MIN_DAYS} to {RECENT_ANTIBIOTIC_DAYS} days before the order", " AND ".join(conditions), with_split=True)
 
     cuts = con.execute(
         f"SELECT quantile_cont(e.adi_score, [0.2, 0.4, 0.6, 0.8]) FROM {episodes} e "
         f"JOIN {split} s ON s.patient_id_hash = sha256(e.patient_id) WHERE s.partition = 'derivation' AND e.adi_score IS NOT NULL"
     ).fetchone()[0]
+    adi = "MAX(m.adi_score)"
     if cuts:
-        bands = " ".join(f"WHEN e.adi_score <= {cut} THEN 'q{i}'" for i, cut in enumerate(cuts, start=1))
-        adi_quintile = f"CASE WHEN e.adi_score IS NULL THEN 'missing' {bands} ELSE 'q5' END"
+        bands = " ".join(f"WHEN {adi} <= {cut} THEN 'q{i}'" for i, cut in enumerate(cuts, start=1))
+        adi_quintile = f"CASE WHEN {adi} IS NULL THEN 'missing' {bands} ELSE 'q5' END"
     else:
         adi_quintile = "'missing'"
+    setting_rank = "CASE m.setting_primary " + " ".join(f"WHEN '{v}' THEN {i}" for i, v in enumerate(SETTING_PRECEDENCE)) + " END"
 
     table = f"{site}_cohort_{spec.name}"
     feature_columns = ", ".join(f"f.{name}" for name in features.FEATURES_48)
+    feature_aggregates = ", ".join(f"{unit_feature_sql(name)} AS {name}" for name in features.FEATURES_48)
     con.execute(f"""
         CREATE OR REPLACE TEMP TABLE {table} AS
-        SELECT e.site, e.patient_id, e.culture_id, s.partition, s.fold, l.label, l.reason,
-               e.setting_primary, e.specimen_type, e.age_band, e.sex,
-               CAST(f.num_prior_orgs > 0 OR f.multi_prior_resistant > 0 AS INTEGER) AS prior_culture_history,
+        WITH m AS (
+            SELECT {unit_key} AS unit_id, e.culture_id, e.setting_primary, e.specimen_type, e.age_band, e.sex, e.adi_score,
+                   {feature_columns}
+            FROM {episodes} e
+            JOIN {kept} k USING (culture_id)
+            JOIN {feats} f USING (culture_id)
+        )
+        SELECT '{site}' AS site, u.patient_id, u.unit_id, MIN(m.culture_id) AS culture_id, u.n_cultures,
+               s.partition, s.fold, u.label, u.reason,
+               arg_min(m.setting_primary, {setting_rank}) AS setting_primary,
+               CASE WHEN COUNT(DISTINCT m.specimen_type) = 1 THEN MIN(m.specimen_type) ELSE 'multiple' END AS specimen_type,
+               MIN(m.age_band) AS age_band, MIN(m.sex) AS sex,
+               CAST(MAX(m.num_prior_orgs) > 0 OR MAX(m.multi_prior_resistant) > 0 AS INTEGER) AS prior_culture_history,
                {adi_quintile} AS adi_quintile,
-               {feature_columns}
-        FROM {episodes} e
-        {joins}
-        JOIN {feats} f USING (culture_id)
+               {feature_aggregates}
+        FROM {units} u
+        {split_join}
+        JOIN m USING (unit_id)
         WHERE {' AND '.join(conditions)}
+        GROUP BY u.patient_id, u.unit_id, u.n_cultures, s.partition, s.fold, u.label, u.reason
     """)
     provenance = {
         "spec": asdict(spec),
         "name": spec.name,
         "partitions": list(partitions),
         "label": label.provenance,
+        "repeat_rule": spec.repeat_rule,
+        "unit": spec.unit,
         "split_manifest": {"path": str(manifest), "sha256": sha256_file(manifest)},
         "features_table": feats,
         "adi_quintile_cuts": list(cuts) if cuts else None,

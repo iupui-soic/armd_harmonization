@@ -30,6 +30,33 @@ def stanford(tmp_path, monkeypatch):
     return loader, loader.build(), manifest
 
 
+@pytest.fixture()
+def stanford_repeats(stanford, tmp_path):
+    """The same release plus a same-day blood culture set and repeat cultures, added as second files."""
+    loader, _, manifest = stanford
+    write_table(tmp_path, "armd-stanford", "cohort", (
+        f"{IDS}, order_time_jittered_utc TIMESTAMPTZ, ordering_mode VARCHAR, culture_description VARCHAR, was_positive BIGINT, "
+        "organism VARCHAR, antibiotic VARCHAR, susceptibility VARCHAR"), [
+        # Two blood cultures ordered with urine culture 106.
+        ("p3", "e6", "107", "2021-04-04 12:00:00+00", "Inpatient", "BLOOD", 0, None, None, None),
+        ("p3", "e6", "108", "2021-04-04 12:00:00+00", "Inpatient", "BLOOD", 0, None, None, None),
+        # Six days after 106: a repeat.
+        ("p3", "e7", "109", "2021-04-10 12:00:00+00", "Outpatient", "URINE", 1, "ESCHERICHIA COLI", "Ceftriaxone", "Resistant"),
+        # Nine days after 102, then ten days after that. Both are repeats because the window chains.
+        ("p1", "e8", "110", "2020-02-10 08:30:00+00", "Outpatient", "URINE", 0, None, None, None),
+        ("p1", "e9", "111", "2020-02-20 08:30:00+00", "Outpatient", "URINE", 0, None, None, None),
+    ], part=1)
+    extra = [("p3", "e6", "107"), ("p3", "e6", "108"), ("p3", "e7", "109"), ("p1", "e8", "110"), ("p1", "e9", "111")]
+    write_table(tmp_path, "armd-stanford", "ward_info", f"{IDS}, hosp_ward_IP BIGINT, hosp_ward_OP BIGINT, hosp_ward_ER BIGINT, hosp_ward_ICU BIGINT",
+                [ids + ((1, 0, 0, 0) if ids[2] in ("107", "108") else (0, 1, 0, 0)) for ids in extra], part=1)
+    write_table(tmp_path, "armd-stanford", "demographics", f"{IDS}, age VARCHAR, gender BIGINT",
+                [ids + (("18-24 years", 0) if ids[0] == "p1" else ("55-64 years", None)) for ids in extra], part=1)
+    write_table(tmp_path, "armd-stanford", "adi_scores", f"{IDS}, adi_score BIGINT, adi_state_rank BIGINT",
+                [ids + ((5, 1) if ids[0] == "p1" else (88, 9)) for ids in extra], part=1)
+    loader = StanfordLoader(connect())
+    return loader, loader.build(), manifest
+
+
 def rows(loader, result, columns="label, reason, partition"):
     return {r[0]: r[1:] for r in loader.con.execute(f"SELECT culture_id, {columns} FROM {result.table} ORDER BY 1").fetchall()}
 
@@ -111,6 +138,8 @@ def test_test_partition_is_sealed(stanford):
         (CohortSpec("E1", label="idsa", nonsusceptible=True), "mgb"),
         (CohortSpec("E1", interpretation="clsi2022", implied_susceptibility="strict"), "mgb"),
         (CohortSpec("E3"), "stanford"),
+        (CohortSpec("E2", repeat_rule="anchored_14d"), "stanford"),
+        (CohortSpec("E2", unit="encounter"), "stanford"),
     ],
 )
 def test_invalid_specs(spec, site):
@@ -118,7 +147,67 @@ def test_invalid_specs(spec, site):
         spec.validate(site)
 
 
+def test_release_culture_keeps_repeats(stanford_repeats):
+    loader, built, manifest = stanford_repeats
+    result = cohorts.build_cohort(loader, built, CohortSpec("E2"), manifest=manifest)
+    assert set(rows(loader, result)) == {f"stanford:p{p}:{c}" for p, c in [
+        (1, 101), (1, 102), (1, 110), (1, 111), (3, 106), (3, 107), (3, 108), (3, 109)]}
+
+
+def test_chained_14d_specimen_day(stanford_repeats):
+    loader, built, manifest = stanford_repeats
+    result = cohorts.build_cohort(loader, built, CohortSpec("E2", repeat_rule="chained_14d", unit="specimen_day"), manifest=manifest)
+    got = {r[0]: r[1:] for r in loader.con.execute(
+        f"SELECT unit_id, culture_id, n_cultures, label, reason, specimen_type FROM {result.table}").fetchall()}
+    assert got == {
+        "stanford:p1:2020-01-01:urine": ("stanford:p1:101", 1, 0, "culture_negative", "urine"),
+        "stanford:p1:2020-02-01:urine": ("stanford:p1:102", 1, 1, "resistant", "urine"),
+        "stanford:p3:2021-04-04:urine": ("stanford:p3:106", 1, 0, "not_resistant", "urine"),
+        # The blood culture set counts once.
+        "stanford:p3:2021-04-04:blood": ("stanford:p3:107", 2, 0, "culture_negative", "blood"),
+    }
+    assert [(s["step"], s["units"], s["cultures"], s["label_positive"]) for s in result.flow] == [
+        ("ordered cultures", None, 11, None),
+        ("index orders under chained_14d", 7, 8, None),
+        ("evaluable for E2", 5, 6, None),
+        ("in partition derivation", 4, 5, 1),
+    ]
+
+
+def test_order_event_pools_specimens(stanford_repeats):
+    loader, built, manifest = stanford_repeats
+    result = cohorts.build_cohort(loader, built, CohortSpec("E2", repeat_rule="chained_14d", unit="order_event"), manifest=manifest)
+    got = loader.con.execute(
+        f"SELECT n_cultures, label, reason, specimen_type, specimen_urine, specimen_blood, setting_primary FROM {result.table} "
+        "WHERE unit_id = 'stanford:p3:2021-04-04'").fetchall()
+    assert got == [(3, 0, "not_resistant", "multiple", 1, 1, "inpatient")]
+
+
+def test_e1_units_ignore_negative_cultures(stanford_repeats):
+    loader, built, manifest = stanford_repeats
+    culture = cohorts.build_cohort(loader, built, CohortSpec("E1"), manifest=manifest)
+    unit = cohorts.build_cohort(loader, built, CohortSpec("E1", repeat_rule="chained_14d", unit="order_event"), manifest=manifest)
+    # As released, repeat culture 109 enters E1. The rule drops it, and the negative blood set does
+    # not stop the 2021-04-04 order from entering E1.
+    assert set(rows(loader, culture)) == {"stanford:p1:102", "stanford:p3:106", "stanford:p3:109"}
+    assert {r[0]: r[1:] for r in loader.con.execute(f"SELECT unit_id, n_cultures, label FROM {unit.table}").fetchall()} == {
+        "stanford:p1:2020-02-01": (1, 1),
+        "stanford:p3:2021-04-04": (3, 0),
+    }
+
+
+def test_unit_feature_aggregation():
+    con = connect()
+    con.execute("CREATE TABLE m AS SELECT * FROM (VALUES ('u1', 0, 1, 0.0), ('u1', 1, 3, 30.0), ('u1', 0, 2, 200.0), ('u2', 0, 0, 0.0)) "
+                "t(unit_id, prior_ESBL, num_prior_orgs, days_since_prior_org)")
+    exprs = ", ".join(cohorts.unit_feature_sql(c) for c in ("prior_ESBL", "num_prior_orgs", "days_since_prior_org"))
+    got = dict((r[0], r[1:]) for r in con.execute(f"SELECT unit_id, {exprs} FROM m GROUP BY unit_id").fetchall())
+    # The most recent prior organism wins, and 0 still means none.
+    assert got == {"u1": (1, 3, 30.0), "u2": (0, 0, 0.0)}
+
+
 def test_spec_names():
     assert CohortSpec("E2", nonsusceptible=True, exclude_recent_antibiotics=True).name == "e2_composite_nonsusceptible_no_antibiotics_3d"
     assert CohortSpec("E1", interpretation="clsi2022").name == "e1_composite_clsi2022"
     assert CohortSpec("E1", label="idsa").name == "e1_idsa"
+    assert CohortSpec("E2", repeat_rule="chained_14d", unit="specimen_day").name == "e2_composite_chained_14d_specimen_day"
