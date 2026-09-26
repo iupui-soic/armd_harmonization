@@ -5,7 +5,8 @@ counts from 1 to MIN_CELL - 1 never appear. Zero is not a small cell and is show
 
 python -m armd_common.qc --site utsw builds a site's canonical tables and writes
 results/qc_<site>/<timestamp>/ with manifest.json, summary.json and report.md. The report covers
-staged row counts, schema problems, missingness, category frequencies and vocabulary gaps.
+staged row counts, schema problems, missingness, category frequencies, vocabulary gaps and how the
+release handles repeat and same-day cultures.
 Vocabulary gaps list raw values without counts, so rare codes can be mapped without exposing
 small cells.
 """
@@ -17,10 +18,12 @@ import json
 import sys
 from pathlib import Path
 
-from . import vocab
+from . import episodes, vocab
 from .config import DEFAULT_SEED, MIN_CELL, SITES
 
 SMALL = f"<{MIN_CELL}"
+WITHHELD = f"withheld, within {MIN_CELL - 1} of another count"
+FLOW_COUNTS = ("units", "cultures", "patients", "label_positive")
 
 CATEGORICAL = {
     "culture_episodes": (
@@ -46,6 +49,106 @@ def rate(numerator, denominator, digits: int = 4):
     if 0 < numerator < MIN_CELL or 0 < denominator < MIN_CELL:
         return SMALL
     return round(numerator / denominator, digits)
+
+
+def publish_flows(flows: dict[str, list[dict]]) -> dict[str, list[dict]]:
+    """Flow counts safe to publish, with small cells suppressed and prevalence added.
+
+    Counts of 11 or more can still expose a small cell by subtraction, for example when a
+    sensitivity cohort differs from the primary cohort by a few cultures. Flows are read in order,
+    so primary cohorts should come first. A step is withheld when any of its counts is within
+    MIN_CELL - 1 of the same count at an earlier published step of its own flow, or at the step of
+    the same name in an earlier flow. Only published counts are compared, since a withheld count
+    cannot be subtracted.
+    """
+    published: dict[tuple[str, str], list[int]] = {}
+    out = {}
+    for name, flow in flows.items():
+        own: dict[str, list[int]] = {}
+        rows = []
+        for step in flow:
+            values = {k: step.get(k) for k in FLOW_COUNTS}
+            clash = any(
+                v is not None and any(0 < abs(v - w) < MIN_CELL for w in own.get(k, []) + published.get((step["step"], k), []))
+                for k, v in values.items()
+            )
+            if clash:
+                rows.append({"step": step["step"], **{k: None if v is None else WITHHELD for k, v in values.items()},
+                             "prevalence": None if values["label_positive"] is None else WITHHELD})
+                continue
+            for k, v in values.items():
+                if v is not None:
+                    own.setdefault(k, []).append(v)
+                    published.setdefault((step["step"], k), []).append(v)
+            denominator = values["units"] if values["units"] is not None else values["cultures"]
+            positive = values["label_positive"]
+            rows.append({"step": step["step"], **{k: cell(v) for k, v in values.items()},
+                         "prevalence": None if positive is None else rate(positive, denominator)})
+        out[name] = rows
+    return out
+
+
+def repeat_profile(con, culture_episodes: str) -> dict:
+    """How the release handles repeat and same-day cultures (docs/HARMONIZATION.md).
+
+    gap_days counts cultures by days since the same patient's previous order date. The rest shows
+    same-day structure and the row counts under each unit, as released and under chained_14d.
+    """
+    e = culture_episodes
+    total = con.execute(f"SELECT COUNT(*) FROM {e}").fetchone()[0]
+    gaps = dict(con.execute(f"""
+        WITH d AS (SELECT patient_id, CAST(order_time AS DATE) AS day, COUNT(*) AS n FROM {e} GROUP BY ALL),
+        g AS (SELECT n, day - LAG(day) OVER (PARTITION BY patient_id ORDER BY day) AS gap FROM d)
+        SELECT gap, SUM(n) FROM g WHERE gap BETWEEN 1 AND 21 GROUP BY gap
+    """).fetchall())
+    within = con.execute(f"""
+        WITH d AS (SELECT patient_id, CAST(order_time AS DATE) AS day, COUNT(*) AS n FROM {e} GROUP BY ALL),
+        g AS (SELECT n, day - LAG(day) OVER (PARTITION BY patient_id ORDER BY day) AS gap FROM d)
+        SELECT COALESCE(SUM(n) FILTER (WHERE gap BETWEEN 1 AND {episodes.REPEAT_WINDOW_DAYS - 1}), 0) FROM g
+    """).fetchone()[0]
+    same_day, same_time, two_times = con.execute(f"""
+        WITH d AS (SELECT patient_id, CAST(order_time AS DATE) AS day, COUNT(*) AS n, COUNT(DISTINCT order_time) AS times
+                   FROM {e} GROUP BY ALL),
+        t AS (SELECT patient_id, order_time, COUNT(*) AS n FROM {e} GROUP BY ALL)
+        SELECT (SELECT COALESCE(SUM(n) FILTER (WHERE n > 1), 0) FROM d),
+               (SELECT COALESCE(SUM(n) FILTER (WHERE n > 1), 0) FROM t),
+               (SELECT COUNT(*) FILTER (WHERE times > 1) FROM d)
+    """).fetchone()
+    blood, blood_sets = con.execute(f"""
+        WITH b AS (SELECT patient_id, CAST(order_time AS DATE) AS day, COUNT(*) AS n FROM {e} WHERE specimen_type = 'blood' GROUP BY ALL)
+        SELECT COALESCE(SUM(n), 0), COALESCE(SUM(n) FILTER (WHERE n > 1), 0) FROM b
+    """).fetchone()
+    by_rule = {}
+    for rule in ("release", "chained_14d"):
+        kept = episodes.kept_cultures(con, e, rule, "_qc_kept")
+        r = con.execute(f"""
+            WITH k AS (SELECT x.* FROM {e} x JOIN {kept} USING (culture_id))
+            SELECT COUNT(*),
+                   (SELECT COUNT(DISTINCT {episodes.unit_key_sql('specimen_day', 'k')}) FROM k),
+                   (SELECT COUNT(DISTINCT {episodes.unit_key_sql('order_event', 'k')}) FROM k),
+                   (SELECT COUNT(*) FROM (SELECT patient_id, CAST(order_time AS DATE) FROM k GROUP BY ALL
+                                          HAVING COUNT(DISTINCT specimen_type) > 1)),
+                   COUNT(DISTINCT patient_id),
+                   COUNT(*) FILTER (WHERE culture_positive),
+                   COUNT(*) FILTER (WHERE specimen_type = 'blood'),
+                   COUNT(*) FILTER (WHERE has_enterobacterales)
+            FROM k
+        """).fetchone()
+        by_rule[rule] = {
+            "cultures": cell(r[0]), "specimen_days": cell(r[1]), "order_events": cell(r[2]),
+            "order_events_with_several_specimen_types": cell(r[3]), "patients": cell(r[4]),
+            "positive_share": rate(r[5], r[0]), "blood_share": rate(r[6], r[0]), "enterobacterales_cultures": cell(r[7]),
+        }
+    return {
+        "cultures": cell(total),
+        "gap_days": {d: cell(gaps.get(d, 0)) for d in range(1, 22)},
+        f"share_with_culture_1_to_{episodes.REPEAT_WINDOW_DAYS - 1}_days_earlier": rate(within, total),
+        "share_sharing_order_date": rate(same_day, total),
+        "cultures_sharing_order_time": cell(same_time),
+        "patient_days_with_several_order_times": cell(two_times),
+        "blood_share_in_same_day_sets": rate(blood_sets, blood),
+        "by_repeat_rule": by_rule,
+    }
 
 
 def value_counts(con, table: str, column: str) -> list[list]:
@@ -154,6 +257,14 @@ def render(summary: dict) -> str:
     lines += ["", "## Sentinel agent reporting among Enterobacterales cultures", ""]
     for interpretation, table in summary["sentinel_reporting"].items():
         lines.append(f"- {interpretation}: {table}")
+    rp = summary["repeat_profile"]
+    lines += ["", "## Repeat and same-day cultures", ""]
+    lines.append("Cultures by days since the patient's previous order date: " + ", ".join(f"{d}: {n}" for d, n in rp["gap_days"].items()))
+    lines += [""] + [f"- {k}: {v}" for k, v in rp.items() if k not in ("gap_days", "by_repeat_rule")]
+    lines += ["", "| repeat rule | " + " | ".join(next(iter(rp["by_repeat_rule"].values()))) + " |",
+              "|---|" + "---|" * len(next(iter(rp["by_repeat_rule"].values())))]
+    for rule, counts in rp["by_repeat_rule"].items():
+        lines.append(f"| {rule} | " + " | ".join(str(v) for v in counts.values()) + " |")
     lines += ["", "## Vocabulary gaps", ""]
     lines += [f"- {k}: {v if v is not None else 'not applicable'}" for k, v in summary["vocab_gaps"].items()]
     return "\n".join(lines) + "\n"
@@ -186,6 +297,7 @@ def site_report(site: str, seed: int = DEFAULT_SEED) -> Path:
     summary["sentinel_reporting"] = {"sir": sentinel_reporting(con, built)}
     if site == "mgb":
         summary["sentinel_reporting"]["sir_clsi2022"] = sentinel_reporting(con, built, "sir_clsi2022")
+    summary["repeat_profile"] = repeat_profile(con, built["culture_episodes"])
     summary["vocab_gaps"] = vocab_gaps(con, site, built)
     manifest.write()
     (manifest.dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))

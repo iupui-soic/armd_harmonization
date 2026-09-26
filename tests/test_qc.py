@@ -64,3 +64,49 @@ def test_vocab_gaps_lists_values_without_counts():
         "sex_values_unmapped": None,
         "ambiguous_organism_names": ["GRAM NEGATIVE RODS"],
     }
+
+
+def test_publish_flows_withholds_counts_exposed_by_subtraction():
+    primary = [
+        {"step": "ordered cultures", "units": None, "cultures": 5000, "patients": 900, "label_positive": None},
+        {"step": "evaluable", "units": 400, "cultures": 400, "patients": 300, "label_positive": None},
+        {"step": "in partition", "units": 320, "cultures": 320, "patients": 240, "label_positive": 40},
+        # Excludes three units, so publishing it would expose a cell of three.
+        {"step": "no recent antibiotics", "units": 317, "cultures": 317, "patients": 238, "label_positive": 40},
+    ]
+    sensitivity = [
+        {"step": "ordered cultures", "units": None, "cultures": 5000, "patients": 900, "label_positive": None},
+        {"step": "evaluable", "units": 401, "cultures": 401, "patients": 301, "label_positive": None},
+        {"step": "in partition", "units": 250, "cultures": 260, "patients": 200, "label_positive": 25},
+    ]
+    out = qc.publish_flows({"primary": primary, "sensitivity": sensitivity})
+    assert out["primary"][2] == {"step": "in partition", "units": 320, "cultures": 320, "patients": 240, "label_positive": 40, "prevalence": 0.125}
+    assert out["primary"][3]["units"] == qc.WITHHELD and out["primary"][3]["prevalence"] == qc.WITHHELD
+    # One more evaluable culture than the primary cohort is withheld. Identical counts are not.
+    assert out["sensitivity"][0]["cultures"] == 5000
+    assert out["sensitivity"][1]["cultures"] == qc.WITHHELD
+    assert out["sensitivity"][2]["prevalence"] == 0.1
+
+
+def test_repeat_profile():
+    con = duckdb.connect()
+    rows = []
+    for p in range(40):
+        rows += [(f"c{p}a", f"p{p}", "2020-01-01 08:00:00", "blood", False, False),
+                 (f"c{p}b", f"p{p}", "2020-01-01 08:00:00", "blood", False, False),
+                 (f"c{p}c", f"p{p}", "2020-01-01 08:00:00", "urine", True, True),
+                 (f"c{p}d", f"p{p}", "2020-01-04 08:00:00", "urine", False, False),
+                 (f"c{p}e", f"p{p}", "2020-01-20 08:00:00", "urine", False, False)]
+    con.execute("CREATE TABLE e (culture_id VARCHAR, patient_id VARCHAR, order_time TIMESTAMP, specimen_type VARCHAR, "
+                "culture_positive BOOLEAN, has_enterobacterales BOOLEAN)")
+    con.executemany("INSERT INTO e VALUES (?, ?, ?, ?, ?, ?)", rows)
+    out = qc.repeat_profile(con, "e")
+    assert out["gap_days"][3] == 40 and out["gap_days"][16] == 40 and out["gap_days"][1] == 0
+    assert out["share_with_culture_1_to_13_days_earlier"] == 0.2
+    assert out["share_sharing_order_date"] == 0.6
+    assert out["blood_share_in_same_day_sets"] == 1.0
+    assert out["by_repeat_rule"]["release"]["order_events"] == 120
+    assert out["by_repeat_rule"]["chained_14d"] == {
+        "cultures": 160, "specimen_days": 120, "order_events": 80, "order_events_with_several_specimen_types": 40,
+        "patients": 40, "positive_share": 0.25, "blood_share": 0.5, "enterobacterales_cultures": 40,
+    }
