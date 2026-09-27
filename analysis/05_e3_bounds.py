@@ -9,7 +9,9 @@ share u of empiric prescribing events that has no culture:
 
 Both are computed at every net-benefit threshold of the plan and at the 90%-sensitivity operating
 point. Counts that 03 withheld leave the bounds for that threshold uncomputed. The uncultured shares
-need justification from the literature before the paper uses them.
+span what published studies report: about 0.10 to 0.25 for inpatient episodes and 0.50 or more in
+the ED and outpatients. The primary threshold is 0.10, where guidance asks for 90% susceptibility in
+septic shock (SAP item R4).
 
 It reads only the aggregate results/03_evaluate_ladder/<timestamp>/summary.json, never row-level data.
 results/05_e3_bounds/<timestamp>/ receives manifest.json, summary.json and report.md.
@@ -27,7 +29,8 @@ from armd_common import bounds
 from armd_common.config import DEFAULT_SEED, RESULTS_DIR
 from armd_common.provenance import RunManifest, sha256_file
 
-UNCULTURED_SHARES = (0.10, 0.25, 0.50)
+UNCULTURED_SHARES = (0.10, 0.25, 0.50, 0.75)
+PRIMARY_THRESHOLD = "0.10"
 
 
 def thresholds_of(cell: dict) -> dict:
@@ -99,7 +102,8 @@ def main() -> int:
     evaluation = json.loads((source / "summary.json").read_text())
     run = RunManifest("05_e3_bounds", seed=args.seed, args=vars(args))
     run.add_input("03_evaluate_ladder.summary", source / "summary.json", sha256_file(source / "summary.json"))
-    summary = {"evaluate_run": str(source), "uncultured_shares": list(UNCULTURED_SHARES), "sites": e3_bounds(evaluation)}
+    summary = {"evaluate_run": str(source), "uncultured_shares": list(UNCULTURED_SHARES),
+               "primary_threshold": PRIMARY_THRESHOLD, "sites": e3_bounds(evaluation)}
     run.write()
     (run.dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
     (run.dir / "report.md").write_text(render(summary))

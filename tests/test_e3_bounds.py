@@ -25,7 +25,7 @@ def test_bounds_for_e2_cells_only():
     out = e3.e3_bounds(EVALUATION)
     assert set(out["site"]) == {"xgboost:E2->E2", "xgboost:E1->E2"}
     b = out["site"]["xgboost:E2->E2"]["0.20"]
-    assert b["computable"] and set(b["by_uncultured_share"]) == {"0.10", "0.25", "0.50"}
+    assert b["computable"] and set(b["by_uncultured_share"]) == {"0.10", "0.25", "0.50", "0.75"}
     assert b["by_uncultured_share"]["0.50"]["manski"] == bounds.manski_bounds(20, 60, 900, 20, 0.5)
     assert b["by_uncultured_share"]["0.50"]["tipping"]["relative_risk"] == pytest.approx(0.6)
     # The operating point uses the cell's own threshold.
