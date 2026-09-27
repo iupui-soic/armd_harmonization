@@ -96,3 +96,12 @@ def test_degenerate_calibration_is_nan_not_an_error():
     y = np.array([0, 0, 1, 1])
     intercept, slope = metrics.calibration(p, y)
     assert np.isnan(slope) or abs(slope) > 1
+
+
+def test_per_thousand():
+    p = np.array([0.9, 0.6, 0.3, 0.2, 0.05])
+    y = np.array([1, 0, 1, 0, 0])
+    assert metrics.per_thousand(p, y, 0.5) == {"flagged": 400.0, "covered": 200.0, "missed": 200.0}
+    # Weights count a unit that many times.
+    got = metrics.per_thousand(p, y, 0.5, w=np.array([2, 0, 1, 1, 1]))
+    assert got == {"flagged": 400.0, "covered": 400.0, "missed": 200.0}

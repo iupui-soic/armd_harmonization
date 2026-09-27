@@ -148,6 +148,13 @@ def operating_point(p, y, t: float, w=None) -> dict:
     }
 
 
+def per_thousand(p, y, t: float, w=None) -> dict:
+    """Per 1,000 orders at threshold t: broad coverage started, resistant cultures covered and missed."""
+    c = confusion(p, y, t, w)
+    n = sum(c.values())
+    return {"flagged": 1000 * (c["tp"] + c["fp"]) / n, "covered": 1000 * c["tp"] / n, "missed": 1000 * c["fn"] / n}
+
+
 def evaluate(p, y, operating_threshold: float, w=None, ranked: Ranked | None = None,
              thresholds=NB_THRESHOLDS, lp=None, start=None) -> dict:
     """Every scalar metric of the plan for one set of predictions.
