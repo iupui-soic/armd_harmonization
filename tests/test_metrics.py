@@ -88,3 +88,11 @@ def test_warm_started_calibration_matches_cold():
     start = metrics.calibration_start(p, y, lp)
     assert start[:2] == pytest.approx(metrics.calibration(p, y), abs=1e-10)
     assert metrics.calibration(p, y, w, lp=lp, start=start) == pytest.approx(metrics.calibration(p, y, w), abs=1e-9)
+
+
+def test_degenerate_calibration_is_nan_not_an_error():
+    # Predictions of exactly 0 and 1 that match the outcome leave no information about the slope.
+    p = np.array([0.0, 0.0, 1.0, 1.0])
+    y = np.array([0, 0, 1, 1])
+    intercept, slope = metrics.calibration(p, y)
+    assert np.isnan(slope) or abs(slope) > 1

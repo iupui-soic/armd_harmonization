@@ -76,7 +76,10 @@ def _logistic(X: np.ndarray, y: np.ndarray, w: np.ndarray, offset: np.ndarray, i
         mu = 1 / (1 + np.exp(-(X @ beta + offset)))
         grad = X.T @ (w * (y - mu))
         hess = (X * (w * mu * (1 - mu))[:, None]).T @ X
-        step = np.linalg.solve(hess, grad)
+        try:
+            step = np.linalg.solve(hess, grad)
+        except np.linalg.LinAlgError:
+            return np.full(X.shape[1], np.nan)
         beta += step
         if np.max(np.abs(step)) < 1e-10:
             break
