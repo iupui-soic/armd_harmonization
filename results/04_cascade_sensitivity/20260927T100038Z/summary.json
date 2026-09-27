@@ -1,0 +1,505 @@
+{
+  "partition": "derivation",
+  "sites": {
+    "stanford": {
+      "reporting": {
+        "sir": {
+          "CAZ": {
+            "reported_sir": 0.6758,
+            "listed_without_sir": 0.0005,
+            "not_listed": 0.3238
+          },
+          "CRO": {
+            "reported_sir": 0.8007,
+            "listed_without_sir": 0.0004,
+            "not_listed": 0.1989
+          },
+          "FEP": {
+            "reported_sir": 0.3191,
+            "listed_without_sir": "<11",
+            "not_listed": 0.6808
+          },
+          "TZP": {
+            "reported_sir": 0.8916,
+            "listed_without_sir": 0.0029,
+            "not_listed": 0.1055
+          },
+          "any_sentinel_reported_sir": 0.9365,
+          "enterobacterales_cultures": 66803
+        }
+      },
+      "not_tested_vs_evaluable": {
+        "evaluable_cultures": 62558,
+        "not_tested_cultures": 4245,
+        "not_tested_share": 0.0635,
+        "covariates": {
+          "hosp_ward_IP": {
+            "evaluable_mean": 0.5255,
+            "not_tested_mean": 0.7093,
+            "smd_not_tested_minus_evaluable": 0.385
+          },
+          "hosp_ward_OP": {
+            "evaluable_mean": 0.4465,
+            "not_tested_mean": 0.2907,
+            "smd_not_tested_minus_evaluable": -0.327
+          },
+          "hosp_ward_ER": {
+            "evaluable_mean": 0.3444,
+            "not_tested_mean": 0.2815,
+            "smd_not_tested_minus_evaluable": -0.136
+          },
+          "specimen_urine": {
+            "evaluable_mean": 0.8983,
+            "not_tested_mean": 0.9946,
+            "smd_not_tested_minus_evaluable": 0.438
+          },
+          "specimen_blood": {
+            "evaluable_mean": 0.0712,
+            "not_tested_mean": 0.0047,
+            "smd_not_tested_minus_evaluable": -0.353
+          },
+          "specimen_respiratory": null,
+          "prior_culture_history": {
+            "evaluable_mean": 0.4609,
+            "not_tested_mean": 0.3774,
+            "smd_not_tested_minus_evaluable": -0.17
+          },
+          "prior_ESBL": {
+            "evaluable_mean": 0.0784,
+            "not_tested_mean": 0.0167,
+            "smd_not_tested_minus_evaluable": -0.293
+          },
+          "num_prior_orgs": {
+            "evaluable_mean": 0.9229,
+            "not_tested_mean": 0.6273,
+            "smd_not_tested_minus_evaluable": -0.24
+          },
+          "organism_ecoli": {
+            "evaluable_mean": 0.7259,
+            "not_tested_mean": 0.8436,
+            "smd_not_tested_minus_evaluable": 0.289
+          },
+          "organism_klebsiella": {
+            "evaluable_mean": 0.1502,
+            "not_tested_mean": 0.0674,
+            "smd_not_tested_minus_evaluable": -0.268
+          },
+          "organism_proteus": {
+            "evaluable_mean": 0.0516,
+            "not_tested_mean": 0.0478,
+            "smd_not_tested_minus_evaluable": -0.017
+          },
+          "organism_enterobacter": {
+            "evaluable_mean": 0.0217,
+            "not_tested_mean": 0.0028,
+            "smd_not_tested_minus_evaluable": -0.172
+          },
+          "organism_other_enterobacterales": {
+            "evaluable_mean": 0.0507,
+            "not_tested_mean": 0.0384,
+            "smd_not_tested_minus_evaluable": -0.06
+          }
+        }
+      },
+      "implied_susceptibility": {
+        "none": {
+          "step": "evaluable for E1",
+          "units": null,
+          "cultures": 62558,
+          "patients": null,
+          "label_positive": 6973,
+          "prevalence": 0.1115
+        },
+        "strict": {
+          "step": "evaluable for E1",
+          "units": null,
+          "cultures": 62558,
+          "patients": null,
+          "label_positive": 6973,
+          "prevalence": 0.1115
+        },
+        "all rules": {
+          "step": "evaluable for E1",
+          "units": null,
+          "cultures": 65629,
+          "patients": null,
+          "label_positive": 6973,
+          "prevalence": 0.1062
+        }
+      }
+    },
+    "mgb": {
+      "reporting": {
+        "sir": {
+          "CAZ": {
+            "reported_sir": 0.5084,
+            "listed_without_sir": 0.1236,
+            "not_listed": 0.368
+          },
+          "CRO": {
+            "reported_sir": 0.8637,
+            "listed_without_sir": 0.0002,
+            "not_listed": 0.1362
+          },
+          "FEP": {
+            "reported_sir": 0.7203,
+            "listed_without_sir": 0.0006,
+            "not_listed": 0.2791
+          },
+          "TZP": {
+            "reported_sir": 0.9591,
+            "listed_without_sir": 0.0019,
+            "not_listed": 0.0391
+          },
+          "any_sentinel_reported_sir": 0.9988,
+          "enterobacterales_cultures": 108702
+        },
+        "sir_clsi2022": {
+          "CAZ": {
+            "reported_sir": 0.6266,
+            "listed_without_sir": 0.0055,
+            "not_listed": 0.368
+          },
+          "CRO": {
+            "reported_sir": 0.7993,
+            "listed_without_sir": 0.0645,
+            "not_listed": 0.1362
+          },
+          "FEP": {
+            "reported_sir": 0.7081,
+            "listed_without_sir": 0.0128,
+            "not_listed": 0.2791
+          },
+          "TZP": {
+            "reported_sir": 0.7764,
+            "listed_without_sir": 0.1845,
+            "not_listed": 0.0391
+          },
+          "any_sentinel_reported_sir": 0.8016,
+          "enterobacterales_cultures": 108702
+        }
+      },
+      "not_tested_vs_evaluable": {
+        "evaluable_cultures": 108572,
+        "not_tested_cultures": 130,
+        "not_tested_share": 0.0012,
+        "covariates": {
+          "hosp_ward_IP": {
+            "evaluable_mean": 0.3424,
+            "not_tested_mean": 0.3615,
+            "smd_not_tested_minus_evaluable": 0.04
+          },
+          "hosp_ward_OP": {
+            "evaluable_mean": 0.4654,
+            "not_tested_mean": 0.5154,
+            "smd_not_tested_minus_evaluable": 0.1
+          },
+          "hosp_ward_ER": {
+            "evaluable_mean": 0.1748,
+            "not_tested_mean": 0.1231,
+            "smd_not_tested_minus_evaluable": -0.146
+          },
+          "specimen_urine": {
+            "evaluable_mean": 0.8831,
+            "not_tested_mean": 0.8462,
+            "smd_not_tested_minus_evaluable": -0.108
+          },
+          "specimen_blood": {
+            "evaluable_mean": 0.0665,
+            "not_tested_mean": 0.1538,
+            "smd_not_tested_minus_evaluable": 0.281
+          },
+          "specimen_respiratory": {
+            "evaluable_mean": 0.0505,
+            "not_tested_mean": 0.0,
+            "smd_not_tested_minus_evaluable": -0.326
+          },
+          "prior_culture_history": {
+            "evaluable_mean": 0.5297,
+            "not_tested_mean": 0.5769,
+            "smd_not_tested_minus_evaluable": 0.095
+          },
+          "prior_ESBL": {
+            "evaluable_mean": 0.1181,
+            "not_tested_mean": 0.1,
+            "smd_not_tested_minus_evaluable": -0.058
+          },
+          "num_prior_orgs": {
+            "evaluable_mean": 1.0708,
+            "not_tested_mean": 1.0923,
+            "smd_not_tested_minus_evaluable": 0.016
+          },
+          "organism_ecoli": {
+            "evaluable_mean": 0.6711,
+            "not_tested_mean": 0.6769,
+            "smd_not_tested_minus_evaluable": 0.012
+          },
+          "organism_klebsiella": {
+            "evaluable_mean": 0.1909,
+            "not_tested_mean": 0.1231,
+            "smd_not_tested_minus_evaluable": -0.187
+          },
+          "organism_proteus": null,
+          "organism_enterobacter": null,
+          "organism_other_enterobacterales": {
+            "evaluable_mean": 0.0567,
+            "not_tested_mean": 0.1231,
+            "smd_not_tested_minus_evaluable": 0.233
+          }
+        }
+      },
+      "mgb_cross_check": {
+        "no_sentinel_result": {
+          "cultures": 130,
+          "esbl_tested": "<11",
+          "esbl_positive_share": "<11",
+          "clsi2022_evaluable": "<11",
+          "clsi2022_resistant_share": "<11"
+        },
+        "sentinel_reported": {
+          "cultures": 108572,
+          "esbl_tested": 6579,
+          "esbl_positive_share": 0.0672,
+          "clsi2022_evaluable": 87122,
+          "clsi2022_resistant_share": 0.1817
+        }
+      },
+      "implied_susceptibility": {
+        "none": {
+          "step": "evaluable for E1",
+          "units": null,
+          "cultures": 108572,
+          "patients": null,
+          "label_positive": 14416,
+          "prevalence": 0.1328
+        },
+        "strict": {
+          "step": "evaluable for E1",
+          "units": null,
+          "cultures": "withheld, within 10 of another count",
+          "patients": null,
+          "label_positive": "withheld, within 10 of another count",
+          "prevalence": "withheld, within 10 of another count"
+        },
+        "all rules": {
+          "step": "evaluable for E1",
+          "units": null,
+          "cultures": 108638,
+          "patients": null,
+          "label_positive": "withheld, within 10 of another count",
+          "prevalence": "withheld, within 10 of another count"
+        }
+      }
+    },
+    "utsw": {
+      "reporting": {
+        "sir": {
+          "CAZ": {
+            "reported_sir": 0.117,
+            "listed_without_sir": "<11",
+            "not_listed": 0.8829
+          },
+          "CRO": {
+            "reported_sir": 0.8156,
+            "listed_without_sir": "<11",
+            "not_listed": 0.1843
+          },
+          "FEP": {
+            "reported_sir": 0.5872,
+            "listed_without_sir": 0.0009,
+            "not_listed": 0.4119
+          },
+          "TZP": {
+            "reported_sir": 0.8734,
+            "listed_without_sir": 0.0244,
+            "not_listed": 0.1021
+          },
+          "any_sentinel_reported_sir": 0.8977,
+          "enterobacterales_cultures": 44799
+        }
+      },
+      "not_tested_vs_evaluable": {
+        "evaluable_cultures": 40215,
+        "not_tested_cultures": 4584,
+        "not_tested_share": 0.1023,
+        "covariates": {
+          "hosp_ward_IP": {
+            "evaluable_mean": 0.5434,
+            "not_tested_mean": 0.4786,
+            "smd_not_tested_minus_evaluable": -0.13
+          },
+          "hosp_ward_OP": {
+            "evaluable_mean": 0.4564,
+            "not_tested_mean": 0.5207,
+            "smd_not_tested_minus_evaluable": 0.129
+          },
+          "hosp_ward_ER": {
+            "evaluable_mean": 0.2893,
+            "not_tested_mean": 0.1222,
+            "smd_not_tested_minus_evaluable": -0.423
+          },
+          "specimen_urine": {
+            "evaluable_mean": 0.9342,
+            "not_tested_mean": 0.9365,
+            "smd_not_tested_minus_evaluable": 0.009
+          },
+          "specimen_blood": {
+            "evaluable_mean": 0.0557,
+            "not_tested_mean": 0.0589,
+            "smd_not_tested_minus_evaluable": 0.014
+          },
+          "specimen_respiratory": {
+            "evaluable_mean": 0.0101,
+            "not_tested_mean": 0.0046,
+            "smd_not_tested_minus_evaluable": -0.064
+          },
+          "prior_culture_history": {
+            "evaluable_mean": 0.3056,
+            "not_tested_mean": 0.2832,
+            "smd_not_tested_minus_evaluable": -0.049
+          },
+          "prior_ESBL": {
+            "evaluable_mean": 0.0773,
+            "not_tested_mean": 0.0517,
+            "smd_not_tested_minus_evaluable": -0.104
+          },
+          "num_prior_orgs": {
+            "evaluable_mean": 0.5956,
+            "not_tested_mean": 0.4644,
+            "smd_not_tested_minus_evaluable": -0.114
+          },
+          "organism_ecoli": {
+            "evaluable_mean": 0.6636,
+            "not_tested_mean": 0.7557,
+            "smd_not_tested_minus_evaluable": 0.204
+          },
+          "organism_klebsiella": {
+            "evaluable_mean": 0.1964,
+            "not_tested_mean": 0.1791,
+            "smd_not_tested_minus_evaluable": -0.044
+          },
+          "organism_proteus": {
+            "evaluable_mean": 0.0565,
+            "not_tested_mean": 0.0471,
+            "smd_not_tested_minus_evaluable": -0.042
+          },
+          "organism_enterobacter": null,
+          "organism_other_enterobacterales": {
+            "evaluable_mean": 0.0556,
+            "not_tested_mean": 0.0179,
+            "smd_not_tested_minus_evaluable": -0.201
+          }
+        }
+      },
+      "implied_susceptibility": {
+        "none": {
+          "step": "evaluable for E1",
+          "units": null,
+          "cultures": 40215,
+          "patients": null,
+          "label_positive": 3192,
+          "prevalence": 0.0794
+        },
+        "strict": {
+          "step": "evaluable for E1",
+          "units": null,
+          "cultures": 40215,
+          "patients": null,
+          "label_positive": "withheld, within 10 of another count",
+          "prevalence": "withheld, within 10 of another count"
+        },
+        "all rules": {
+          "step": "evaluable for E1",
+          "units": null,
+          "cultures": 42746,
+          "patients": null,
+          "label_positive": "withheld, within 10 of another count",
+          "prevalence": "withheld, within 10 of another count"
+        }
+      }
+    },
+    "ecuh": {
+      "reporting": {
+        "sir": {
+          "CAZ": {
+            "reported_sir": 0.5245,
+            "listed_without_sir": "<11",
+            "not_listed": 0.4754
+          },
+          "CRO": {
+            "reported_sir": 0.9812,
+            "listed_without_sir": 0.0002,
+            "not_listed": 0.0186
+          },
+          "FEP": {
+            "reported_sir": 0.5676,
+            "listed_without_sir": "<11",
+            "not_listed": 0.4324
+          },
+          "TZP": {
+            "reported_sir": 0.9967,
+            "listed_without_sir": "<11",
+            "not_listed": 0.0032
+          },
+          "any_sentinel_reported_sir": 0.9997,
+          "enterobacterales_cultures": 69351
+        }
+      },
+      "not_tested_vs_evaluable": {
+        "evaluable_cultures": 69333,
+        "not_tested_cultures": 18,
+        "not_tested_share": 0.0003,
+        "covariates": {
+          "hosp_ward_IP": null,
+          "hosp_ward_OP": null,
+          "hosp_ward_ER": null,
+          "specimen_urine": null,
+          "specimen_blood": null,
+          "specimen_respiratory": {
+            "evaluable_mean": 0.0124,
+            "not_tested_mean": 0.0,
+            "smd_not_tested_minus_evaluable": -0.158
+          },
+          "prior_culture_history": null,
+          "prior_ESBL": null,
+          "num_prior_orgs": {
+            "evaluable_mean": 0.8522,
+            "not_tested_mean": 1.5,
+            "smd_not_tested_minus_evaluable": 0.299
+          },
+          "organism_ecoli": null,
+          "organism_klebsiella": null,
+          "organism_proteus": null,
+          "organism_enterobacter": null,
+          "organism_other_enterobacterales": null
+        }
+      },
+      "implied_susceptibility": {
+        "none": {
+          "step": "evaluable for E1",
+          "units": null,
+          "cultures": 69333,
+          "patients": null,
+          "label_positive": 6406,
+          "prevalence": 0.0924
+        },
+        "strict": {
+          "step": "evaluable for E1",
+          "units": null,
+          "cultures": 69333,
+          "patients": null,
+          "label_positive": 6406,
+          "prevalence": 0.0924
+        },
+        "all rules": {
+          "step": "evaluable for E1",
+          "units": null,
+          "cultures": 69333,
+          "patients": null,
+          "label_positive": 6406,
+          "prevalence": 0.0924
+        }
+      }
+    }
+  }
+}

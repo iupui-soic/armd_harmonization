@@ -39,3 +39,11 @@
 - MGB E1 prevalence falls from 13.3% to 10.7% once repeat cultures go, so repeats after a resistant culture inflated it. Keeping each patient's first index order lowers E1 prevalence to 8.0%, 6.8%, 5.8% and 5.1%.
 - The E2 minus E1 inpatient SMD moves from +0.18 to +0.04 at Stanford and from +0.14 to +0.02 at UTSW, so most of the earlier "E2 is more inpatient" surprise came from counting blood sets separately. MGB stays more inpatient (+0.78 to +0.47) and ECUH shifts further to outpatients (-0.32 to -0.45).
 - Flow counts within 10 of another published count are now withheld. This hides the S5 counts at MGB and UTSW, which differed from the primary cohorts by fewer than 11.
+
+## 2026-09-27 04_cascade_sensitivity (results/04_cascade_sensitivity/20260927T100038Z, commit 56e7d84)
+
+- Among derivation Enterobacterales cultures, a sentinel agent is reported for 93.7% at Stanford, 99.9% at MGB, 89.8% at UTSW and 99.97% at ECUH. Cefepime is reported for 31.9% at Stanford and ceftazidime for 11.7% at UTSW.
+- Cultures without a sentinel result are 6.3% at Stanford and 10.2% at UTSW, against 130 cultures at MGB and 18 at ECUH. At Stanford they are more often urine (SMD +0.44), inpatient (+0.39) and E. coli (+0.29), with less prior ESBL (-0.29). That fits cascade reporting, which hides broad agents when narrow ones test susceptible.
+- The MGB enzyme and CLSI 2022 cross-check cannot inform layer T. Fewer than 11 of the 130 MGB cultures without a sentinel result had an ESBL test or a CLSI 2022 sentinel result.
+- Applying every implied-susceptibility rule makes 3,071 of 4,245 not-tested Stanford cultures and 2,531 of 4,584 UTSW cultures evaluable. It adds no resistant culture at Stanford, so Stanford E1 prevalence falls from 11.15% to 10.62%. Strict rules change fewer than 11 cultures at any site, and neither rule set changes ECUH.
+- Flagged: the rules only impute susceptible results from susceptible ones, so the lower prevalence is built in. It does not show that the not-tested cultures are susceptible.
