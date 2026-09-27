@@ -50,6 +50,19 @@ def git_state() -> dict:
     return {"sha": sha, "dirty": dirty}
 
 
+def require_git_tag(tag: str, pinned: Path | None = None) -> dict:
+    """Stop the run unless the repository has `tag`.
+
+    `pinned` is a local file the run depends on but the repository does not track, such as an
+    analysis plan. Its SHA-256 goes into the returned record, so the manifest pins its contents.
+    """
+    tags = subprocess.run(["git", "tag", "-l", tag], cwd=REPO_ROOT, capture_output=True, text=True).stdout.split()
+    if tag not in tags:
+        raise SystemExit(f"refusing to run: the git tag {tag} does not exist")
+    return {"tag": tag, "pinned_file": None if pinned is None else Path(pinned).name,
+            "pinned_sha256": sha256_file(pinned) if pinned is not None and Path(pinned).exists() else None}
+
+
 def package_versions() -> dict:
     versions = {"python": sys.version.split()[0]}
     for name in _PACKAGES:

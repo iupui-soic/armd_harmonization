@@ -21,7 +21,7 @@ import math
 import shutil
 
 from armd_common import features, splits
-from armd_common.cohorts import PRIMARY_SPECS, CohortSpec, build_cohort
+from armd_common.cohorts import PRIMARY_SPECS, TABLE1_COVARIATES, CohortSpec, build_cohort
 from armd_common.config import DEFAULT_SEED, SITES, get_site
 from armd_common.db import connect
 from armd_common.provenance import RunManifest, sha256_file
@@ -49,11 +49,7 @@ MGB_SPECS = (
     CohortSpec("E1", label="enzyme"),
 )
 
-COVARIATES = (
-    "age_65plus", "gender_male", "hosp_ward_IP", "hosp_ward_OP", "hosp_ward_ER", "specimen_urine", "specimen_blood",
-    "specimen_respiratory", "prior_culture_history", "prior_ESBL", "T_ceph3_90d", "T_fq_90d", "nursing_home_90d",
-    "adi_missing", "elixhauser_count", "num_prior_orgs",
-)
+COVARIATES = TABLE1_COVARIATES
 
 
 def staged(site: str) -> bool:

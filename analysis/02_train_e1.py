@@ -29,7 +29,6 @@ from __future__ import annotations
 import argparse
 import json
 import pickle
-import subprocess
 from pathlib import Path
 
 import duckdb
@@ -41,7 +40,7 @@ from armd_common.cohorts import CohortSpec
 from armd_common.config import DEFAULT_SEED, REPO_ROOT, SITES, get_site
 from armd_common.episodes import REPEAT_RULES, UNITS
 from armd_common.features import FEATURES_48
-from armd_common.provenance import RunManifest, sha256_file
+from armd_common.provenance import RunManifest, require_git_tag, sha256_file
 from armd_common.qc import cell
 from armd_common.splits import SealedPartitionError
 
@@ -50,11 +49,7 @@ ESTIMANDS = ("E1", "E2")
 
 
 def require_frozen_plan() -> dict:
-    tags = subprocess.run(["git", "tag", "-l", FROZEN_TAG], cwd=REPO_ROOT, capture_output=True, text=True).stdout.split()
-    if FROZEN_TAG not in tags:
-        raise SystemExit(f"refusing to train: the analysis plan is not frozen (no git tag {FROZEN_TAG})")
-    sap = REPO_ROOT / "SAP.md"
-    return {"tag": FROZEN_TAG, "sap_sha256": sha256_file(sap) if sap.exists() else None}
+    return require_git_tag(FROZEN_TAG, REPO_ROOT / "SAP.md")
 
 
 def cohort_names(repeat_rule: str, unit: str) -> dict:

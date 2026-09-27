@@ -29,6 +29,12 @@ RECENT_ANTIBIOTIC_DAYS = 3
 # Antifungals do not suppress bacterial growth, so they do not count as recent antibiotics.
 ANTIFUNGAL_CODES = frozenset({"5FC", "AFG", "AMB", "CAS", "FLC", "ISA", "ITC", "MCZ", "MFG", "POS", "TRB", "VRC"})
 SUBGROUP_COLUMNS = ("setting_primary", "specimen_type", "age_band", "sex", "prior_culture_history", "adi_quintile")
+# Covariates described for each cohort, with standardized mean differences between E2 and E1.
+TABLE1_COVARIATES = (
+    "age_65plus", "gender_male", "hosp_ward_IP", "hosp_ward_OP", "hosp_ward_ER", "specimen_urine", "specimen_blood",
+    "specimen_respiratory", "prior_culture_history", "prior_ESBL", "T_ceph3_90d", "T_fq_90d", "nursing_home_90d",
+    "adi_missing", "elixhauser_count", "num_prior_orgs",
+)
 
 
 @dataclass(frozen=True)
