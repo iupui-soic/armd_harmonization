@@ -1,4 +1,4 @@
-"""Estimand cohorts for Paper A (plan sections 0, 5.1 and 5.2).
+"""Estimand cohorts for the OrderGap study (plan sections 0, 5.1 and 5.2).
 
 E1  Status quo. Cultures that grew Enterobacterales and had at least one sentinel agent reported as
     S, I or R. Label: labels.esbl_phenotype_composite.

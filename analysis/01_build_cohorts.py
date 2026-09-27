@@ -1,4 +1,4 @@
-"""Build the Paper A cohorts at every site and describe them (plan section 5.2, Analysis 1).
+"""Build the OrderGap cohorts at every site and describe them (plan section 5.2, Analysis 1).
 
 For each staged site this builds the primary E1 and E2 cohorts and the sensitivity cohorts named in
 SAP.md, on the derivation partition only because the test partition is sealed. Each cohort is written

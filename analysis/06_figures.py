@@ -1,4 +1,4 @@
-"""Figures for Paper A from saved results (plan section 5.8).
+"""Figures for OrderGap from saved results (plan section 5.8).
 
 Reads only aggregate summaries, never row-level data:
   1  cohort flow, ordered cultures to E2 to E1        results/01_build_cohorts

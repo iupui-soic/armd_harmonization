@@ -1,4 +1,4 @@
-"""Train the Paper A models on the derivation partition (plan section 5.3, SAP sections 6 and 7.3).
+"""Train the OrderGap models on the derivation partition (plan section 5.3, SAP sections 6 and 7.3).
 
 For each site, each model class and each training estimand (E1 and E2) this fits:
 - cross-fitted predictions on the frozen inner folds, so every derivation unit is predicted by a

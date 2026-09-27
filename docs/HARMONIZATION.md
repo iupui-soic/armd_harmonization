@@ -354,7 +354,7 @@ This evidence has three limits.
 ### Options in armd-common
 
 They are the `repeat_rule` and `unit` options of `cohorts.CohortSpec`. On 2026-09-27 the project
-adopted `chained_14d` and `specimen_day` for the benchmark tasks and Paper A. `CohortSpec` itself still
+adopted `chained_14d` and `specimen_day` for the benchmark tasks and OrderGap. `CohortSpec` itself still
 defaults to `release` and `culture`, so a caller reproduces the releases unless it opts in.
 
 **Repeat rule.**
