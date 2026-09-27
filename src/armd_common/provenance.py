@@ -16,7 +16,7 @@ from pathlib import Path
 
 from .config import DEFAULT_SEED, REPO_ROOT, RESULTS_DIR
 
-_PACKAGES = ("duckdb", "polars", "pyarrow", "numpy", "scikit-learn", "xgboost", "statsmodels", "pyyaml")
+_PACKAGES = ("duckdb", "polars", "pyarrow", "numpy", "scikit-learn", "xgboost", "statsmodels", "matplotlib", "pyyaml")
 
 
 def sha256_file(path: Path, cache_path: Path | None = None, chunk: int = 1 << 24) -> str:

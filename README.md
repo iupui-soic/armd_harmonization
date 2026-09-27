@@ -9,7 +9,7 @@ Harmonization decisions and data quirks are documented in `docs/HARMONIZATION.md
 
 ```bash
 uv venv --python 3.11 .venv
-VIRTUAL_ENV=.venv uv pip install -e ".[model,dev]"
+VIRTUAL_ENV=.venv uv pip install -e ".[model,figures,dev]"
 cp .env.example .env    # set ARMD_DATA_ROOT, and Dryad API credentials for UTSW and ECUH
 ```
 
