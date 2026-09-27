@@ -353,8 +353,9 @@ This evidence has three limits.
 
 ### Options in armd-common
 
-They are the `repeat_rule` and `unit` options of `cohorts.CohortSpec`. Until the project lead confirms
-the proposed defaults, the defaults stay `release` and `culture`, one row per culture as released.
+They are the `repeat_rule` and `unit` options of `cohorts.CohortSpec`. On 2026-09-27 the project
+adopted `chained_14d` and `specimen_day` for the benchmark tasks and Paper A. `CohortSpec` itself still
+defaults to `release` and `culture`, so a caller reproduces the releases unless it opts in.
 
 **Repeat rule.**
 
@@ -584,7 +585,7 @@ ordered cultures in each release's cohort table, measured on 2026-09-11 without 
   nothing at UTSW and ECUH.
 - The exclusion therefore counts days 1 to 3 at every site, from the table the antibiotic features use. It misses
   doses on the order day before the culture, and MGB courses that began earlier and continued past
-  the order. The project lead has yet to confirm this.
+  the order. This was adopted on 2026-09-27.
 
 ## Implied susceptibility
 
@@ -687,17 +688,22 @@ The project lead decided the following on 2026-09-11:
 - **Masked sex codes.** They are mapped by inference, as described under Sex.
 - **Splits.** They are frozen with the stratification described under Splits.
 
+Decided on 2026-09-27:
+
+- **Recent antibiotic window.** Days 1 to 3 at every site, as described under Recent antibiotic
+  exposure.
+- **Repeat rule.** `chained_14d`, as described under Repeat cultures and the unit of analysis.
+  `first_per_patient` and the release as is are sensitivity analyses.
+- **Unit of analysis.** `specimen_day`, with `order_event` as a sensitivity analysis.
+- **Implied susceptibility.** The sensitivity analysis applies every rule. The rules that can fill a
+  sentinel agent for Enterobacterales only impute susceptibility from ceftriaxone, cefotaxime or
+  cefazolin, so the flagged Acinetobacter rule does not affect these labels.
+
 Still open:
 
 1. **K. aerogenes grouping.** Klebsiella by taxonomy (current) or Enterobacter by AmpC behaviour.
 2. **ESBL confirmatory label at ECUH.** ECUH reports clavulanate combination tests, which could
    support a confirmatory-test label alongside MGB's enzyme label.
-3. **Recent antibiotic window.** Days 1 to 3 at every site, as described under Recent antibiotic
-   exposure.
-4. **Repeat rule.** The proposed default is `chained_14d`, as described under Repeat cultures and the
-   unit of analysis.
-5. **Unit of analysis.** The proposed default is `specimen_day`, with `order_event` as a sensitivity
-   analysis.
 
 ## Questions for the ARMD-MGB maintainers
 
