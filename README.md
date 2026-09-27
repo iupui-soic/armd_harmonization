@@ -36,6 +36,9 @@ python -m armd_common.splits --site stanford     # generate and freeze the split
 python -m armd_common.features --site stanford   # harmonized 48 features, written under the site data folder
 python analysis/01_build_cohorts.py              # E1, E2 and sensitivity cohorts plus Analysis 1, derivation only
 python analysis/02_train_e1.py                   # models, cross-fitted predictions and recalibration maps, derivation only
+python analysis/03_evaluate_ladder.py            # the only script that reads the test partition
+python analysis/04_cascade_sensitivity.py        # sentinel reporting and the evaluable subset, derivation only
+python analysis/05_e3_bounds.py                  # population bounds from the 03 results
 .venv/bin/pytest
 ```
 
