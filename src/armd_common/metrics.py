@@ -69,8 +69,9 @@ def brier(p, y, w=None) -> float:
     return float(np.sum(w * (np.asarray(p, dtype=float) - y) ** 2) / w.sum())
 
 
-def _logistic(X: np.ndarray, y: np.ndarray, w: np.ndarray, offset: np.ndarray, iterations: int = 50) -> np.ndarray:
-    beta = np.zeros(X.shape[1])
+def _logistic(X: np.ndarray, y: np.ndarray, w: np.ndarray, offset: np.ndarray, iterations: int = 50,
+              start=None) -> np.ndarray:
+    beta = np.zeros(X.shape[1]) if start is None else np.array(start, dtype=float)
     for _ in range(iterations):
         mu = 1 / (1 + np.exp(-(X @ beta + offset)))
         grad = X.T @ (w * (y - mu))
@@ -82,15 +83,30 @@ def _logistic(X: np.ndarray, y: np.ndarray, w: np.ndarray, offset: np.ndarray, i
     return beta
 
 
-def calibration(p, y, w=None) -> tuple[float, float]:
-    """(intercept, slope). The intercept is estimated with the slope fixed at 1."""
+def calibration(p, y, w=None, lp=None, start=None) -> tuple[float, float]:
+    """(intercept, slope). The intercept is estimated with the slope fixed at 1.
+
+    `lp` is the logit of `p` when already computed. `start` is a (intercept, slope, slope model
+    intercept) guess, such as the point estimate when bootstrapping, so Newton steps are few.
+    """
     y = np.asarray(y, dtype=float)
     w = _weights(w, len(y))
-    lp = logit(p)
+    lp = logit(p) if lp is None else lp
     ones = np.ones((len(y), 1))
-    intercept = _logistic(ones, y, w, lp)[0]
-    slope = _logistic(np.column_stack([ones, lp]), y, w, np.zeros(len(y)))[1]
+    intercept = _logistic(ones, y, w, lp, start=None if start is None else [start[0]])[0]
+    slope = _logistic(np.column_stack([ones, lp]), y, w, np.zeros(len(y)), start=None if start is None else [start[2], start[1]])[1]
     return float(intercept), float(slope)
+
+
+def calibration_start(p, y, lp=None) -> tuple[float, float, float]:
+    """Point estimates to start bootstrap calibration fits from."""
+    y = np.asarray(y, dtype=float)
+    lp = logit(p) if lp is None else lp
+    ones = np.ones((len(y), 1))
+    w = np.ones(len(y))
+    intercept = _logistic(ones, y, w, lp)[0]
+    b0, b1 = _logistic(np.column_stack([ones, lp]), y, w, np.zeros(len(y)))
+    return float(intercept), float(b1), float(b0)
 
 
 def confusion(p, y, t: float, w=None) -> dict:
@@ -130,13 +146,16 @@ def operating_point(p, y, t: float, w=None) -> dict:
 
 
 def evaluate(p, y, operating_threshold: float, w=None, ranked: Ranked | None = None,
-             thresholds=NB_THRESHOLDS) -> dict:
-    """Every scalar metric of the SAP for one set of predictions."""
+             thresholds=NB_THRESHOLDS, lp=None, start=None) -> dict:
+    """Every scalar metric of the plan for one set of predictions.
+
+    `ranked`, `lp` and `start` are reusable across bootstrap draws of the same predictions.
+    """
     y = np.asarray(y, dtype=float)
     w = _weights(w, len(y))
     ranked = ranked or Ranked(p, y)
     prevalence = float(np.sum(w * y) / w.sum())
-    intercept, slope = calibration(p, y, w)
+    intercept, slope = calibration(p, y, w, lp=lp, start=start)
     out = {
         "prevalence": prevalence,
         "auroc": ranked.auroc(w),

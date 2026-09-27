@@ -80,3 +80,11 @@ def test_bootstrap_is_seeded():
 
 def test_percentile_interval_ignores_nan():
     assert metrics.percentile_interval([np.nan, 1, 2, 3, 4, 5], alpha=0.5) == pytest.approx((2, 4))
+
+
+def test_warm_started_calibration_matches_cold():
+    p, y, w = synthetic()
+    lp = metrics.logit(p)
+    start = metrics.calibration_start(p, y, lp)
+    assert start[:2] == pytest.approx(metrics.calibration(p, y), abs=1e-10)
+    assert metrics.calibration(p, y, w, lp=lp, start=start) == pytest.approx(metrics.calibration(p, y, w), abs=1e-9)
