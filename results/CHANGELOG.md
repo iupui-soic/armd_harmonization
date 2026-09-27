@@ -83,3 +83,11 @@
 - Platt maps from urine E1 toward urine E2 have XGBoost intercepts of -1.14, -0.97, -1.40 and -1.17, about half the pooled shift, because resistance is more common in urine than across all specimens.
 - The 90%-sensitivity threshold of the urine E2 XGBoost model is 0.0095, 0.0201, 0.0037 and 0.0076.
 - Flagged: this run was chosen after the primary test results were seen, so it and the evaluation it feeds are exploratory.
+
+## 2026-09-27 03_exploratory (results/03_exploratory/20260927T190415Z, commit 23a55e6, SAP section 17 E-1 to E-5)
+
+- E-1: the approximated Tumbarello score ranks better at order time (AUROC 0.70 to 0.75) than on E1 (0.61 to 0.67). At its published cut-off it flags 234 to 397 of every 1,000 orders, with PPV of 1.5% to 4.9% and negative standardized net benefit at 0.10 at every site. At the score's sensitivity the E2 XGBoost model flags 87 to 164 fewer orders per 1,000.
+- E-2: prior ESBL alone flags 29 to 56 orders per 1,000 with sensitivity of 25% to 39%, and the E2 model saves only 4 to 18 flags per 1,000 at that sensitivity. Adding recent beta-lactam or fluoroquinolone exposure flags 128 to 233 per 1,000, with negative net benefit at 0.10 at every site. R3, a five-predictor logistic model trained on all orders, is calibrated (intercepts 0.00 to 0.05), has AUROC 0.70 to 0.81, and matches the XGBoost model's flags at 0.10 within 2 per 1,000.
+- E-3: within urine, urine-trained E1 models reach AUROC 0.72 to 0.79 at order time against 0.79 to 0.85 for urine-trained E2 models, a paired gap of 0.055 to 0.064. After Platt recalibration the standardized net benefit gap at 0.10 is 0.01 to 0.04.
+- E-4: at the 10% threshold, the E1 model starts broad coverage in 165 to 366 of every 1,000 orders to cover 2.9 to 17.1 resistant cultures, and the E2 model in 6 to 38 orders to cover 0.8 to 10.8. To catch 90% of resistant cultures, R3 flags 576 to 744 per 1,000 against 436 to 549 for the E2 XGBoost model. E-5: every conclusion above holds at the three Dryad sites alone.
+- Flagged: within urine, the E1 model's AUROC rises at order time at three sites, as the plan originally expected. The pooled fall comes from mixing specimen types. Much of the E2 advantage comes from training on all orders rather than from model complexity. All of E-1 to E-5 is exploratory.
