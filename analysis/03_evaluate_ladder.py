@@ -15,10 +15,12 @@ and predicts them with the models from analysis/02_train_e1.py. Each model class
   E2 model on E2 test              the corrected model
 
 Each cell reports the planned metrics with 95% percentile intervals from patient-clustered bootstrap
-draws. Cells on one test cohort share each draw, so the COMPARISONS are paired differences.
-Subgroups are reported without intervals. The sensitivity cohorts (S1 to S7) are evaluated with the
-primary models. Every ordered pair of sites is evaluated with the source site's models on the target
-site's test cohorts. Table 1 describes the full cohorts, derivation and test together.
+draws. Cells on one test cohort share each draw, so the COMPARISONS are paired differences. The same
+grid runs within urine and within blood (SPECIMEN_GRIDS). Subgroups are reported without intervals.
+The sensitivity cohorts (S1 to S8) are evaluated with the primary models. Every ordered pair of sites
+is evaluated with the source site's models on the target site's test cohorts. Table 1 describes the
+full cohorts, derivation and test together. null_result applies the plan's definition of a null
+result to the recalibrated comparison.
 
 Predictions are row-level, so they are cached under models/<rule>_<unit>/test/ in the site folder of
 the data root. results/03_evaluate_ladder/<timestamp>/ receives manifest.json, summary.json and
@@ -63,10 +65,15 @@ SENSITIVITY = {
     "S3": {"interpretation": "clsi2022"},
     "S4": {"label": "idsa"},
     "S4_enzyme": {"label": "enzyme"},
-    "S5": {"implied_susceptibility": "strict"},
+    "S5": {"implied_susceptibility": "full"},
     "S6": {"unit": "order_event"},
     "S7": {"repeat_rule": "first_per_patient"},
+    "S8": {"repeat_rule": "release", "unit": "culture"},
 }
+SPECIMEN_GRIDS = ("urine", "blood")
+# A null result: every primary threshold within these margins of zero, for the recalibrated comparison.
+NULL_MARGIN, NULL_INTERVAL_MARGIN = 0.05, 0.10
+NULL_COMPARISON = ("E1_platt", "E2")
 SENSITIVITY_VARIANTS = ("E1", "E1_platt", "E2")
 CROSS_SITE = (("E1", "E1"), ("E2", "E2"))
 OPERATING = ("sensitivity", "specificity", "ppv", "npv", "net_benefit")
@@ -87,6 +94,8 @@ def withheld_metrics(p, y, threshold: float) -> set[str]:
     events = int(np.sum(y))
     if small(len(y)) or small(events) or small(len(y) - events):
         return {"*"}
+    if events == 0 or events == len(y):
+        return {"*"}  # nothing to estimate, which is not a disclosure but withheld the same way
     out = set()
     for t in metrics.NB_THRESHOLDS:
         if any(small(v) for v in metrics.confusion(p, y, t).values()):
@@ -331,7 +340,62 @@ def evaluate_site(cohorts: dict, variants: dict, n_boot: int, seed: int, cache_d
     for key in sorted(k for k in cohorts if ":" in k):
         cells = grid_cells(cohorts, variants, [(v, key) for v in SENSITIVITY_VARIANTS])
         sensitivity[key], _ = evaluate_cells(cells, n_boot, seed)
-    return {"grid": grid, "comparisons": differences, "sensitivity": sensitivity}
+    out = {"grid": grid, "comparisons": differences, "sensitivity": sensitivity,
+           "specimen_grids": specimen_grids(cohorts, variants, n_boot, seed)}
+    out["null_result"] = {k: null_result(out, k) for k in variants}
+    return out
+
+
+def restrict(cohorts: dict, column: str, value: str) -> dict:
+    """The E1 and E2 test cohorts limited to units whose `column` equals `value`."""
+    out = {}
+    for key in ("E1", "E2"):
+        if key not in cohorts:
+            continue
+        a = cohorts[key]
+        rows = np.asarray(a[column]).astype(str) == value
+        out[key] = {k: np.asarray(v)[rows] for k, v in a.items()}
+    return out
+
+
+def specimen_grids(cohorts: dict, variants: dict, n_boot: int, seed: int) -> dict:
+    """The grid and its paired comparisons within each specimen type in SPECIMEN_GRIDS."""
+    out = {}
+    for specimen in SPECIMEN_GRIDS:
+        cells = grid_cells(restrict(cohorts, "specimen_type", specimen), variants, GRID, prefix=f"{specimen}:")
+        comparisons = [(f"{specimen}:{k}:{a}->{t}", f"{specimen}:{k}:{b}->{t}") for k in variants for a, b, t in COMPARISONS]
+        grid, differences = evaluate_cells(cells, n_boot, seed, comparisons)
+        out[specimen] = {"grid": grid, "comparisons": differences}
+    return out
+
+
+def _interval(v):
+    return tuple(v) if isinstance(v, (list, tuple)) and len(v) == 2 else None
+
+
+def null_result(site: dict, model: str = "xgboost") -> dict:
+    """The plan's null result at one site, on the E2 test cohort.
+
+    Negligible when, for the Platt-recalibrated E1 model against the E2 model, the difference in
+    standardized net benefit is within NULL_MARGIN at every primary threshold with its 95% interval
+    inside NULL_INTERVAL_MARGIN, and the recalibrated model's calibration slope interval includes 1.
+    A withheld value leaves the verdict undetermined.
+    """
+    a, b = NULL_COMPARISON
+    comparison = site["comparisons"].get(f"{model}:{a}->E2 minus {model}:{b}->E2")
+    recalibrated = site["grid"].get(f"{model}:{a}->E2")
+    if comparison is None or recalibrated is None:
+        return {"model": model, "negligible": None, "checks": {}}
+    checks = {}
+    for t in metrics.NB_THRESHOLDS:
+        key = f"standardized_net_benefit_{t:.2f}"
+        point, interval = comparison["point"].get(key), _interval(comparison["interval"].get(key))
+        checks[key] = None if not isinstance(point, float) or interval is None else bool(
+            abs(point) <= NULL_MARGIN and -NULL_INTERVAL_MARGIN <= interval[0] and interval[1] <= NULL_INTERVAL_MARGIN)
+    slope = _interval(recalibrated["interval"].get("calibration_slope"))
+    checks["calibration_slope_includes_1"] = None if slope is None else bool(slope[0] <= 1 <= slope[1])
+    verdict = None if any(v is None for v in checks.values()) else all(checks.values())
+    return {"model": model, "comparison": f"{a} against {b} on E2", "negligible": verdict, "checks": checks}
 
 
 def evaluate_cross_site(per_site: dict, n_boot: int, seed: int) -> dict:
@@ -367,7 +431,7 @@ def render(summary: dict) -> str:
                   "|---|" + "---|" * len(shown)]
         for name, d in s["comparisons"].items():
             lines.append(f"| {name} | " + " | ".join(fmt(d["point"].get(m), d["interval"].get(m)) for m in shown) + " |")
-        lines.append("")
+        lines += ["", f"Null result (plan section 12): {s['null_result']}", ""]
     return "\n".join(lines) + "\n"
 
 
@@ -418,6 +482,8 @@ def main() -> int:
         summary["sites"][site] = result
         per_site[site] = ({k: cohorts[k] for k in ("E1", "E2") if k in cohorts}, variants)
     summary["cross_site"] = evaluate_cross_site(per_site, args.boot, args.seed)
+    verdicts = [s["null_result"]["xgboost"]["negligible"] for s in summary["sites"].values() if "xgboost" in s["null_result"]]
+    summary["null_result_overall"] = None if not verdicts or None in verdicts else all(verdicts)
     run.write()
     (run.dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
     (run.dir / "report.md").write_text(render(summary))

@@ -143,3 +143,32 @@ def test_refuses_to_run_before_the_plan_is_frozen(monkeypatch):
     monkeypatch.setattr(evaluate, "FROZEN_TAG", "sap-never-tagged")
     with pytest.raises(SystemExit):
         evaluate.require_frozen_plan()
+
+
+def test_specimen_grids_partition_the_test_cohort(trained):
+    out = evaluate.evaluate_site(synthetic_test(), trained, n_boot=5, seed=1)
+    grids = out["specimen_grids"]
+    assert set(grids) == {"urine", "blood"}
+    assert all(len(g["grid"]) == 12 for g in grids.values())
+    # Every synthetic unit is urine or blood, so the two grids split the E2 test cohort.
+    total = out["grid"]["xgboost:E2->E2"]["units"]
+    assert grids["urine"]["grid"]["urine:xgboost:E2->E2"]["units"] + grids["blood"]["grid"]["blood:xgboost:E2->E2"]["units"] == total
+    assert "urine:xgboost:E1_platt->E2 minus urine:xgboost:E2->E2" in grids["urine"]["comparisons"]
+
+
+def site_with(diff: float, interval, slope_interval):
+    keys = [f"standardized_net_benefit_{t:.2f}" for t in metrics.NB_THRESHOLDS]
+    return {
+        "comparisons": {"xgboost:E1_platt->E2 minus xgboost:E2->E2": {
+            "point": {k: diff for k in keys}, "interval": {k: interval for k in keys}}},
+        "grid": {"xgboost:E1_platt->E2": {"interval": {"calibration_slope": slope_interval}}},
+    }
+
+
+def test_null_result():
+    assert evaluate.null_result(site_with(0.01, [-0.04, 0.06], [0.9, 1.1]))["negligible"] is True
+    # A gap beyond the margin, or a slope interval that excludes 1, is not a null result.
+    assert evaluate.null_result(site_with(0.08, [0.02, 0.14], [0.9, 1.1]))["negligible"] is False
+    assert evaluate.null_result(site_with(0.01, [-0.04, 0.06], [1.2, 1.5]))["negligible"] is False
+    # A withheld value leaves the verdict open.
+    assert evaluate.null_result(site_with(WITHHELD, WITHHELD, [0.9, 1.1]))["negligible"] is None
