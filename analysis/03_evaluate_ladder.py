@@ -27,8 +27,12 @@ the data root. results/03_evaluate_ladder/<timestamp>/ receives manifest.json, s
 report.md. A metric is withheld when a confusion count behind it is between 1 and 10, and the four
 counts at a threshold are withheld together.
 
+With --exploratory it runs the SAP's exploratory amendment (section 17, E-1 to E-4) instead, and
+writes results/03_exploratory/<timestamp>/. That mode needs the urine-only training run (E-3).
+
 Usage: python analysis/03_evaluate_ladder.py [--train-run results/02_train_e1/<timestamp>]
        [--sites stanford,mgb] [--boot 2000] [--seed 20260911]
+       python analysis/03_evaluate_ladder.py --exploratory [--urine-train-run results/02_train_e1/<timestamp>]
 """
 
 from __future__ import annotations
@@ -44,7 +48,7 @@ import duckdb
 import numpy as np
 import pyarrow as pa
 
-from armd_common import features, metrics, modeling
+from armd_common import features, metrics, modeling, scores
 from armd_common.cohorts import TABLE1_COVARIATES, CohortSpec, build_cohort
 from armd_common.config import DEFAULT_SEED, MIN_CELL, REPO_ROOT, RESULTS_DIR, get_site
 from armd_common.db import connect
@@ -443,6 +447,264 @@ def render(summary: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+# Exploratory amendment, SAP section 17 --------------------------------------------------------------
+
+DECISION_THRESHOLDS = (0.05, 0.10, 0.20)
+R3_FLAG_THRESHOLD = 0.10  # R3 is a probability model, so it flags at the primary decision threshold
+RULES = ("tumbarello", "R1_prior_esbl", "R2_prior_esbl_or_recent_blfq")
+
+
+def flag_rate_at_sensitivity(p, y, sensitivity: float, w=None) -> float:
+    """Orders flagged per 1,000 at the highest threshold whose sensitivity reaches `sensitivity`."""
+    p, y = np.asarray(p, dtype=float), np.asarray(y).astype(bool)
+    w = np.ones(len(p)) if w is None else np.asarray(w, dtype=float)
+    positives = np.flatnonzero(y & (w > 0))
+    if len(positives) == 0 or not np.isfinite(sensitivity):
+        return float("nan")
+    order = positives[np.argsort(-p[positives], kind="stable")]
+    reached = np.cumsum(w[order]) / w[order].sum()
+    k = min(int(np.searchsorted(reached, sensitivity - 1e-12)), len(order) - 1)
+    return float(1000 * w[p >= p[order[k]]].sum() / w.sum())
+
+
+def _rule_values(score, flags, y, ranked, w=None) -> dict:
+    c = metrics.confusion(flags.astype(float), y, 0.5, w)
+    n, positives, flagged = sum(c.values()), c["tp"] + c["fn"], c["tp"] + c["fp"]
+    nan = float("nan")
+    out = {
+        "auroc": ranked.auroc(w),
+        "flagged_per_1000": 1000 * flagged / n,
+        "covered_per_1000": 1000 * c["tp"] / n,
+        "missed_per_1000": 1000 * c["fn"] / n,
+        "sensitivity": c["tp"] / positives if positives else nan,
+        "specificity": c["tn"] / (c["tn"] + c["fp"]) if c["tn"] + c["fp"] else nan,
+        "ppv": c["tp"] / flagged if flagged else nan,
+        "npv": c["tn"] / (c["tn"] + c["fn"]) if c["tn"] + c["fn"] else nan,
+    }
+    for t in DECISION_THRESHOLDS:
+        nb = (c["tp"] - c["fp"] * t / (1 - t)) / n
+        out[f"net_benefit_{t:.2f}"] = nb
+        out[f"standardized_net_benefit_{t:.2f}"] = nb / (positives / n) if positives else nan
+    return out
+
+
+def _draws(fn, patients, n_boot: int, seed: int, key: str):
+    """Point value of fn(None), and 95% intervals over patient bootstrap draws shared by cohort key."""
+    point = fn(None)
+    keys = list(point)
+    rows = [[d[k] for k in keys] for d in (fn(w) for w in metrics.patient_weights(patients, n_boot, cohort_seed(seed, key)))]
+    draws = np.array(rows) if rows else np.empty((0, len(keys)))
+    intervals = {k: metrics.percentile_interval(draws[:, i]) for i, k in enumerate(keys)} if len(draws) else {}
+    return point, intervals
+
+
+def _flag_withheld(flags, y) -> tuple[set, dict]:
+    """Small-cell rule for a set of flags: everything, or every value but AUROC, or nothing."""
+    events = int(np.sum(y))
+    counts = {k: int(v) for k, v in metrics.confusion(np.asarray(flags, dtype=float), y, 0.5).items()}
+    if small(len(y)) or small(events) or small(len(y) - events) or events in (0, len(y)):
+        return {"*"}, {k: WITHHELD for k in counts}
+    if any(small(v) for v in counts.values()):
+        return {"withhold_all_but_auroc"}, {k: WITHHELD for k in counts}
+    return set(), counts
+
+
+def evaluate_rule(score, flags, y, patients, n_boot: int, seed: int, key: str) -> dict:
+    """E-1 and E-2: AUROC of the score, and the rule's flags as a decision, with bootstrap intervals."""
+    score, flags, y = np.asarray(score, dtype=float), np.asarray(flags, dtype=bool), np.asarray(y, dtype=float)
+    ranked = metrics.Ranked(score, y)
+    point, intervals = _draws(lambda w: _rule_values(score, flags, y, ranked, w), patients, n_boot, seed, key)
+    withheld, counts = _flag_withheld(flags, y)
+    if "withhold_all_but_auroc" in withheld:
+        withheld = set(point) - {"auroc"}
+    return {"units": cell(len(y)), "events": cell(int(y.sum())), "confusion": counts,
+            "point": publish(point, withheld), "interval": publish(intervals, withheld)}
+
+
+def matched_comparison(flags, p_model, y, patients, n_boot: int, seed: int, key: str) -> dict:
+    """Orders flagged per 1,000 by a rule, and by a model at the rule's own sensitivity."""
+    flags, y = np.asarray(flags, dtype=bool), np.asarray(y, dtype=float)
+
+    def values(w):
+        c = metrics.confusion(flags.astype(float), y, 0.5, w)
+        n, positives = sum(c.values()), c["tp"] + c["fn"]
+        sensitivity = c["tp"] / positives if positives else float("nan")
+        rule_rate = 1000 * (c["tp"] + c["fp"]) / n
+        model_rate = flag_rate_at_sensitivity(p_model, y, sensitivity, w)
+        return {"rule_sensitivity": sensitivity, "rule_flagged_per_1000": rule_rate,
+                "model_flagged_per_1000": model_rate, "difference_per_1000": rule_rate - model_rate}
+
+    point, intervals = _draws(values, patients, n_boot, seed, key)
+    withheld, _ = _flag_withheld(flags, y)
+    withheld = set(point) if withheld else set()
+    return {"point": publish(point, withheld), "interval": publish(intervals, withheld)}
+
+
+def decision_impact(p, y, patients, threshold90, n_boot: int, seed: int, key: str) -> dict:
+    """E-4: per 1,000 orders, broad coverage started and resistant cultures covered and missed."""
+    p, y = np.asarray(p, dtype=float), np.asarray(y, dtype=float)
+    labels = [(f"{t:.2f}", t) for t in DECISION_THRESHOLDS]
+    if threshold90 is not None:
+        labels.append(("90_sensitivity", float(threshold90)))
+
+    def values(w):
+        out = {}
+        for label, t in labels:
+            for k, v in metrics.per_thousand(p, y, t, w).items():
+                out[f"{label}:{k}"] = v
+        return out
+
+    point, intervals = _draws(values, patients, n_boot, seed, key)
+    out = {}
+    for label, t in labels:
+        hidden = any(small(v) for v in metrics.confusion(p, y, t).values()) or small(int(y.sum()))
+        out[label] = {"threshold": t, "point": {}, "interval": {}}
+        for k in ("flagged", "covered", "missed"):
+            out[label]["point"][k] = WITHHELD if hidden else point[f"{label}:{k}"]
+            out[label]["interval"][k] = WITHHELD if hidden else intervals.get(f"{label}:{k}")
+    return out
+
+
+def fit_minimal(path: Path):
+    """R3: logistic regression on scores.MINIMAL_PREDICTORS, fitted on a derivation cohort file."""
+    from sklearn.linear_model import LogisticRegression
+
+    con = duckdb.connect()
+    src = f"read_parquet('{str(path).replace(chr(39), chr(39) * 2)}')"
+    partitions = [r[0] for r in con.execute(f"SELECT DISTINCT partition FROM {src}").fetchall()]
+    if partitions != ["derivation"]:
+        raise ValueError(f"{path} must hold the derivation partition only")
+    a = con.execute(f"SELECT label, {', '.join(features.FEATURES_48)} FROM {src}").fetchnumpy()
+    con.close()
+    X = np.column_stack([np.asarray(a[c], dtype=np.float32) for c in features.FEATURES_48])
+    y = np.asarray(a["label"]).astype(int)
+    D = scores.minimal_design(scores.columns(X))
+    model = LogisticRegression(C=1e6, max_iter=5000).fit(D, y)  # effectively unpenalized
+    threshold = modeling.sensitivity_threshold(model.predict_proba(D)[:, 1], y)
+    coefficients = dict(zip(("intercept",) + scores.MINIMAL_PREDICTORS,
+                            [float(model.intercept_[0])] + [float(c) for c in model.coef_[0]]))
+    return model, threshold, coefficients
+
+
+def exploratory_site(cohorts: dict, variants: dict, urine_variants: dict, derivation_e2: Path,
+                     n_boot: int, seed: int) -> dict:
+    """E-1 to E-4 for one site. Draws are shared by cohort key, so rules and models on one cohort pair up."""
+    out = {"rules": {}, "matched": {}, "minimal_model": {}, "urine_models": {}, "decision_impact": {}}
+    tests = [t for t in ("E1", "E2") if t in cohorts]
+    xgb_e2 = variants["xgboost"]["E2"][0]
+    for test in tests:
+        a = cohorts[test]
+        f = scores.columns(a["X"])
+        points = scores.tumbarello_points(f)
+        rules = {
+            "tumbarello": (points, points >= scores.TUMBARELLO_CUTOFF),
+            "R1_prior_esbl": (scores.prior_esbl(f).astype(float), scores.prior_esbl(f)),
+            "R2_prior_esbl_or_recent_blfq": (scores.prior_esbl_or_recent_blfq(f).astype(float), scores.prior_esbl_or_recent_blfq(f)),
+        }
+        p_model = xgb_e2(a["X"])
+        for name, (score, flags) in rules.items():
+            out["rules"][f"{name}->{test}"] = evaluate_rule(score, flags, a["y"], a["patient_id"], n_boot, seed, test)
+            out["matched"][f"{name}->{test}"] = matched_comparison(flags, p_model, a["y"], a["patient_id"], n_boot, seed, test)
+
+    model, threshold, coefficients = fit_minimal(derivation_e2)
+    cells = {}
+    for test in tests:
+        a = cohorts[test]
+        p = model.predict_proba(scores.minimal_design(scores.columns(a["X"])))[:, 1]
+        cells[f"R3->{test}"] = {"cohort": test, "p": p, "y": a["y"], "patients": a["patient_id"], "threshold": threshold}
+        flags = p >= R3_FLAG_THRESHOLD
+        out["matched"][f"R3_at_{R3_FLAG_THRESHOLD:.2f}->{test}"] = matched_comparison(
+            flags, variants["xgboost"]["E2"][0](a["X"]), a["y"], a["patient_id"], n_boot, seed, test)
+    grid, _ = evaluate_cells(cells, n_boot, seed)
+    out["minimal_model"] = {"coefficients": coefficients, "threshold_90_sensitivity": threshold, "grid": grid}
+
+    urine = restrict(cohorts, "specimen_type", "urine")
+    ucells = grid_cells(urine, urine_variants, GRID, prefix="urine:")
+    comparisons = [(f"urine:{k}:{a}->{t}", f"urine:{k}:{b}->{t}") for k in urine_variants for a, b, t in COMPARISONS]
+    ugrid, udiff = evaluate_cells(ucells, n_boot, seed, comparisons)
+    out["urine_models"] = {"grid": ugrid, "comparisons": udiff}
+
+    impact_cells = {**grid_cells(cohorts, variants, GRID), **cells, **ucells}
+    for name, c in impact_cells.items():
+        out["decision_impact"][name] = decision_impact(c["p"], c["y"], c["patients"], c["threshold"], n_boot, seed, c["cohort"])
+    return out
+
+
+def render_exploratory(summary: dict) -> str:
+    lines = ["# 03_exploratory", "", "Exploratory amendment E-1 to E-4 (SAP section 17). Test partition, not pre-specified.", ""]
+
+    def v(d, k, digits=3):
+        x = d.get(k)
+        return f"{x:.{digits}f}" if isinstance(x, float) else str(x)
+
+    for site, s in summary["sites"].items():
+        lines += [f"## {site}", "", "Rules and scores on the E2 test cohort:", "",
+                  "| rule | AUROC | flagged per 1,000 | sensitivity | PPV | standardized NB at 0.10 |", "|---|---|---|---|---|---|"]
+        for name, r in s["rules"].items():
+            if name.endswith("->E2"):
+                pt = r["point"]
+                lines.append(f"| {name} | {v(pt, 'auroc')} | {v(pt, 'flagged_per_1000', 0)} | {v(pt, 'sensitivity', 2)} | "
+                             f"{v(pt, 'ppv', 3)} | {v(pt, 'standardized_net_benefit_0.10', 2)} |")
+        lines += ["", "The E2-trained XGBoost model at each rule's own sensitivity:", "",
+                  "| rule | rule sensitivity | rule flags per 1,000 | model flags per 1,000 | difference |", "|---|---|---|---|---|"]
+        for name, m in s["matched"].items():
+            if name.endswith("->E2"):
+                pt = m["point"]
+                lines.append(f"| {name} | {v(pt, 'rule_sensitivity', 2)} | {v(pt, 'rule_flagged_per_1000', 0)} | "
+                             f"{v(pt, 'model_flagged_per_1000', 0)} | {v(pt, 'difference_per_1000', 0)} |")
+        lines += ["", "Urine-specific XGBoost models on urine test units:", "",
+                  "| cell | AUROC | calibration intercept | standardized NB at 0.10 |", "|---|---|---|---|"]
+        for name, c in s["urine_models"]["grid"].items():
+            if ":xgboost:" in name:
+                pt = c["point"]
+                lines.append(f"| {name} | {v(pt, 'auroc')} | {v(pt, 'calibration_intercept', 2)} | {v(pt, 'standardized_net_benefit_0.10', 2)} |")
+        lines.append("")
+    return "\n".join(lines) + "\n"
+
+
+def run_exploratory(args, frozen: dict, train_dir: Path) -> int:
+    trained = json.loads((train_dir / "summary.json").read_text())
+    train_args = json.loads((train_dir / "manifest.json").read_text())["args"]
+    urine_dir = Path(args.urine_train_run) if args.urine_train_run else latest_run("02_train_e1", "urine")
+    urine_trained = json.loads((urine_dir / "summary.json").read_text())
+    urine_args = json.loads((urine_dir / "manifest.json").read_text())["args"]
+    rule, unit, kinds = train_args["repeat_rule"], train_args["unit"], train_args["models"].split(",")
+    if (urine_args["repeat_rule"], urine_args["unit"]) != (rule, unit):
+        raise SystemExit("the urine training run must use the primary repeat rule and unit")
+    sites = args.sites.split(",") if args.sites else list(trained["sites"])
+
+    run = RunManifest("03_exploratory", seed=args.seed, args=vars(args))
+    run.set("analysis_plan", frozen)
+    run.set("amendment", "SAP section 17, exploratory analyses E-1 to E-5")
+    for label, d in (("02_train_e1.summary", train_dir), ("02_train_e1_urine.summary", urine_dir)):
+        run.add_input(label, d / "summary.json", sha256_file(d / "summary.json"))
+    base = {"repeat_rule": rule, "unit": unit}
+    specs = {"E1": CohortSpec("E1", **base), "E2": CohortSpec("E2", **base)}
+    names = {e: specs[e].name for e in specs}
+    summary = {"partition": "test", "exploratory": True, "amendment": "SAP section 17, E-1 to E-5", "analysis_plan": frozen,
+               "train_run": str(train_dir), "urine_train_run": str(urine_dir),
+               "tumbarello": {"cutoff": scores.TUMBARELLO_CUTOFF, "max": scores.TUMBARELLO_MAX},
+               "r3_flag_threshold": R3_FLAG_THRESHOLD, "sites": {}}
+    for site in sites:
+        print(f"exploratory: {site}", flush=True)
+        root = get_site(site).parquet_dir.parent
+        variants = {k: load_variants(root / "models" / f"{rule}_{unit}", names, k, trained["sites"][site]) for k in kinds}
+        urine_variants = {k: load_variants(root / "models" / f"{rule}_{unit}_urine", names, k, urine_trained["sites"][site])
+                          for k in kinds}
+        derivation = root / "cohorts" / names["E2"] / "derivation.parquet"
+        run.add_input(f"{site}.{names['E2']}.derivation", derivation, sha256_file(derivation))
+        cohorts, flows = build_test_cohorts(site, specs)
+        for key, flow in flows.items():
+            for step in flow:
+                run.count(f"{site}.{key}.{step['step']}", step["cultures"])
+        summary["sites"][site] = exploratory_site(cohorts, variants, urine_variants, derivation, args.boot, args.seed)
+    run.write()
+    (run.dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
+    (run.dir / "report.md").write_text(render_exploratory(summary))
+    print(f"exploratory: wrote {run.dir}")
+    return 0
+
+
 def latest_run(script: str, specimen: str | None = None) -> Path:
     """The latest run of `script` with a summary. For training runs, the one trained on `specimen`
     (None is every specimen type), read from its manifest."""
@@ -463,9 +725,13 @@ def main() -> int:
     parser.add_argument("--sites", help="comma-separated sites (default: every site in the training run)")
     parser.add_argument("--boot", type=int, default=N_BOOT)
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    parser.add_argument("--exploratory", action="store_true", help="run the SAP's exploratory amendment E-1 to E-4")
+    parser.add_argument("--urine-train-run", help="the urine-only training run for E-3 (default: the latest)")
     args = parser.parse_args()
     frozen = require_frozen_plan()
     train_dir = Path(args.train_run) if args.train_run else latest_run("02_train_e1")
+    if args.exploratory:
+        return run_exploratory(args, frozen, train_dir)
     trained = json.loads((train_dir / "summary.json").read_text())
     train_args = json.loads((train_dir / "manifest.json").read_text())["args"]
     rule, unit, kinds = train_args["repeat_rule"], train_args["unit"], train_args["models"].split(",")
