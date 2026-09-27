@@ -21,7 +21,7 @@ benchmarks/manifests/mgb.csv.gz
 # Agent instructions and the project plans stay local
 CLAUDE.md
 PAPER_A_PLAN.md
-SAP.md
+SAP*.md
 
 # Results stay local except per-run summary JSON and the changelog
 results/**
