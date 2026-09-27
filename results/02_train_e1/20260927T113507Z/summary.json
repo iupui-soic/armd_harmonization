@@ -1,0 +1,242 @@
+{
+  "partition": "derivation",
+  "analysis_plan": {
+    "tag": "sap-v1.0",
+    "pinned_file": "SAP.md",
+    "pinned_sha256": "85725865d5cbfa182d4fca2134884ad36a3a4d0e5a89df1826dd318b971657a8"
+  },
+  "sites": {
+    "stanford": {
+      "cohorts": {
+        "E1": {
+          "name": "e1_composite_chained_14d_specimen_day",
+          "units": 62468,
+          "label_positive": 6961
+        },
+        "E2": {
+          "name": "e2_composite_chained_14d_specimen_day",
+          "units": 471928,
+          "label_positive": 6961
+        }
+      },
+      "models": {
+        "xgboost_E1": {
+          "trained_on": "e1_composite_chained_14d_specimen_day",
+          "model_file": "xgboost.ubj",
+          "threshold_90_sensitivity": 0.057136960327625275,
+          "recalibration_to_E2": {
+            "fitted_on": "e2_composite_chained_14d_specimen_day",
+            "platt": {
+              "intercept": -1.9702722008111382,
+              "slope": 1.1018931470183273
+            },
+            "isotonic_file": "xgboost_isotonic_to_E2.pkl",
+            "threshold_90_sensitivity_uncalibrated": 0.057136960327625275,
+            "threshold_90_sensitivity_platt": 0.006309330446878833,
+            "threshold_90_sensitivity_isotonic": 0.008087761538200684
+          }
+        },
+        "xgboost_E2": {
+          "trained_on": "e2_composite_chained_14d_specimen_day",
+          "model_file": "xgboost.ubj",
+          "threshold_90_sensitivity": 0.006299634464085102
+        },
+        "logistic_E1": {
+          "trained_on": "e1_composite_chained_14d_specimen_day",
+          "model_file": "logistic.pkl",
+          "threshold_90_sensitivity": 0.0588613823056221,
+          "recalibration_to_E2": {
+            "fitted_on": "e2_composite_chained_14d_specimen_day",
+            "platt": {
+              "intercept": -2.193206245807333,
+              "slope": 0.9772372474144346
+            },
+            "isotonic_file": "logistic_isotonic_to_E2.pkl",
+            "threshold_90_sensitivity_uncalibrated": 0.0588613823056221,
+            "threshold_90_sensitivity_platt": 0.007376770211101905,
+            "threshold_90_sensitivity_isotonic": 0.0069568418146682635
+          }
+        },
+        "logistic_E2": {
+          "trained_on": "e2_composite_chained_14d_specimen_day",
+          "model_file": "logistic.pkl",
+          "threshold_90_sensitivity": 0.006657307501882315
+        }
+      }
+    },
+    "mgb": {
+      "cohorts": {
+        "E1": {
+          "name": "e1_composite_chained_14d_specimen_day",
+          "units": 93955,
+          "label_positive": 10016
+        },
+        "E2": {
+          "name": "e2_composite_chained_14d_specimen_day",
+          "units": 364930,
+          "label_positive": 10016
+        }
+      },
+      "models": {
+        "xgboost_E1": {
+          "trained_on": "e1_composite_chained_14d_specimen_day",
+          "model_file": "xgboost.ubj",
+          "threshold_90_sensitivity": 0.04400038719177246,
+          "recalibration_to_E2": {
+            "fitted_on": "e2_composite_chained_14d_specimen_day",
+            "platt": {
+              "intercept": -1.749399324426948,
+              "slope": 0.945688903931704
+            },
+            "isotonic_file": "xgboost_isotonic_to_E2.pkl",
+            "threshold_90_sensitivity_uncalibrated": 0.04400038719177246,
+            "threshold_90_sensitivity_platt": 0.009370645385625187,
+            "threshold_90_sensitivity_isotonic": 0.015458260002233626
+          }
+        },
+        "xgboost_E2": {
+          "trained_on": "e2_composite_chained_14d_specimen_day",
+          "model_file": "xgboost.ubj",
+          "threshold_90_sensitivity": 0.015308833681046963
+        },
+        "logistic_E1": {
+          "trained_on": "e1_composite_chained_14d_specimen_day",
+          "model_file": "logistic.pkl",
+          "threshold_90_sensitivity": 0.04533422738313675,
+          "recalibration_to_E2": {
+            "fitted_on": "e2_composite_chained_14d_specimen_day",
+            "platt": {
+              "intercept": -1.8238868486859559,
+              "slope": 0.884498072758623
+            },
+            "isotonic_file": "logistic_isotonic_to_E2.pkl",
+            "threshold_90_sensitivity_uncalibrated": 0.04533422738313675,
+            "threshold_90_sensitivity_platt": 0.010780077428574092,
+            "threshold_90_sensitivity_isotonic": 0.01523484252482281
+          }
+        },
+        "logistic_E2": {
+          "trained_on": "e2_composite_chained_14d_specimen_day",
+          "model_file": "logistic.pkl",
+          "threshold_90_sensitivity": 0.017988180741667747
+        }
+      }
+    },
+    "utsw": {
+      "cohorts": {
+        "E1": {
+          "name": "e1_composite_chained_14d_specimen_day",
+          "units": 39458,
+          "label_positive": 3179
+        },
+        "E2": {
+          "name": "e2_composite_chained_14d_specimen_day",
+          "units": 487157,
+          "label_positive": 3179
+        }
+      },
+      "models": {
+        "xgboost_E1": {
+          "trained_on": "e1_composite_chained_14d_specimen_day",
+          "model_file": "xgboost.ubj",
+          "threshold_90_sensitivity": 0.04112473130226135,
+          "recalibration_to_E2": {
+            "fitted_on": "e2_composite_chained_14d_specimen_day",
+            "platt": {
+              "intercept": -2.7328881974393364,
+              "slope": 0.9868788265466749
+            },
+            "isotonic_file": "xgboost_isotonic_to_E2.pkl",
+            "threshold_90_sensitivity_uncalibrated": 0.04112473130226135,
+            "threshold_90_sensitivity_platt": 0.002898327306220016,
+            "threshold_90_sensitivity_isotonic": 0.003611126784404446
+          }
+        },
+        "xgboost_E2": {
+          "trained_on": "e2_composite_chained_14d_specimen_day",
+          "model_file": "xgboost.ubj",
+          "threshold_90_sensitivity": 0.0029917277861386538
+        },
+        "logistic_E1": {
+          "trained_on": "e1_composite_chained_14d_specimen_day",
+          "model_file": "logistic.pkl",
+          "threshold_90_sensitivity": 0.04162987694144249,
+          "recalibration_to_E2": {
+            "fitted_on": "e2_composite_chained_14d_specimen_day",
+            "platt": {
+              "intercept": -3.1045731311413864,
+              "slope": 0.8203860812681066
+            },
+            "isotonic_file": "logistic_isotonic_to_E2.pkl",
+            "threshold_90_sensitivity_uncalibrated": 0.04162987694144249,
+            "threshold_90_sensitivity_platt": 0.00340993896752559,
+            "threshold_90_sensitivity_isotonic": 0.003253975192081671
+          }
+        },
+        "logistic_E2": {
+          "trained_on": "e2_composite_chained_14d_specimen_day",
+          "model_file": "logistic.pkl",
+          "threshold_90_sensitivity": 0.003161470405757427
+        }
+      }
+    },
+    "ecuh": {
+      "cohorts": {
+        "E1": {
+          "name": "e1_composite_chained_14d_specimen_day",
+          "units": 68410,
+          "label_positive": 6323
+        },
+        "E2": {
+          "name": "e2_composite_chained_14d_specimen_day",
+          "units": 542116,
+          "label_positive": 6323
+        }
+      },
+      "models": {
+        "xgboost_E1": {
+          "trained_on": "e1_composite_chained_14d_specimen_day",
+          "model_file": "xgboost.ubj",
+          "threshold_90_sensitivity": 0.04579465463757515,
+          "recalibration_to_E2": {
+            "fitted_on": "e2_composite_chained_14d_specimen_day",
+            "platt": {
+              "intercept": -1.7112069341245042,
+              "slope": 1.1889909408993633
+            },
+            "isotonic_file": "xgboost_isotonic_to_E2.pkl",
+            "threshold_90_sensitivity_uncalibrated": 0.04579465463757515,
+            "threshold_90_sensitivity_platt": 0.0048600752999525265,
+            "threshold_90_sensitivity_isotonic": 0.005308036665956086
+          }
+        },
+        "xgboost_E2": {
+          "trained_on": "e2_composite_chained_14d_specimen_day",
+          "model_file": "xgboost.ubj",
+          "threshold_90_sensitivity": 0.004904095083475113
+        },
+        "logistic_E1": {
+          "trained_on": "e1_composite_chained_14d_specimen_day",
+          "model_file": "logistic.pkl",
+          "threshold_90_sensitivity": 0.04385913163423538,
+          "recalibration_to_E2": {
+            "fitted_on": "e2_composite_chained_14d_specimen_day",
+            "platt": {
+              "intercept": -1.94896184060371,
+              "slope": 1.074582399365907
+            },
+            "isotonic_file": "logistic_isotonic_to_E2.pkl",
+            "threshold_90_sensitivity_uncalibrated": 0.04385913163423538,
+            "threshold_90_sensitivity_platt": 0.005164642799836533,
+            "threshold_90_sensitivity_isotonic": 0.004905968928863451
+          }
+        },
+        "logistic_E2": {
+          "trained_on": "e2_composite_chained_14d_specimen_day",
+          "model_file": "logistic.pkl",
+          "threshold_90_sensitivity": 0.005235346499830484
+        }
+      }
+    }
+  }
+}

@@ -47,3 +47,11 @@
 - The MGB enzyme and CLSI 2022 cross-check cannot inform layer T. Fewer than 11 of the 130 MGB cultures without a sentinel result had an ESBL test or a CLSI 2022 sentinel result.
 - Applying every implied-susceptibility rule makes 3,071 of 4,245 not-tested Stanford cultures and 2,531 of 4,584 UTSW cultures evaluable. It adds no resistant culture at Stanford, so Stanford E1 prevalence falls from 11.15% to 10.62%. Strict rules change fewer than 11 cultures at any site, and neither rule set changes ECUH.
 - Flagged: the rules only impute susceptible results from susceptible ones, so the lower prevalence is built in. It does not show that the not-tested cultures are susceptible.
+
+## 2026-09-27 02_train_e1 (results/02_train_e1/20260927T113507Z, commit 1b99f33, tag sap-v1.0)
+
+- Trained XGBoost and logistic models under the frozen plan on the derivation partition, with the chained 14-day rule and one row per specimen-day. E1 has 62,468, 93,955, 39,458 and 68,410 units at Stanford, MGB, UTSW and ECUH, and E2 has 471,928, 364,930, 487,157 and 542,116, with the same 6,961, 10,016, 3,179 and 6,323 resistant units.
+- The 90%-sensitivity threshold is 0.057, 0.044, 0.041 and 0.046 for the E1-trained XGBoost model and 0.0063, 0.0153, 0.0030 and 0.0049 for the E2-trained model. Both sit below 0.05, the smallest planned net-benefit threshold.
+- Platt maps from E1 toward E2 have intercepts of -1.97, -1.75, -2.73 and -1.71 and slopes of 1.10, 0.95, 0.99 and 1.19 for XGBoost. That is close to the shift in log odds of prevalence, with the ranking kept.
+- The recalibrated E1 thresholds on E2 are 0.0063, 0.0094, 0.0029 and 0.0049, close to those of the E2-trained models.
+- Flagged: slopes near 1 suggest recalibration may recover much of the gap, which is the null judged in SAP section 12. These are cross-fitted derivation predictions and say nothing yet about test performance.
