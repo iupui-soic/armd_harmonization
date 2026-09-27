@@ -10,6 +10,9 @@ def test_cell_and_rate_suppress_small_counts():
     assert qc.rate(50, 5) == "<11"
     assert qc.rate(50, 200) == 0.25
     assert qc.rate(3, 0) is None
+    # 495 of 500 leaves 5 out, which is a small cell.
+    assert qc.rate(495, 500) == "<11"
+    assert qc.rate(500, 500) == 1.0
 
 
 def test_value_counts_and_null_shares():
@@ -38,8 +41,9 @@ def test_sentinel_reporting():
     out = qc.sentinel_reporting(con, {"culture_episodes": "episodes", "isolate_ast": "ast"})
     assert out["CRO"] == {"reported_sir": 0.5, "listed_without_sir": 0.3, "not_listed": 0.2}
     assert out["TZP"] == {"reported_sir": 1.0, "listed_without_sir": 0.0, "not_listed": 0.0}
-    # Five cultures with CAZ is a small cell, so its share is suppressed.
-    assert out["CAZ"] == {"reported_sir": "<11", "listed_without_sir": 0.0, "not_listed": 0.95}
+    # Five cultures with CAZ is a small cell, so its share is suppressed, and so is the 95 of 100
+    # without it, which would expose the same five.
+    assert out["CAZ"] == {"reported_sir": "<11", "listed_without_sir": 0.0, "not_listed": "<11"}
     assert out["FEP"]["not_listed"] == 1.0
     assert out["any_sentinel_reported_sir"] == 1.0
     assert out["enterobacterales_cultures"] == 100

@@ -43,10 +43,11 @@ def cell(n):
 
 
 def rate(numerator, denominator, digits: int = 4):
-    """A proportion, or a marker when the numerator or denominator is a small cell."""
+    """A proportion, or a marker when the numerator, the denominator or their difference is a small
+    cell. The difference matters because a share near 1 exposes the few units it leaves out."""
     if not denominator:
         return None
-    if 0 < numerator < MIN_CELL or 0 < denominator < MIN_CELL:
+    if any(0 < n < MIN_CELL for n in (numerator, denominator, denominator - numerator)):
         return SMALL
     return round(numerator / denominator, digits)
 
