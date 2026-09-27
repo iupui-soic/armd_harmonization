@@ -369,6 +369,14 @@ def specimen_grids(cohorts: dict, variants: dict, n_boot: int, seed: int) -> dic
     return out
 
 
+def conjunction(values) -> bool | None:
+    """False if any value is False, None if none is False but some is unknown, else True."""
+    values = list(values)
+    if any(v is False for v in values):
+        return False
+    return None if any(v is None for v in values) else True
+
+
 def _interval(v):
     return tuple(v) if isinstance(v, (list, tuple)) and len(v) == 2 else None
 
@@ -379,7 +387,8 @@ def null_result(site: dict, model: str = "xgboost") -> dict:
     Negligible when, for the Platt-recalibrated E1 model against the E2 model, the difference in
     standardized net benefit is within NULL_MARGIN at every primary threshold with its 95% interval
     inside NULL_INTERVAL_MARGIN, and the recalibrated model's calibration slope interval includes 1.
-    A withheld value leaves the verdict undetermined.
+    Every check must pass, so one failed check settles the verdict as not negligible. A withheld
+    value leaves it undetermined only when no check has failed.
     """
     a, b = NULL_COMPARISON
     comparison = site["comparisons"].get(f"{model}:{a}->E2 minus {model}:{b}->E2")
@@ -394,8 +403,7 @@ def null_result(site: dict, model: str = "xgboost") -> dict:
             abs(point) <= NULL_MARGIN and -NULL_INTERVAL_MARGIN <= interval[0] and interval[1] <= NULL_INTERVAL_MARGIN)
     slope = _interval(recalibrated["interval"].get("calibration_slope"))
     checks["calibration_slope_includes_1"] = None if slope is None else bool(slope[0] <= 1 <= slope[1])
-    verdict = None if any(v is None for v in checks.values()) else all(checks.values())
-    return {"model": model, "comparison": f"{a} against {b} on E2", "negligible": verdict, "checks": checks}
+    return {"model": model, "comparison": f"{a} against {b} on E2", "negligible": conjunction(checks.values()), "checks": checks}
 
 
 def evaluate_cross_site(per_site: dict, n_boot: int, seed: int) -> dict:
@@ -483,7 +491,7 @@ def main() -> int:
         per_site[site] = ({k: cohorts[k] for k in ("E1", "E2") if k in cohorts}, variants)
     summary["cross_site"] = evaluate_cross_site(per_site, args.boot, args.seed)
     verdicts = [s["null_result"]["xgboost"]["negligible"] for s in summary["sites"].values() if "xgboost" in s["null_result"]]
-    summary["null_result_overall"] = None if not verdicts or None in verdicts else all(verdicts)
+    summary["null_result_overall"] = conjunction(verdicts) if verdicts else None
     run.write()
     (run.dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
     (run.dir / "report.md").write_text(render(summary))

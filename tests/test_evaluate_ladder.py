@@ -170,5 +170,7 @@ def test_null_result():
     # A gap beyond the margin, or a slope interval that excludes 1, is not a null result.
     assert evaluate.null_result(site_with(0.08, [0.02, 0.14], [0.9, 1.1]))["negligible"] is False
     assert evaluate.null_result(site_with(0.01, [-0.04, 0.06], [1.2, 1.5]))["negligible"] is False
-    # A withheld value leaves the verdict open.
+    # A withheld value leaves the verdict open, unless another check has already failed.
     assert evaluate.null_result(site_with(WITHHELD, WITHHELD, [0.9, 1.1]))["negligible"] is None
+    assert evaluate.null_result(site_with(WITHHELD, WITHHELD, [1.2, 1.5]))["negligible"] is False
+    assert evaluate.conjunction([True, None, False]) is False and evaluate.conjunction([True, None]) is None
