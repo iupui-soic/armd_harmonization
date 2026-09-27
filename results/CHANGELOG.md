@@ -55,3 +55,23 @@
 - Platt maps from E1 toward E2 have intercepts of -1.97, -1.75, -2.73 and -1.71 and slopes of 1.10, 0.95, 0.99 and 1.19 for XGBoost. That is close to the shift in log odds of prevalence, with the ranking kept.
 - The recalibrated E1 thresholds on E2 are 0.0063, 0.0094, 0.0029 and 0.0049, close to those of the E2-trained models.
 - Flagged: slopes near 1 suggest recalibration may recover much of the gap, which is the null judged in SAP section 12. These are cross-fitted derivation predictions and say nothing yet about test performance.
+
+## 2026-09-27 03_evaluate_ladder (results/03_evaluate_ladder/20260927T114044Z, commit dc77b63, tag sap-v1.0)
+
+- First read of the test partition, with 2,000 patient bootstrap draws. On the E2 test cohort, the E1-trained XGBoost model has calibration intercepts of -2.15, -1.67, -2.73 and -2.03 at Stanford, MGB, UTSW and ECUH. Its standardized net benefit is negative at every planned threshold (-1.88, -0.79, -3.99 and -0.89 at 0.10).
+- Platt recalibration restores calibration (intercepts -0.02 to 0.04, slopes 0.95 to 1.03) but not ranking. AUROC stays at 0.686, 0.680, 0.653 and 0.753, against 0.812, 0.846, 0.795 and 0.860 for the E2-trained model. The paired differences run from -0.11 to -0.17, with every interval below 0.
+- The recalibrated E1 model trails the E2 model in standardized net benefit at 0.10 by 0.10, 0.10, 0.03 and 0.09. Under SAP section 12 the gap is not negligible at any site for either model class, so the result is not null.
+- Flagged: the plan expected AUROC to rise from E1 to E2 as an artifact of easy negatives. For the E1-trained model it falls instead (0.724 to 0.686 at Stanford, 0.770 to 0.680 at MGB). Within urine the AUROC gap shrinks to 0.06, so much of it lies between specimen types. The pooled Platt map over-predicts within blood (standardized net benefit at 0.10 of -0.52 at MGB and -0.35 at ECUH), and among first index orders (S7) the E1 model's AUROC falls to 0.50 to 0.58.
+- Flagged: a logic bug, fixed in d5099dd, makes this run's summary read the null verdict as undetermined at UTSW and overall. One failed check settles the verdict, and the stored checks give "not negligible" at all four sites.
+
+## 2026-09-27 05_e3_bounds (results/05_e3_bounds/20260927T143411Z, from the 03 run above)
+
+- At the primary threshold of 0.10, net benefit among cultured events is 0.0024, 0.0078, 0.0002 and 0.0021 for the E2-trained XGBoost model at Stanford, MGB, UTSW and ECUH. For the uncalibrated E1-trained model it is -0.028, -0.022, -0.026 and -0.011.
+- For the uncalibrated E1 model to break even, uncultured events would need 2.5 to 81 times the cultured risk, across sites and uncultured shares from 0.10 to 0.75.
+- The E2-trained model's net benefit turns negative only at uncultured shares of 0.50 or 0.75, and only if uncultured events carry 0.13 to 0.65 times the cultured risk.
+- Worst-case PPV bounds are wide at every share. At u = 0.25 they run from 0.03 or less up to 0.93 or more for the E2-trained model, so E3 PPV is not usefully bounded without assumptions.
+- Flagged: at UTSW the recalibrated E1 model flags no unit at 0.10, so its PPV bounds span 0 to 1 by construction.
+
+## 2026-09-27 06_figures (results/06_figures/20260927T143412Z)
+
+- Drew figures 1, 2, 3, 5 and 6 and table 4 from the runs above, with the chained 14-day rule and specimen-day units, as PDF, PNG and CSV. Figure and table files stay local.
