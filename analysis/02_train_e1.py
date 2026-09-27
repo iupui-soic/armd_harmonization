@@ -20,8 +20,11 @@ Two guards:
   the git tag sap-v1.0. The manifest records the SHA-256 of the local SAP.md it ran under.
 - It reads derivation rows only and fails if a cohort file holds any other partition.
 
+With --specimen, every model is trained and recalibrated on that specimen type's units only, and the
+outputs go under models/<rule>_<unit>_<specimen>/ (the SAP's exploratory analysis E-3).
+
 Usage: python analysis/02_train_e1.py [--sites stanford,mgb] [--models xgboost,logistic]
-       [--repeat-rule release] [--unit culture] [--threads 8] [--seed 20260911]
+       [--repeat-rule release] [--unit culture] [--specimen urine] [--threads 8] [--seed 20260911]
 """
 
 from __future__ import annotations
@@ -46,6 +49,7 @@ from armd_common.splits import SealedPartitionError
 
 FROZEN_TAG = "sap-v1.0"
 ESTIMANDS = ("E1", "E2")
+SPECIMENS = ("urine", "blood", "respiratory")
 
 
 def require_frozen_plan() -> dict:
@@ -56,8 +60,8 @@ def cohort_names(repeat_rule: str, unit: str) -> dict:
     return {e: CohortSpec(e, repeat_rule=repeat_rule, unit=unit).name for e in ESTIMANDS}
 
 
-def load_cohort(path: Path) -> dict:
-    """Derivation units of one cohort as arrays. Fails on any other partition."""
+def load_cohort(path: Path, specimen: str | None = None) -> dict:
+    """Derivation units of one cohort as arrays, optionally one specimen type's. Fails on any other partition."""
     con = duckdb.connect()
     src = f"read_parquet('{str(path).replace(chr(39), chr(39) * 2)}')"
     partitions = [r[0] for r in con.execute(f"SELECT DISTINCT partition FROM {src}").fetchall()]
@@ -67,7 +71,8 @@ def load_cohort(path: Path) -> dict:
     if any(missing):
         raise ValueError(f"{path} has units without a label or an inner fold")
     columns = ", ".join(FEATURES_48)
-    arrays = con.execute(f"SELECT unit_id, patient_id, fold, label, {columns} FROM {src} ORDER BY unit_id").fetchnumpy()
+    where = "" if specimen is None else f"WHERE specimen_type = '{specimen}'"
+    arrays = con.execute(f"SELECT unit_id, patient_id, fold, label, {columns} FROM {src} {where} ORDER BY unit_id").fetchnumpy()
     con.close()
     return {
         "unit_id": arrays["unit_id"],
@@ -99,19 +104,24 @@ def save_model(model, kind: str, path_stem: Path) -> Path:
 
 
 def train_site(site: str, cohort_dir: Path, out_dir: Path, repeat_rule: str, unit: str, models, seed: int,
-               threads: int, run: RunManifest | None = None, params: dict | None = None) -> dict:
-    """Train every model for one site. `params` overrides the XGBoost hyperparameters, for tests only."""
+               threads: int, run: RunManifest | None = None, params: dict | None = None,
+               specimen: str | None = None) -> dict:
+    """Train every model for one site, on one specimen type's units if `specimen` is given.
+    `params` overrides the XGBoost hyperparameters, for tests only."""
+    if specimen is not None and specimen not in SPECIMENS:
+        raise ValueError(f"specimen must be one of {SPECIMENS}")
     names = cohort_names(repeat_rule, unit)
     data = {}
     for estimand, name in names.items():
         path = cohort_dir / name / "derivation.parquet"
         if run is not None:
             run.add_input(f"{site}.{name}", path, sha256_file(path))
-        data[estimand] = load_cohort(path)
+        data[estimand] = load_cohort(path, specimen)
         if run is not None:
-            run.count(f"{site}.{name}.units", len(data[estimand]["y"]))
+            run.count(f"{site}.{name}.units" + (f".{specimen}" if specimen else ""), len(data[estimand]["y"]))
 
-    out = {"cohorts": {e: {"name": n, "units": cell(len(data[e]["y"])), "label_positive": cell(int(data[e]["y"].sum()))}
+    out = {"specimen": specimen,
+           "cohorts": {e: {"name": n, "units": cell(len(data[e]["y"])), "label_positive": cell(int(data[e]["y"].sum()))}
                        for e, n in names.items()}, "models": {}}
     for kind in models:
         def factory(kind=kind):
@@ -155,6 +165,7 @@ def main() -> int:
     parser.add_argument("--models", default=",".join(modeling.MODEL_KINDS))
     parser.add_argument("--repeat-rule", default="release", choices=REPEAT_RULES)
     parser.add_argument("--unit", default="culture", choices=UNITS)
+    parser.add_argument("--specimen", choices=SPECIMENS, help="train on one specimen type only (exploratory E-3)")
     parser.add_argument("--threads", type=int, default=8)
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     args = parser.parse_args()
@@ -171,11 +182,13 @@ def main() -> int:
     run.set("analysis_plan", frozen)
     run.set("xgboost_params", modeling.XGB_PARAMS)
     run.set("logistic_C", modeling.LOGISTIC_C)
-    summary = {"partition": "derivation", "analysis_plan": frozen, "sites": {}}
+    summary = {"partition": "derivation", "analysis_plan": frozen, "specimen": args.specimen, "sites": {}}
+    folder = f"{args.repeat_rule}_{args.unit}" + (f"_{args.specimen}" if args.specimen else "")
     for site in sites:
         print(f"train: {site}", flush=True)
-        summary["sites"][site] = train_site(site, root[site] / "cohorts", root[site] / "models" / f"{args.repeat_rule}_{args.unit}",
-                                            args.repeat_rule, args.unit, models, args.seed, args.threads, run)
+        summary["sites"][site] = train_site(site, root[site] / "cohorts", root[site] / "models" / folder,
+                                            args.repeat_rule, args.unit, models, args.seed, args.threads, run,
+                                            specimen=args.specimen)
     run.write()
     (run.dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
     print(f"train: wrote {run.dir}")

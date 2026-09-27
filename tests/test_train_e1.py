@@ -44,6 +44,7 @@ def synthetic_cohorts(root, n=4000, seed=0, test_rows=False):
         "partition": ["derivation"] * n,
         "fold": (patients % 5 + 1).astype(int),
         "label": y,
+        "specimen_type": np.where(X[:, 4] > 0.5, "blood", "urine"),
         **{c: X[:, j].astype(float) for j, c in enumerate(FEATURES_48)},
     }
     if test_rows:
@@ -115,3 +116,19 @@ def test_refuses_to_train_before_the_plan_is_frozen(monkeypatch):
     monkeypatch.setattr(train, "FROZEN_TAG", "sap-never-tagged")
     with pytest.raises(SystemExit):
         train.require_frozen_plan()
+
+
+def test_trains_on_one_specimen_type(tmp_path):
+    synthetic_cohorts(tmp_path / "cohorts")
+    out = train.train_site("site", tmp_path / "cohorts", tmp_path / "urine", "release", "culture", ("logistic",),
+                           seed=1, threads=2, params=FAST, specimen="urine")
+    everything = run(tmp_path)
+    assert out["specimen"] == "urine" and everything["specimen"] is None
+    assert out["cohorts"]["E2"]["units"] < everything["cohorts"]["E2"]["units"]
+    names = train.cohort_names("release", "culture")
+    n = duckdb.connect().execute(
+        f"SELECT COUNT(*) FROM read_parquet('{tmp_path / 'urine' / names['E2'] / 'logistic_crossfit.parquet'}')").fetchone()[0]
+    assert n == out["cohorts"]["E2"]["units"]
+    with pytest.raises(ValueError):
+        train.train_site("site", tmp_path / "cohorts", tmp_path / "x", "release", "culture", ("logistic",),
+                         seed=1, threads=2, params=FAST, specimen="wound")
