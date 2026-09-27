@@ -75,3 +75,11 @@
 ## 2026-09-27 06_figures (results/06_figures/20260927T143412Z)
 
 - Drew figures 1, 2, 3, 5 and 6 and table 4 from the runs above, with the chained 14-day rule and specimen-day units, as PDF, PNG and CSV. Figure and table files stay local.
+
+## 2026-09-27 02_train_e1, urine only (results/02_train_e1/20260927T190025Z, commit 6b431eb, exploratory E-3)
+
+- Trained XGBoost and logistic models on the urine units of the derivation partition only, for the exploratory amendment in SAP section 17 (E-3).
+- Urine E1 has 56,176, 87,021, 37,541 and 62,613 units at Stanford, MGB, UTSW and ECUH, with 6,065, 8,849, 2,845 and 5,652 resistant. Urine E2 has 292,939, 199,057, 351,972 and 376,977 units.
+- Platt maps from urine E1 toward urine E2 have XGBoost intercepts of -1.14, -0.97, -1.40 and -1.17, about half the pooled shift, because resistance is more common in urine than across all specimens.
+- The 90%-sensitivity threshold of the urine E2 XGBoost model is 0.0095, 0.0201, 0.0037 and 0.0076.
+- Flagged: this run was chosen after the primary test results were seen, so it and the evaluation it feeds are exploratory.
