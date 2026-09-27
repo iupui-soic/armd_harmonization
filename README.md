@@ -39,6 +39,7 @@ python analysis/02_train_e1.py                   # models, cross-fitted predicti
 python analysis/03_evaluate_ladder.py            # the only script that reads the test partition
 python analysis/04_cascade_sensitivity.py        # sentinel reporting and the evaluable subset, derivation only
 python analysis/05_e3_bounds.py                  # population bounds from the 03 results
+python analysis/06_figures.py                    # figures and the operating-point table from saved results
 .venv/bin/pytest
 ```
 
