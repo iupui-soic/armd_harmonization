@@ -443,10 +443,17 @@ def render(summary: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
-def latest_run(script: str) -> Path:
-    runs = sorted(p for p in (RESULTS_DIR / script).iterdir() if (p / "summary.json").exists())
+def latest_run(script: str, specimen: str | None = None) -> Path:
+    """The latest run of `script` with a summary. For training runs, the one trained on `specimen`
+    (None is every specimen type), read from its manifest."""
+    def matches(p: Path) -> bool:
+        if not (p / "summary.json").exists():
+            return False
+        manifest = p / "manifest.json"
+        return not manifest.exists() or json.loads(manifest.read_text())["args"].get("specimen") == specimen
+    runs = sorted(p for p in (RESULTS_DIR / script).iterdir() if matches(p))
     if not runs:
-        raise SystemExit(f"no {script} run with a summary.json")
+        raise SystemExit(f"no {script} run with a summary.json" + (f" for {specimen}" if specimen else ""))
     return runs[-1]
 
 
