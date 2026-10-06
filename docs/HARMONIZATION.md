@@ -41,7 +41,9 @@ the CSV reader quote raw lines, so the converter reports only a line number and 
 `culture_id` is `<site>:<anon_id>:<order_proc_id_coded>` and `patient_id` is `<site>:<anon_id>`.
 
 - **The patient is part of the culture key.** MGB reuses `order_proc_id_coded` across patients:
-  2,633 values belong to two patients each.
+  2,633 values belong to two patients each. The maintainers explained on 2026-10-06 that different
+  hospitals issued the same accession numbers independently. Order IDs will be unique in the revised
+  release.
 - **MGB rows repeat once per linked encounter.** 118,408 MGB cultures link to more than one
   encounter, and every cohort and feature row is repeated for each. Loaders collapse these rows
   before counting or labelling.
@@ -51,8 +53,9 @@ the CSV reader quote raw lines, so the converter reports only a line number and 
   (anon_id, order date) pair in those files exists in the cohort: 407,018 of 407,018, 386,657 of
   386,657 and 78,259 of 78,259. The MGB loader links them by patient and order date. Their contents
   are measured relative to the order date, so a patient's same-day cultures share the same values
-  and nothing is lost at MGB's day resolution. This looks like a release defect and should be
-  reported to the dataset maintainers.
+  and nothing is lost at MGB's day resolution. The maintainers confirmed the defect on 2026-10-06.
+  They also confirmed that `anon_id` and the date shift are consistent across files, so the link by
+  patient and order date is correct for 1.0.0. The revised release synchronizes the IDs.
 - **The MGB defect is in the release, not our copy.** It reproduces on the raw CSVs read with
   Python's csv module, outside the staging pipeline, and every row has the header's field count.
   All 12 local files match PhysioNet's SHA256SUMS.txt and the byte sizes in the server's directory
@@ -76,14 +79,31 @@ at MGB. The definitions are not the same, and this matters most for the decision
 - The Dryad sites keep a negative culture as one row with no organism. UTSW and ECUH describe
   positivity as "the inclusion of susceptibility results".
 - In MGB every non-negative row carries AST, so a culture that grew an organism without AST cannot
-  appear as positive. Such cultures are either absent from the release or folded into negatives.
+  appear as positive. The maintainers confirmed on 2026-10-06 that such cultures are not in the
+  release. Their reason is that these are typically mixed cultures, usually urine, of unclear
+  clinical significance.
 - MGB is the outlier. Blood positivity matches the other sites, but urine and respiratory positivity
   are two to three times higher. That fits a release that drops growth without AST, such as mixed
   urine flora and normal respiratory flora. MGB also has the fewest respiratory cultures (36,821).
 
-**Open question.** If MGB drops growth-without-AST cultures, its E2 denominator is smaller than the
-other sites' by construction. Cross-site E2 comparisons then need a matched definition. This should
-be resolved with the MGB dataset authors before Analysis 6.
+**Answered on 2026-10-06: MGB's E2 denominator is smaller by construction.** An MGB culture order is
+released only if the culture had no growth or grew an organism with AST. This holds for 1.0.0 and
+for the revised release.
+
+- **No matched definition can be built.** The Dryad releases do not mark these cultures either. A
+  one-off aggregate check on 2026-10-06 found fewer than 50 positive cultures at each Dryad site
+  with a named organism and no susceptibility result. At those sites growth without AST sits among
+  the negatives or is absent, so it cannot be removed to match MGB. It cannot be restored at MGB.
+- **Direction of the effect.** UTSW and ECUH define positivity by susceptibility results, which
+  implies they hold these cultures as negatives, and those count as E2 negatives. Leaving them out
+  raises MGB's E2 prevalence and narrows its gap between E1 and E2. OrderGap's
+  results are consistent with that. MGB has the highest E2 prevalence, 2.74% of derivation
+  specimen-days against 0.65% to 1.48% elsewhere. The E1-trained model's calibration intercept on
+  the E2 test cohort is also closest to zero there, -1.67 against -2.03 to -2.73. Cross-site E2
+  comparisons that include MGB must state this limit.
+- **Flagged: the size is unexplained.** For MGB urine positivity to fall from 48.3% to the Dryad
+  range of 16.3% to 23.8%, the excluded urine cultures would have to number one to two times the
+  308,326 released. The reply gives no counts, so the size of the gap is follow-up question 7 below.
 
 **Positive cultures without an identified organism** number 1,510 at Stanford, 533 at MGB, 14,906 at
 UTSW and 620 at ECUH. At UTSW, 14,397 of them have no organism and no susceptibility rows at all,
@@ -256,15 +276,18 @@ The state rank is not usable at UTSW or ECUH.
   `order_time_jittered`, also to the second. MGB order times are dates.
 - Dates are shifted per patient. MGB dates run from 1931 to 2108, and UTSW and ECUH shift by up to
   two months. Calendar time is not usable, so every temporal feature must use the release's
-  days-to-culture columns.
-- Stanford, UTSW and ECUH exclude repeat cultures within 14 days, and MGB does not. See the next
-  section.
+  days-to-culture columns. The MGB maintainers confirmed on 2026-10-06 that each patient has one
+  random offset across all tables, so intervals within a patient are preserved.
+- Stanford, UTSW and ECUH exclude repeat cultures within 14 days, and MGB 1.0.0 does not. See the
+  next section.
 
 ## Repeat cultures and the unit of analysis
 
 An earlier version of this document said every release excludes repeat cultures within 14 days. That
-is true of three releases and not of MGB. This section records what each release documents, what the
-data show, what published rules do, and the options armd-common proposes. Figures come from the QC
+is true of three releases and not of MGB 1.0.0. This section records what each release documents,
+what the data show, what published rules do, and the options armd-common proposes. The MGB
+maintainers answered the questions it raised on 2026-10-06, and their answers are marked where they
+apply. Figures come from the QC
 runs `results/qc_<site>/20260926T1204*` (`qc.repeat_profile`), over all ordered cultures and without
 labels, unless stated otherwise.
 
@@ -281,7 +304,8 @@ labels, unless stated otherwise.
 - UTSW and ECUH anchor the window on the encounter and word it as excluding patients. Stanford
   anchors it on the culture. The data below show the same result at all three.
 - MGB says dates "are randomly shifted for each patient, encounter, and microbiology culture". The
-  three Dryad releases shift dates per patient.
+  three Dryad releases shift dates per patient. The maintainers clarified on 2026-10-06 that MGB
+  also uses one offset per patient, across all tables.
 
 ### What the data show
 
@@ -291,12 +315,13 @@ labels, unless stated otherwise.
   359,625 ECUH cultures share an exact order time with another culture of the same patient, and no
   patient has two different order times on one day. The Dryad rule therefore acts on order events and
   keeps every culture in the index order.
-- **MGB applies no repeat rule.** 35.0% of MGB cultures have a culture from the same patient 1 to 13
-  days earlier, and 35.5% counting 14 days. The gaps peak at one day (155,950 cultures) and fall
-  smoothly after that.
-- **MGB intervals look preserved.** 66.2% of MGB cultures share an order date with another culture of
+- **MGB 1.0.0 applies no repeat rule.** 35.0% of MGB cultures have a culture from the same patient 1
+  to 13 days earlier, and 35.5% counting 14 days. The gaps peak at one day (155,950 cultures) and fall
+  smoothly after that. The maintainers confirmed on 2026-10-06 that 1.0.0 does not reflect the
+  intended 14-day exclusion.
+- **MGB intervals are preserved.** 66.2% of MGB cultures share an order date with another culture of
   the same patient. Random shifts per culture would erase that clustering and the peak at one day. The
-  maintainers have not confirmed this.
+  maintainers confirmed this on 2026-10-06.
 - **Blood cultures come in sets.** Among blood cultures, 90% at Stanford, 86% at MGB, 91% at UTSW and
   93% at ECUH share a patient and day with another blood culture.
 
@@ -416,9 +441,36 @@ all same-day cultures share one order time. Counts after `chained_14d`:
   by culture ID, and same-day cultures should share their history at day resolution, so MGB seems to
   compute each culture's history separately. The Dryad sites show no such disagreement.
 
-**Still depends on MGB.** The maintainers are being asked which repeat rule they applied and whether
-intervals between a patient's cultures are preserved. If intervals are not preserved, no window rule
-can be applied at MGB.
+### The revised MGB release
+
+The maintainers replied on 2026-10-06. Intervals within a patient are preserved, so a window rule can
+be applied at MGB and `chained_14d` on 1.0.0 stands. They have submitted a revised release to
+PhysioNet that applies the exclusion at source. On 2026-10-06 PhysioNet still listed only 1.0.0.
+
+- **The revised rule.** A culture is excluded if the same patient had any blood, urine or respiratory
+  culture in the preceding 14 days. The window is measured from collection time and applies across
+  specimen types.
+- **Where it agrees with `chained_14d`.** Both use a 14-day window and look at every earlier culture
+  of the patient, whatever its specimen type or result. MGB releases only blood, urine and
+  respiratory cultures. As worded, an excluded culture still restarts the window, which is the
+  chained reading. That reading is ours and is not confirmed.
+- **Where it may differ.** None of these can be settled from 1.0.0.
+  - *Anchor.* 1.0.0 gives one date per culture and no collection time. `chained_14d` works on that
+    date.
+  - *Boundary.* `chained_14d` keeps a culture whose previous order date is exactly 14 days earlier,
+    as the Dryad releases do. 5,102 MGB cultures sit on that boundary, and a window that includes
+    day 14 would drop them.
+  - *Same-day cultures.* `chained_14d` keeps every culture on an index date. A window measured from
+    collection time could drop a second blood culture set drawn later the same day, and 86% of MGB
+    blood cultures share a day with another.
+  - *Cultures outside the release.* Growth without AST is not released. If the window is applied
+    before those cultures are removed, they can exclude later cultures, and no rule applied to the
+    release can see them.
+- **Check to run when it is published.** Compare the revised cohort with `chained_14d` on 1.0.0,
+  culture by culture if `anon_id` is unchanged and by counts otherwise. Re-test the ID link of the
+  three date-linked tables and the uniqueness of order IDs.
+- **The frozen splits are keyed on `anon_id`.** If the revised release renumbers patients, the MGB
+  split manifest does not carry over to it.
 
 ## Feature tables
 
@@ -704,18 +756,44 @@ Still open:
 1. **K. aerogenes grouping.** Klebsiella by taxonomy (current) or Enterobacter by AmpC behaviour.
 2. **ESBL confirmatory label at ECUH.** ECUH reports clavulanate combination tests, which could
    support a confirmatory-test label alongside MGB's enzyme label.
+3. **The revised ARMD-MGB release.** Whether armd-common and OrderGap move to it once PhysioNet
+   publishes it. Every result so far uses 1.0.0, which OrderGap's frozen plan names.
 
 ## Questions for the ARMD-MGB maintainers
 
+Questions 1 to 4 were put to the maintainers on 2026-09-26. They answered by email on 2026-10-06 and
+said a revised release had been submitted to PhysioNet.
+
 1. Encounter and culture IDs in `comorbidity`, `nursing_home_visits` and `prior_procedures` come
    from a different mapping than the cohort. Is this intended?
+   - **Answer.** No. The three tables used a different ID mapping, and the revised release
+     synchronizes them. For 1.0.0, linking by `anon_id` and order date is correct.
 2. Were cultures that grew an organism without AST excluded? The answer changes MGB's E2
    denominator.
+   - **Answer.** Yes. They are not in the release, because they are typically mixed cultures, usually
+     urine, of unclear clinical significance.
 3. Which repeat-culture exclusion, if any, was applied? The project page says "Exclusion:
    Microbiology cultures with no previous culture within the last 14 days", but 35.5% of cultures have
    a culture from the same patient 1 to 14 days earlier.
+   - **Answer.** None in 1.0.0, which does not reflect the intended exclusion. The revised release
+     excludes a culture if the same patient had any blood, urine or respiratory culture in the
+     preceding 14 days, measured from collection time and across specimen types.
 4. Are intervals between one patient's cultures preserved, given that dates are shifted "for each
    patient, encounter, and microbiology culture"?
+   - **Answer.** Yes. Dates are shifted by one random offset per patient across all tables.
+
+The reply added two points. Duplicate order IDs arose because different hospitals issued the same
+accession numbers independently, and order IDs are unique in the revised release. The project link
+will be corrected to https://github.com/AlexWei21/ARMD-MGB, which returned "not found" on 2026-10-06.
+
+Follow-up questions, not yet sent:
+
+5. Do `anon_id` and each patient's date shift stay the same in the revised release? The frozen
+   splits and any culture-level comparison with 1.0.0 depend on it.
+6. Is the 14-day window applied before or after cultures with growth and no AST are removed?
+7. How many cultures were excluded for growth without AST, by specimen type? This sizes the gap in
+   MGB's E2 denominator.
+8. Is the released date the order date or the collection date?
 
 ## References
 
