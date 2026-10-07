@@ -3,7 +3,8 @@
 MGB differs from the Stanford layout in ways that change the SQL:
   * Cohort and feature rows repeat once per linked encounter, so results are collapsed before use.
   * order_proc_id_coded is reused across patients, so the culture key includes anon_id.
-  * Order times are dates only.
+  * The time column is a date only. The maintainers stated on 2026-10-07 that it is the specimen
+    collection date, not the order date, despite its name.
   * Each AST row carries the lab interpretation (AST_pheno) and a CLSI 2022 reinterpretation.
   * A preliminary result is dropped when a final result exists for the same organism and agent.
   * Enzyme tests (ESBL, carbapenemase, beta-lactamase, PBP2a) are their own rows.
