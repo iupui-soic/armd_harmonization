@@ -136,6 +136,7 @@ def test_test_partition_is_sealed(stanford):
         (CohortSpec("E1", interpretation="clsi2022"), "stanford"),
         (CohortSpec("E1", label="enzyme"), "stanford"),
         (CohortSpec("E1", label="idsa", nonsusceptible=True), "mgb"),
+        (CohortSpec("E2", label="ceftriaxone", nonsusceptible=True), "stanford"),
         (CohortSpec("E1", interpretation="clsi2022", implied_susceptibility="strict"), "mgb"),
         (CohortSpec("E3"), "stanford"),
         (CohortSpec("E2", repeat_rule="anchored_14d"), "stanford"),
@@ -210,4 +211,22 @@ def test_spec_names():
     assert CohortSpec("E2", nonsusceptible=True, exclude_recent_antibiotics=True).name == "e2_composite_nonsusceptible_no_antibiotics_3d"
     assert CohortSpec("E1", interpretation="clsi2022").name == "e1_composite_clsi2022"
     assert CohortSpec("E1", label="idsa").name == "e1_idsa"
+    assert CohortSpec("E2", label="ceftriaxone", repeat_rule="chained_14d", unit="specimen_day").name == "e2_ceftriaxone_chained_14d_specimen_day"
     assert CohortSpec("E2", repeat_rule="chained_14d", unit="specimen_day").name == "e2_composite_chained_14d_specimen_day"
+
+
+def test_ceftriaxone_label(stanford):
+    """SAP section 17, E-6: only ceftriaxone resistance counts, and a culture needs a ceftriaxone result."""
+    loader, built, manifest = stanford
+    ast = built["isolate_ast"]
+    ceftriaxone = "is_enterobacterales AND antibiotic_code = 'CRO'"
+    resistant = {r[0] for r in loader.con.execute(f"SELECT DISTINCT culture_id FROM {ast} WHERE {ceftriaxone} AND sir = 'R'").fetchall()}
+    tested = {r[0] for r in loader.con.execute(f"SELECT DISTINCT culture_id FROM {ast} WHERE {ceftriaxone} AND sir IN ('S', 'I', 'R')").fetchall()}
+    for estimand in ("E1", "E2"):
+        result = cohorts.build_cohort(loader, built, CohortSpec(estimand, label="ceftriaxone"), manifest=manifest)
+        got = rows(loader, result)
+        assert got and {cid for cid, (label, _, _) in got.items() if label == 1} == resistant & set(got)
+        assert {cid for cid, (_, reason, _) in got.items() if reason in ("resistant", "not_resistant")} <= tested
+        assert result.provenance["label"]["agents"] == ["CRO"]
+    composite = rows(loader, cohorts.build_cohort(loader, built, CohortSpec("E2"), manifest=manifest))
+    assert set(got) <= set(composite)

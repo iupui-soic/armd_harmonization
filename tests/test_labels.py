@@ -129,6 +129,52 @@ def test_decision_time(con):
     assert result.provenance["estimand"] == "E2"
 
 
+CEFTRIAXONE_REASONS = {
+    **COMPOSITE_REASONS,
+    # ceftazidime resistance with susceptible ceftriaxone is not ceftriaxone resistance
+    "kpn_caz_r": "not_resistant",
+    "tzp_r_cro_s": "not_resistant",
+    # an Enterobacterales isolate without a ceftriaxone result cannot be labelled
+    "ecoli_tzp_only": "not_tested",
+}
+
+
+@pytest.fixture()
+def ceftriaxone_con(con):
+    con.executemany("INSERT INTO cultures VALUES (?, ?, ?)", [("tzp_r_cro_s", True, False), ("ecoli_tzp_only", True, False)])
+    con.executemany("INSERT INTO ast VALUES (?, ?, ?, ?, ?)", [
+        ("tzp_r_cro_s", True, True, "TZP", "R"),
+        ("tzp_r_cro_s", True, True, "CRO", "S"),
+        ("ecoli_tzp_only", True, True, "TZP", "R"),
+    ])
+    return con
+
+
+def test_ceftriaxone_only_e1(ceftriaxone_con):
+    """Susceptible, intermediate, resistant, not tested, organism absent and negative, with ceftriaxone as the only agent."""
+    got = collect(labels.esbl_phenotype_composite(ceftriaxone_con, "cultures", "ast", agents=("CRO",)))
+    assert got == expected(CEFTRIAXONE_REASONS, labels.E1_RULE)
+    assert got["ecoli_s"] == (0, True, "not_resistant")
+    assert got["ecoli_cro_i"] == (0, True, "not_resistant")
+    assert got["ecl_cro_r"] == (1, True, "resistant")
+    assert got["ecoli_tzp_only"] == (None, False, "not_tested")
+    assert got["staph_cro_r"] == (None, False, "organism_absent")
+    assert got["neg"] == (None, False, "culture_negative")
+    # Under the composite label the same two cultures are resistant.
+    composite = collect(labels.esbl_phenotype_composite(ceftriaxone_con, "cultures", "ast"))
+    assert composite["tzp_r_cro_s"][2] == composite["ecoli_tzp_only"][2] == composite["kpn_caz_r"][2] == "resistant"
+
+
+def test_ceftriaxone_only_e2(ceftriaxone_con):
+    got = collect(labels.esbl_decision_time(ceftriaxone_con, "cultures", "ast", agents=("CRO",)))
+    assert got == expected(CEFTRIAXONE_REASONS, labels.E2_RULE)
+    assert got["neg"] == (0, True, "culture_negative")
+    assert got["staph_cro_r"] == (0, True, "organism_absent")
+    assert got["tzp_r_cro_s"] == (0, True, "not_resistant")
+    assert got["ecoli_tzp_only"] == (None, False, "not_tested")
+    assert got["ecoli_two_isolates"] == (1, True, "resistant")
+
+
 def test_label_null_exactly_when_not_evaluable(con):
     for build in (labels.esbl_phenotype_composite, labels.esbl_phenotype_idsa, labels.esbl_decision_time):
         rows = build(con, "cultures", "ast").frame.fetchall()

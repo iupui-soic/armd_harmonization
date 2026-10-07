@@ -13,6 +13,9 @@ label and reason, subgroup columns and the 48 harmonized features. The repeat ru
 set by the spec (episodes.py). The defaults, release and culture, give one row per culture as
 released. Each build also returns the counts at every filter step for the TRIPOD+AI flow diagram. The test partition is sealed, so asking for it raises
 unless the caller is analysis/03_evaluate_ladder.py.
+
+The ceftriaxone label is the same pair of constructors with ceftriaxone as the only agent, so a
+culture needs a ceftriaxone result to be evaluable (SAP section 17, E-6).
 """
 
 from __future__ import annotations
@@ -26,6 +29,7 @@ from . import features, implied, labels, splits
 from .provenance import sha256_file
 
 RECENT_ANTIBIOTIC_DAYS = 3
+CEFTRIAXONE_AGENTS = ("CRO",)
 # Antifungals do not suppress bacterial growth, so they do not count as recent antibiotics.
 ANTIFUNGAL_CODES = frozenset({"5FC", "AFG", "AMB", "CAS", "FLC", "ISA", "ITC", "MCZ", "MFG", "POS", "TRB", "VRC"})
 SUBGROUP_COLUMNS = ("setting_primary", "specimen_type", "age_band", "sex", "prior_culture_history", "adi_quintile")
@@ -69,14 +73,14 @@ class CohortSpec:
         problems = []
         if self.estimand not in ("E1", "E2"):
             problems.append("estimand must be E1 or E2")
-        if self.label not in ("composite", "idsa", "enzyme"):
-            problems.append("label must be composite, idsa or enzyme")
-        if self.estimand == "E2" and self.label != "composite":
-            problems.append("E2 is defined for the composite label only")
+        if self.label not in ("composite", "idsa", "enzyme", "ceftriaxone"):
+            problems.append("label must be composite, idsa, enzyme or ceftriaxone")
+        if self.estimand == "E2" and self.label not in ("composite", "ceftriaxone"):
+            problems.append("E2 is defined for the composite and ceftriaxone labels only")
         if self.label == "enzyme" and site != "mgb":
             problems.append("the enzyme label exists at MGB only")
         if self.label != "composite" and self.nonsusceptible:
-            problems.append("nonsusceptible applies to the composite label; the IDSA label is non-susceptibility by definition")
+            problems.append("nonsusceptible applies to the composite label only; the IDSA label is non-susceptibility by definition")
         if self.interpretation not in ("lab", "clsi2022"):
             problems.append("interpretation must be lab or clsi2022")
         if self.interpretation == "clsi2022" and site != "mgb":
@@ -138,6 +142,9 @@ def _label(con, built: dict, spec: CohortSpec) -> labels.LabelResult:
         return labels.esbl_enzyme_class(con, episodes, built["enzyme_tests"])
     if spec.label == "idsa":
         return labels.esbl_phenotype_idsa(con, episodes, ast, sir_column=sir_column)
+    if spec.label == "ceftriaxone":
+        build = labels.esbl_phenotype_composite if spec.estimand == "E1" else labels.esbl_decision_time
+        return build(con, episodes, ast, agents=CEFTRIAXONE_AGENTS, sir_column=sir_column)
     if spec.estimand == "E1":
         return labels.esbl_phenotype_composite(con, episodes, ast, nonsusceptible=spec.nonsusceptible, sir_column=sir_column)
     return labels.esbl_decision_time(con, episodes, ast, nonsusceptible=spec.nonsusceptible, sir_column=sir_column)
