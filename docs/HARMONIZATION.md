@@ -88,7 +88,8 @@ at MGB. The definitions are not the same, and this matters most for the decision
 
 **Answered on 2026-10-06: MGB's E2 denominator is smaller by construction.** An MGB culture order is
 released only if the culture had no growth or grew an organism with AST. This holds for 1.0.0 and
-for the revised release.
+for the revised release. On 2026-10-07 the maintainers added that these cultures appear to be absent
+from the source data they extract from, so the gap arises upstream of the release.
 
 - **No matched definition can be built.** The Dryad releases do not mark these cultures either. A
   one-off aggregate check on 2026-10-06 found fewer than 50 positive cultures at each Dryad site
@@ -101,9 +102,10 @@ for the revised release.
   specimen-days against 0.65% to 1.48% elsewhere. The E1-trained model's calibration intercept on
   the E2 test cohort is also closest to zero there, -1.67 against -2.03 to -2.73. Cross-site E2
   comparisons that include MGB must state this limit.
-- **Flagged: the size is unexplained.** For MGB urine positivity to fall from 48.3% to the Dryad
-  range of 16.3% to 23.8%, the excluded urine cultures would have to number one to two times the
-  308,326 released. The reply gives no counts, so the size of the gap is follow-up question 7 below.
+- **Flagged: the size cannot be measured.** For MGB urine positivity to fall from 48.3% to the Dryad
+  range of 16.3% to 23.8%, the missing urine cultures would have to number one to two times the
+  308,326 released. The maintainers cannot give a count, because these cultures are absent from
+  their source data (2026-10-07). The gap in MGB's E2 denominator stays unquantified.
 
 **Positive cultures without an identified organism** number 1,510 at Stanford, 533 at MGB, 14,906 at
 UTSW and 620 at ECUH. At UTSW, 14,397 of them have no organism and no susceptibility rows at all,
@@ -273,7 +275,12 @@ The state rank is not usable at UTSW or ECUH.
 ## Time
 
 - Stanford order times resolve to the second in `order_time_jittered_utc`. UTSW and ECUH use
-  `order_time_jittered`, also to the second. MGB order times are dates.
+  `order_time_jittered`, also to the second. MGB gives a date only.
+- **The MGB date is the specimen collection date, not the order date.** The maintainers stated this
+  on 2026-10-07, despite the column name `order_time_jittered_utc_shifted`. The canonical
+  `order_time` therefore means collection date at MGB and order time at the Dryad sites. The two
+  differ by a day when a specimen is collected the day after the order, and the release cannot show
+  how often. In that case MGB history is measured from the later day.
 - Dates are shifted per patient. MGB dates run from 1931 to 2108, and UTSW and ECUH shift by up to
   two months. Calendar time is not usable, so every temporal feature must use the release's
   days-to-culture columns. The MGB maintainers confirmed on 2026-10-06 that each patient has one
@@ -443,34 +450,42 @@ all same-day cultures share one order time. Counts after `chained_14d`:
 
 ### The revised MGB release
 
-The maintainers replied on 2026-10-06. Intervals within a patient are preserved, so a window rule can
-be applied at MGB and `chained_14d` on 1.0.0 stands. They have submitted a revised release to
-PhysioNet that applies the exclusion at source. On 2026-10-06 PhysioNet still listed only 1.0.0.
+The maintainers replied on 2026-10-06 and answered four follow-up questions on 2026-10-07. Intervals
+within a patient are preserved, so a window rule can be applied at MGB and `chained_14d` on 1.0.0
+stands. They have submitted a revised release to PhysioNet that applies the exclusion at source. On
+2026-10-06 PhysioNet still listed only 1.0.0.
 
 - **The revised rule.** A culture is excluded if the same patient had any blood, urine or respiratory
-  culture in the preceding 14 days. The window is measured from collection time and applies across
-  specimen types.
-- **Where it agrees with `chained_14d`.** Both use a 14-day window and look at every earlier culture
-  of the patient, whatever its specimen type or result. MGB releases only blood, urine and
-  respiratory cultures. As worded, an excluded culture still restarts the window, which is the
-  chained reading. That reading is ours and is not confirmed.
-- **Where it may differ.** None of these can be settled from 1.0.0.
-  - *Anchor.* 1.0.0 gives one date per culture and no collection time. `chained_14d` works on that
-    date.
-  - *Boundary.* `chained_14d` keeps a culture whose previous order date is exactly 14 days earlier,
-    as the Dryad releases do. 5,102 MGB cultures sit on that boundary, and a window that includes
-    day 14 would drop them.
+  culture in the preceding 14 days. The window is measured from collection time. It is applied per
+  patient across the three specimen types, to cultures that pass the site, encounter and age
+  criteria. Cultures that fail those criteria do not count as priors.
+- **Where it agrees with `chained_14d`.**
+  - Both use a 14-day window and look at every earlier culture of the patient, whatever its specimen
+    type or result. MGB releases only blood, urine and respiratory cultures.
+  - Chaining is confirmed. A culture removed by the rule still counts as a prior.
+  - The anchor agrees. The released date is the collection date, which is what `chained_14d` uses.
+  - No hidden priors. Growth without AST is absent from the data the window was applied to, so it
+    cannot exclude a later culture. 1.0.0 applies no rule, so it holds every culture the rule would
+    use as a prior, provided both releases apply the same site, encounter and age criteria.
+- **Where it may still differ.** Neither point can be settled from 1.0.0.
+  - *Boundary.* `chained_14d` keeps a culture whose previous date is exactly 14 days earlier, as the
+    Dryad releases do. 5,102 MGB cultures sit on that boundary, and a window that includes day 14, or
+    one measured to the hour, would drop some or all of them.
   - *Same-day cultures.* `chained_14d` keeps every culture on an index date. A window measured from
     collection time could drop a second blood culture set drawn later the same day, and 86% of MGB
     blood cultures share a day with another.
-  - *Cultures outside the release.* Growth without AST is not released. If the window is applied
-    before those cultures are removed, they can exclude later cultures, and no rule applied to the
-    release can see them.
-- **Check to run when it is published.** Compare the revised cohort with `chained_14d` on 1.0.0,
-  culture by culture if `anon_id` is unchanged and by counts otherwise. Re-test the ID link of the
-  three date-linked tables and the uniqueness of order IDs.
-- **The frozen splits are keyed on `anon_id`.** If the revised release renumbers patients, the MGB
-  split manifest does not carry over to it.
+- **The two releases cannot be linked.** The revised release was de-identified again, so `anon_id`
+  and every patient's date offset differ from 1.0.0. Only aggregates can be compared. Do not try to
+  match patients or cultures across the two releases.
+- **Check to run when it is published.**
+  - If the rules match, the revised cohort holds about 632,625 cultures on 410,763 dates.
+  - `chained_14d` applied to the revised release should remove nothing.
+  - The smallest gap between one patient's dates settles the boundary, and the share of blood
+    cultures in same-day sets settles same-day handling.
+  - Re-test the ID link of the three date-linked tables and the uniqueness of order IDs.
+- **The frozen MGB split does not carry over.** The revised release needs its own split. Models
+  trained on 1.0.0 cannot be tested on it without leakage, because the same patients return under
+  new IDs.
 
 ## Feature tables
 
@@ -757,7 +772,10 @@ Still open:
 2. **ESBL confirmatory label at ECUH.** ECUH reports clavulanate combination tests, which could
    support a confirmatory-test label alongside MGB's enzyme label.
 3. **The revised ARMD-MGB release.** Whether armd-common and OrderGap move to it once PhysioNet
-   publishes it. Every result so far uses 1.0.0, which OrderGap's frozen plan names.
+   publishes it. Every result so far uses 1.0.0, which OrderGap's frozen plan names. Moving OrderGap
+   would mean a new MGB split, retraining and a new test read, because the releases cannot be linked.
+4. **The time anchor in the canonical schema.** `order_time` is the collection date at MGB and the
+   order time elsewhere. Whether the schema should record that difference in a column is undecided.
 
 ## Questions for the ARMD-MGB maintainers
 
@@ -786,14 +804,24 @@ The reply added two points. Duplicate order IDs arose because different hospital
 accession numbers independently, and order IDs are unique in the revised release. The project link
 will be corrected to https://github.com/AlexWei21/ARMD-MGB, which returned "not found" on 2026-10-06.
 
-Follow-up questions, not yet sent:
+Questions 5 to 8 were sent after that reply. The maintainers answered them on 2026-10-07.
 
 5. Do `anon_id` and each patient's date shift stay the same in the revised release? The frozen
    splits and any culture-level comparison with 1.0.0 depend on it.
+   - **Answer.** No. The revised release was de-identified with new mappings, so `anon_id` and the
+     per-patient date offsets both differ. Splits keyed on 1.0.0 `anon_id` must be rebuilt.
 6. Is the 14-day window applied before or after cultures with growth and no AST are removed?
+   - **Answer.** Those cultures are absent from the data the window was applied to, so they cannot
+     exclude a later culture. The window is applied per patient across the three specimen types, to
+     cultures that pass the site, encounter and age criteria. Cultures failing those criteria do not
+     count as priors. Cultures removed by the 14-day rule itself still count as priors.
 7. How many cultures were excluded for growth without AST, by specimen type? This sizes the gap in
    MGB's E2 denominator.
+   - **Answer.** Not available. These cultures appear to be absent from the source data.
 8. Is the released date the order date or the collection date?
+   - **Answer.** The specimen collection time, de-identified with a per-patient date shift.
+
+The maintainers also said the GitHub repository will become public when the PhysioNet release does.
 
 ## References
 
