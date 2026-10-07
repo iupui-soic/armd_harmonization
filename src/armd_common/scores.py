@@ -12,11 +12,12 @@ tumbarello_points  The Tumbarello 2011 score (Antimicrob Agents Chemother 55:348
   Charlson score of 4 or more, 2 points                 approximate Charlson from comorbidity flags
   age 70 or older, 2 points                             proxy: age 65 or older, the nearest band
   recent urinary catheterization, 2 points              a prior urethral catheter procedure
-  High risk is TUMBARELLO_CUTOFF points or more, as published.
+  High risk is TUMBARELLO_CUTOFF points or more. The paper also reports TUMBARELLO_HIGH_CUTOFF or more.
 
 prior_esbl                   R1: a prior third-generation-cephalosporin-resistant Enterobacterales
 prior_esbl_or_recent_blfq    R2: R1, or beta-lactam or fluoroquinolone treatment in the prior 90 days
 minimal_design               R3's predictors: specimen type, prior ESBL and that recent treatment
+specimen_design              specimen type alone (SAP section 17, E-7)
 """
 
 from __future__ import annotations
@@ -34,8 +35,10 @@ CHARLSON_WEIGHTS = {
     "comorbid_metastatic_cancer": 6,
 }
 TUMBARELLO_CUTOFF = 3
+TUMBARELLO_HIGH_CUTOFF = 6
 TUMBARELLO_MAX = 14
-MINIMAL_PREDICTORS = ("specimen_urine", "specimen_blood", "specimen_respiratory", "prior_ESBL", "recent_blfq")
+SPECIMEN_PREDICTORS = ("specimen_urine", "specimen_blood", "specimen_respiratory")
+MINIMAL_PREDICTORS = SPECIMEN_PREDICTORS + ("prior_ESBL", "recent_blfq")
 
 
 def columns(X: np.ndarray, names=FEATURES_48) -> dict:
@@ -81,3 +84,8 @@ def minimal_design(f: dict) -> np.ndarray:
         _flag(f["specimen_urine"]), _flag(f["specimen_blood"]), _flag(f["specimen_respiratory"]),
         prior_esbl(f), recent_blfq(f),
     ]).astype(float)
+
+
+def specimen_design(f: dict) -> np.ndarray:
+    """The specimen-type-only predictor matrix, in SPECIMEN_PREDICTORS order."""
+    return np.column_stack([_flag(f[c]) for c in SPECIMEN_PREDICTORS]).astype(float)

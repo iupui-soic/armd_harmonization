@@ -30,9 +30,13 @@ counts at a threshold are withheld together.
 With --exploratory it runs the SAP's exploratory amendment (section 17, E-1 to E-4) instead, and
 writes results/03_exploratory/<timestamp>/. That mode needs the urine-only training run (E-3).
 
+With --second-exploratory it runs the second exploratory amendment (section 17, E-6 to E-8) instead,
+and writes results/03_exploratory_2/<timestamp>/. That mode needs the blood-only training run (E-7).
+
 Usage: python analysis/03_evaluate_ladder.py [--train-run results/02_train_e1/<timestamp>]
        [--sites stanford,mgb] [--boot 2000] [--seed 20260911]
        python analysis/03_evaluate_ladder.py --exploratory [--urine-train-run results/02_train_e1/<timestamp>]
+       python analysis/03_evaluate_ladder.py --second-exploratory [--blood-train-run results/02_train_e1/<timestamp>]
 """
 
 from __future__ import annotations
@@ -180,22 +184,26 @@ def evaluate_cells(cells: dict, n_boot: int, seed: int, comparisons=()) -> tuple
     return out, differences
 
 
-def curves(p, y) -> dict:
-    """Decision curve and a smoothed calibration curve for figures. Values only, never counts."""
-    import statsmodels.api as sm
-
+def decision_curve(p, y) -> dict:
+    """Net benefit along metrics.DECISION_CURVE and the treat-all line. Values only, never counts."""
     p, y = np.asarray(p, dtype=float), np.asarray(y, dtype=float)
     decision = {}
     for t in metrics.DECISION_CURVE:
         c = metrics.confusion(p, y, t)
         decision[f"{t:.2f}"] = WITHHELD if any(small(v) for v in c.values()) else metrics.net_benefit(p, y, t)
+    return {"decision_curve": decision,
+            "treat_all": {f"{t:.2f}": metrics.treat_all_net_benefit(y, t) for t in metrics.DECISION_CURVE}}
+
+
+def curves(p, y) -> dict:
+    """Decision curve and a smoothed calibration curve for figures. Values only, never counts."""
+    import statsmodels.api as sm
+
+    p, y = np.asarray(p, dtype=float), np.asarray(y, dtype=float)
     grid = np.quantile(p, np.linspace(0.05, 0.95, 19))
     observed = sm.nonparametric.lowess(y, p, frac=0.3, it=0, xvals=grid)
-    return {
-        "decision_curve": decision,
-        "treat_all": {f"{t:.2f}": metrics.treat_all_net_benefit(y, t) for t in metrics.DECISION_CURVE},
-        "calibration_curve": {"predicted": grid.tolist(), "observed": np.asarray(observed).tolist()},
-    }
+    return {**decision_curve(p, y),
+            "calibration_curve": {"predicted": grid.tolist(), "observed": np.asarray(observed).tolist()}}
 
 
 def subgroups(p, y, threshold: float, arrays: dict) -> dict:
@@ -540,10 +548,10 @@ def matched_comparison(flags, p_model, y, patients, n_boot: int, seed: int, key:
     return {"point": publish(point, withheld), "interval": publish(intervals, withheld)}
 
 
-def decision_impact(p, y, patients, threshold90, n_boot: int, seed: int, key: str) -> dict:
+def decision_impact(p, y, patients, threshold90, n_boot: int, seed: int, key: str, thresholds=DECISION_THRESHOLDS) -> dict:
     """E-4: per 1,000 orders, broad coverage started and resistant cultures covered and missed."""
     p, y = np.asarray(p, dtype=float), np.asarray(y, dtype=float)
-    labels = [(f"{t:.2f}", t) for t in DECISION_THRESHOLDS]
+    labels = [(f"{t:.2f}", t) for t in thresholds]
     if threshold90 is not None:
         labels.append(("90_sensitivity", float(threshold90)))
 
@@ -567,6 +575,11 @@ def decision_impact(p, y, patients, threshold90, n_boot: int, seed: int, key: st
 
 def fit_minimal(path: Path):
     """R3: logistic regression on scores.MINIMAL_PREDICTORS, fitted on a derivation cohort file."""
+    return fit_design(path, scores.minimal_design, scores.MINIMAL_PREDICTORS)
+
+
+def fit_design(path: Path, design, predictors):
+    """Logistic regression on one of the scores.py designs, fitted on a derivation cohort file."""
     from sklearn.linear_model import LogisticRegression
 
     con = duckdb.connect()
@@ -578,10 +591,10 @@ def fit_minimal(path: Path):
     con.close()
     X = np.column_stack([np.asarray(a[c], dtype=np.float32) for c in features.FEATURES_48])
     y = np.asarray(a["label"]).astype(int)
-    D = scores.minimal_design(scores.columns(X))
+    D = design(scores.columns(X))
     model = LogisticRegression(C=1e6, max_iter=5000).fit(D, y)  # effectively unpenalized
     threshold = modeling.sensitivity_threshold(model.predict_proba(D)[:, 1], y)
-    coefficients = dict(zip(("intercept",) + scores.MINIMAL_PREDICTORS,
+    coefficients = dict(zip(("intercept",) + tuple(predictors),
                             [float(model.intercept_[0])] + [float(c) for c in model.coef_[0]]))
     return model, threshold, coefficients
 
@@ -705,6 +718,222 @@ def run_exploratory(args, frozen: dict, train_dir: Path) -> int:
     return 0
 
 
+# Second exploratory amendment, SAP section 17, E-6 to E-8 -------------------------------------------
+
+CEFTRIAXONE = "ceftriaxone"
+BLOOD_THRESHOLDS = (0.01, 0.02, 0.05, 0.10)  # no guideline gives a treatment threshold for bacteremia
+THRESHOLD_SPECIMENS = ("urine", "blood")
+THRESHOLD_VARIANTS = ("E1", "E2")
+
+
+def _parquet(path: Path) -> str:
+    return f"read_parquet('{str(path).replace(chr(39), chr(39) * 2)}')"
+
+
+def specimen_thresholds(model_dir: Path, cohort_dir: Path, names: dict, kind: str) -> tuple[dict, list[Path]]:
+    """E-7: {specimen: {variant: threshold}} for one model class, and the files read.
+
+    The threshold is the 90%-sensitivity threshold of the pooled model's cross-fitted predictions on
+    the E2 derivation units of one specimen type. Only derivation files are read.
+    """
+    cohort = cohort_dir / names["E2"] / "derivation.parquet"
+    sources = {"E1": model_dir / names["E1"] / f"{kind}_crossfit_on_{names['E2']}.parquet",
+               "E2": model_dir / names["E2"] / f"{kind}_crossfit.parquet"}
+    con = duckdb.connect()
+    partitions = [r[0] for r in con.execute(f"SELECT DISTINCT partition FROM {_parquet(cohort)}").fetchall()]
+    if partitions != ["derivation"]:
+        raise ValueError(f"{cohort} must hold the derivation partition only")
+    out = {}
+    for variant, path in sources.items():
+        n = con.execute(f"SELECT COUNT(*) FROM {_parquet(path)}").fetchone()[0]
+        a = con.execute(f"SELECT c.specimen_type, p.label, p.prediction FROM {_parquet(path)} p "
+                        f"JOIN {_parquet(cohort)} c USING (unit_id)").fetchnumpy()
+        if len(a["label"]) != n:
+            raise ValueError(f"{path} does not match the units of {cohort}")
+        specimen = np.asarray(a["specimen_type"]).astype(str)
+        for value in THRESHOLD_SPECIMENS:
+            rows = specimen == value
+            out.setdefault(value, {})[variant] = modeling.sensitivity_threshold(
+                np.asarray(a["prediction"], dtype=float)[rows], np.asarray(a["label"]).astype(int)[rows])
+    con.close()
+    return out, [cohort, *sources.values()]
+
+
+def _hide_near_counts(grid: dict, reference: dict) -> None:
+    """Withhold a cell's units or events when they sit 1 to 10 from the primary cohort's published count."""
+    for name, c in grid.items():
+        n, e = reference[name.split("->", 1)[1].split(":")[-1]]
+        if isinstance(c["units"], int) and small(abs(n - c["units"])):
+            c["units"] = WITHHELD
+        if isinstance(c["events"], int) and small(abs(e - c["events"])):
+            c["events"] = WITHHELD
+
+
+def second_exploratory_site(cohorts: dict, variants: dict, blood_variants: dict, thresholds: dict, derivation: dict,
+                            n_boot: int, seed: int) -> dict:
+    """E-6 to E-8 for one site.
+
+    cohorts holds the primary E1 and E2 test cohorts and the two ceftriaxone cohorts. thresholds is
+    {model class: specimen_thresholds(...)[0]}, and derivation maps E1 and E2 to derivation cohort files.
+    """
+    out = {"decision_impact": {}}
+    tests = [t for t in ("E1", "E2") if t in cohorts]
+    xgb_e2 = variants["xgboost"]["E2"][0]
+
+    # E-6: the primary models, thresholds and Platt map on the ceftriaxone-labelled cohorts.
+    cells = {}
+    for key in (f"{CEFTRIAXONE}:{t}" for t in tests):
+        if key in cohorts:
+            cells.update(grid_cells(cohorts, variants, [(v, key) for v in SENSITIVITY_VARIANTS]))
+    comparisons = [(f"{k}:{v}->{CEFTRIAXONE}:E2", f"{k}:E2->{CEFTRIAXONE}:E2") for k in variants for v in ("E1", "E1_platt")]
+    grid, differences = evaluate_cells(cells, n_boot, seed, comparisons)
+    _hide_near_counts(grid, {t: (len(cohorts[t]["y"]), int(np.sum(cohorts[t]["y"]))) for t in tests})
+    out["ceftriaxone"] = {"grid": grid, "comparisons": differences}
+    for name, c in cells.items():
+        out["decision_impact"][name] = decision_impact(c["p"], c["y"], c["patients"], c["threshold"], n_boot, seed, c["cohort"])
+
+    # E-7: blood-trained models on blood test units, with low treatment thresholds.
+    blood = restrict(cohorts, "specimen_type", "blood")
+    cells = grid_cells(blood, blood_variants, GRID, prefix="blood:")
+    comparisons = [(f"blood:{k}:{a}->{t}", f"blood:{k}:{b}->{t}") for k in blood_variants for a, b, t in COMPARISONS]
+    grid, differences = evaluate_cells(cells, n_boot, seed, comparisons)
+    for name, c in cells.items():
+        grid[name]["curves"] = decision_curve(c["p"], c["y"])
+        out["decision_impact"][name] = decision_impact(c["p"], c["y"], c["patients"], c["threshold"], n_boot, seed, c["cohort"],
+                                                       thresholds=BLOOD_THRESHOLDS)
+    out["blood_models"] = {"grid": grid, "comparisons": differences}
+
+    # E-7: the pooled models at a 90%-sensitivity threshold set within each specimen type.
+    out["specimen_thresholds"] = {}
+    for specimen in THRESHOLD_SPECIMENS:
+        sub = restrict(cohorts, "specimen_type", specimen)
+        if "E2" not in sub:
+            continue
+        a, cells = sub["E2"], {}
+        for kind, vs in variants.items():
+            for variant in THRESHOLD_VARIANTS:
+                cells[f"pooled:{specimen}:{kind}:{variant}->E2"] = {
+                    "cohort": f"{specimen}:E2", "p": vs[variant][0](a["X"]), "y": a["y"], "patients": a["patient_id"],
+                    "threshold": thresholds[kind][specimen][variant]}
+        out["specimen_thresholds"][specimen], _ = evaluate_cells(cells, n_boot, seed)
+        for name, c in cells.items():
+            out["decision_impact"][name] = decision_impact(c["p"], c["y"], c["patients"], c["threshold"], n_boot, seed, c["cohort"],
+                                                           thresholds=())
+
+    # E-7: specimen type alone. The XGBoost cells are repeated so the paired differences share each draw.
+    cells, coefficients = {}, {}
+    for trained_on, path in derivation.items():
+        model, threshold, coefficients[trained_on] = fit_design(path, scores.specimen_design, scores.SPECIMEN_PREDICTORS)
+        for test in tests:
+            a = cohorts[test]
+            p = model.predict_proba(scores.specimen_design(scores.columns(a["X"])))[:, 1]
+            cells[f"specimen_only:{trained_on}->{test}"] = {"cohort": test, "p": p, "y": a["y"], "patients": a["patient_id"],
+                                                             "threshold": threshold}
+    paired = grid_cells(cohorts, {"xgboost": variants["xgboost"]}, (("E1", "E2"), ("E2", "E2")))
+    comparisons = [(f"xgboost:{e}->E2", f"specimen_only:{e}->E2") for e in derivation]
+    grid, differences = evaluate_cells({**cells, **paired}, n_boot, seed, comparisons)
+    out["specimen_only"] = {"coefficients": coefficients, "grid": {k: grid[k] for k in cells}, "comparisons": differences}
+    for name, c in cells.items():
+        out["decision_impact"][name] = decision_impact(c["p"], c["y"], c["patients"], c["threshold"], n_boot, seed, c["cohort"])
+
+    # E-8: the published score at its second cut-off.
+    out["rules"], out["matched"] = {}, {}
+    for test in tests:
+        a = cohorts[test]
+        points = scores.tumbarello_points(scores.columns(a["X"]))
+        flags = points >= scores.TUMBARELLO_HIGH_CUTOFF
+        name = f"tumbarello_{scores.TUMBARELLO_HIGH_CUTOFF}->{test}"
+        out["rules"][name] = evaluate_rule(points, flags, a["y"], a["patient_id"], n_boot, seed, test)
+        out["matched"][name] = matched_comparison(flags, xgb_e2(a["X"]), a["y"], a["patient_id"], n_boot, seed, test)
+    return out
+
+
+def render_second_exploratory(summary: dict) -> str:
+    lines = ["# 03_exploratory_2", "", "Exploratory amendment E-6 to E-8 (SAP section 17). Test partition, not pre-specified.", ""]
+
+    def v(d, k, digits=3):
+        x = d.get(k)
+        return f"{x:.{digits}f}" if isinstance(x, float) else str(x)
+
+    shown = ("prevalence", "auroc", "calibration_intercept", "standardized_net_benefit_0.10", "sensitivity_at_90_sensitivity",
+             "specificity_at_90_sensitivity")
+    header = ["| cell | units | " + " | ".join(shown) + " |", "|---|---|" + "---|" * len(shown)]
+
+    def rows(grid, only="xgboost"):
+        return [f"| {name} | {c['units']} | " + " | ".join(v(c["point"], m) for m in shown) + " |"
+                for name, c in grid.items() if only in name or "specimen_only" in name]
+
+    for site, s in summary["sites"].items():
+        lines += [f"## {site}", "", "E-6, ceftriaxone resistance as the outcome:", "", *header, *rows(s["ceftriaxone"]["grid"]), "",
+                  "E-7, blood-trained models on blood test units:", "", *header, *rows(s["blood_models"]["grid"]), "",
+                  "E-7, pooled models at within-specimen thresholds:", "", *header]
+        for grid in s["specimen_thresholds"].values():
+            lines += rows(grid)
+        lines += ["", "E-7, specimen type alone:", "", *header, *rows(s["specimen_only"]["grid"]), "",
+                  "E-8, the published score at its second cut-off:", "",
+                  "| rule | flagged per 1,000 | sensitivity | specificity | PPV | standardized NB at 0.10 |", "|---|---|---|---|---|---|"]
+        for name, r in s["rules"].items():
+            pt = r["point"]
+            lines.append(f"| {name} | {v(pt, 'flagged_per_1000', 0)} | {v(pt, 'sensitivity', 2)} | {v(pt, 'specificity', 2)} | "
+                         f"{v(pt, 'ppv', 3)} | {v(pt, 'standardized_net_benefit_0.10', 2)} |")
+        lines.append("")
+    return "\n".join(lines) + "\n"
+
+
+def run_second_exploratory(args, frozen: dict, train_dir: Path) -> int:
+    trained = json.loads((train_dir / "summary.json").read_text())
+    train_args = json.loads((train_dir / "manifest.json").read_text())["args"]
+    blood_dir = Path(args.blood_train_run) if args.blood_train_run else latest_run("02_train_e1", "blood")
+    blood_trained = json.loads((blood_dir / "summary.json").read_text())
+    blood_args = json.loads((blood_dir / "manifest.json").read_text())["args"]
+    rule, unit, kinds = train_args["repeat_rule"], train_args["unit"], train_args["models"].split(",")
+    if (blood_args["repeat_rule"], blood_args["unit"]) != (rule, unit):
+        raise SystemExit("the blood training run must use the primary repeat rule and unit")
+    sites = args.sites.split(",") if args.sites else list(trained["sites"])
+
+    run = RunManifest("03_exploratory_2", seed=args.seed, args=vars(args))
+    run.set("analysis_plan", frozen)
+    run.set("amendment", "SAP section 17, exploratory analyses E-6 to E-8")
+    for label, d in (("02_train_e1.summary", train_dir), ("02_train_e1_blood.summary", blood_dir)):
+        run.add_input(label, d / "summary.json", sha256_file(d / "summary.json"))
+    base = {"repeat_rule": rule, "unit": unit}
+    specs = {"E1": CohortSpec("E1", **base), "E2": CohortSpec("E2", **base),
+             f"{CEFTRIAXONE}:E1": CohortSpec("E1", label=CEFTRIAXONE, **base),
+             f"{CEFTRIAXONE}:E2": CohortSpec("E2", label=CEFTRIAXONE, **base)}
+    names = {e: specs[e].name for e in ("E1", "E2")}
+    summary = {"partition": "test", "exploratory": True, "amendment": "SAP section 17, E-6 to E-8", "analysis_plan": frozen,
+               "train_run": str(train_dir), "blood_train_run": str(blood_dir),
+               "tumbarello": {"cutoff": scores.TUMBARELLO_HIGH_CUTOFF, "max": scores.TUMBARELLO_MAX},
+               "blood_thresholds": list(BLOOD_THRESHOLDS), "sites": {}}
+    for site in sites:
+        print(f"second exploratory: {site}", flush=True)
+        root = get_site(site).parquet_dir.parent
+        model_dir = root / "models" / f"{rule}_{unit}"
+        variants = {k: load_variants(model_dir, names, k, trained["sites"][site]) for k in kinds}
+        blood_variants = {k: load_variants(root / "models" / f"{rule}_{unit}_blood", names, k, blood_trained["sites"][site])
+                          for k in kinds}
+        derivation = {e: root / "cohorts" / names[e] / "derivation.parquet" for e in ("E1", "E2")}
+        thresholds, read = {}, set(derivation.values())
+        for k in kinds:
+            thresholds[k], files = specimen_thresholds(model_dir, root / "cohorts", names, k)
+            read |= set(files)
+        for path in sorted(read):
+            run.add_input(f"{site}.{path.parent.name}.{path.name}", path, sha256_file(path))
+        cohorts, flows = build_test_cohorts(site, specs)
+        for key, flow in flows.items():
+            for step in flow:
+                run.count(f"{site}.{key}.{step['step']}", step["cultures"])
+        result = second_exploratory_site(cohorts, variants, blood_variants, thresholds, derivation, args.boot, args.seed)
+        result["within_specimen_thresholds"] = thresholds
+        result["flows"] = publish_flows(flows)
+        summary["sites"][site] = result
+    run.write()
+    (run.dir / "summary.json").write_text(json.dumps(summary, indent=2, default=str))
+    (run.dir / "report.md").write_text(render_second_exploratory(summary))
+    print(f"second exploratory: wrote {run.dir}")
+    return 0
+
+
 def latest_run(script: str, specimen: str | None = None) -> Path:
     """The latest run of `script` with a summary. For training runs, the one trained on `specimen`
     (None is every specimen type), read from its manifest."""
@@ -727,11 +956,17 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     parser.add_argument("--exploratory", action="store_true", help="run the SAP's exploratory amendment E-1 to E-4")
     parser.add_argument("--urine-train-run", help="the urine-only training run for E-3 (default: the latest)")
+    parser.add_argument("--second-exploratory", action="store_true", help="run the SAP's second exploratory amendment E-6 to E-8")
+    parser.add_argument("--blood-train-run", help="the blood-only training run for E-7 (default: the latest)")
     args = parser.parse_args()
+    if args.exploratory and args.second_exploratory:
+        parser.error("choose one exploratory amendment")
     frozen = require_frozen_plan()
     train_dir = Path(args.train_run) if args.train_run else latest_run("02_train_e1")
     if args.exploratory:
         return run_exploratory(args, frozen, train_dir)
+    if args.second_exploratory:
+        return run_second_exploratory(args, frozen, train_dir)
     trained = json.loads((train_dir / "summary.json").read_text())
     train_args = json.loads((train_dir / "manifest.json").read_text())["args"]
     rule, unit, kinds = train_args["repeat_rule"], train_args["unit"], train_args["models"].split(",")

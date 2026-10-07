@@ -43,3 +43,10 @@ def test_minimal_design():
     f = rows({"specimen_urine": 1, "prior_ESBL": 1}, {"specimen_blood": 1, "T_fq_90d": 1})
     assert scores.minimal_design(f).tolist() == [[1, 0, 0, 1, 0], [0, 1, 0, 0, 1]]
     assert len(scores.MINIMAL_PREDICTORS) == 5
+
+
+def test_specimen_design_and_high_cutoff():
+    f = rows({"specimen_urine": 1, "prior_ESBL": 1}, {"specimen_blood": 1}, {"specimen_respiratory": 1})
+    assert scores.specimen_design(f).tolist() == [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    assert scores.MINIMAL_PREDICTORS[:3] == scores.SPECIMEN_PREDICTORS
+    assert scores.TUMBARELLO_CUTOFF < scores.TUMBARELLO_HIGH_CUTOFF == 6
