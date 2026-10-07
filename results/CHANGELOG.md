@@ -91,3 +91,11 @@
 - E-3: within urine, urine-trained E1 models reach AUROC 0.72 to 0.79 at order time against 0.79 to 0.85 for urine-trained E2 models, a paired gap of 0.055 to 0.064. After Platt recalibration the standardized net benefit gap at 0.10 is 0.01 to 0.04.
 - E-4: at the 10% threshold, the E1 model starts broad coverage in 165 to 366 of every 1,000 orders to cover 2.9 to 17.1 resistant cultures, and the E2 model in 6 to 38 orders to cover 0.8 to 10.8. To catch 90% of resistant cultures, R3 flags 576 to 744 per 1,000 against 436 to 549 for the E2 XGBoost model. E-5: every conclusion above holds at the three Dryad sites alone.
 - Flagged: within urine, the E1 model's AUROC rises at order time at three sites, as the plan originally expected. The pooled fall comes from mixing specimen types. Much of the E2 advantage comes from training on all orders rather than from model complexity. All of E-1 to E-5 is exploratory.
+
+## 2026-10-07 02_train_e1, blood only (results/02_train_e1/20261007T101226Z, commit dc8f0c2, exploratory E-7)
+
+- Trained XGBoost and logistic models on the blood units of the derivation partition only, for the second exploratory amendment in SAP section 17 (E-7).
+- Blood E1 has 4,384, 4,614, 1,514 and 4,937 units at Stanford, MGB, UTSW and ECUH, with 649, 674, 228 and 533 resistant. Blood E2 has 127,173, 153,193, 116,971 and 146,883 units.
+- Platt maps from blood E1 toward blood E2 have XGBoost intercepts of -2.89, -3.15, -2.82 and -2.71, a larger shift than the pooled maps, because resistance is rarer among blood orders.
+- The 90%-sensitivity threshold of the blood E2 XGBoost model is 0.0028, 0.0023, 0.0014 and 0.0022, about half the share of blood orders that are resistant.
+- Flagged: the Platt slopes are 1.37, 1.27, 1.96 and 1.38, well above the pooled and urine slopes near 1. With 228 to 674 resistant units the blood models are noisy, UTSW most of all. This run was chosen after test results were seen, so it is exploratory.
