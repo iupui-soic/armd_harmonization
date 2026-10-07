@@ -21,7 +21,8 @@ Two guards:
 - It reads derivation rows only and fails if a cohort file holds any other partition.
 
 With --specimen, every model is trained and recalibrated on that specimen type's units only, and the
-outputs go under models/<rule>_<unit>_<specimen>/ (the SAP's exploratory analysis E-3).
+outputs go under models/<rule>_<unit>_<specimen>/ (the SAP's exploratory analyses E-3 for urine and
+E-7 for blood).
 
 Usage: python analysis/02_train_e1.py [--sites stanford,mgb] [--models xgboost,logistic]
        [--repeat-rule release] [--unit culture] [--specimen urine] [--threads 8] [--seed 20260911]
@@ -165,7 +166,7 @@ def main() -> int:
     parser.add_argument("--models", default=",".join(modeling.MODEL_KINDS))
     parser.add_argument("--repeat-rule", default="release", choices=REPEAT_RULES)
     parser.add_argument("--unit", default="culture", choices=UNITS)
-    parser.add_argument("--specimen", choices=SPECIMENS, help="train on one specimen type only (exploratory E-3)")
+    parser.add_argument("--specimen", choices=SPECIMENS, help="train on one specimen type only (exploratory E-3 and E-7)")
     parser.add_argument("--threads", type=int, default=8)
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     args = parser.parse_args()
