@@ -654,6 +654,29 @@ ordered cultures in each release's cohort table, measured on 2026-09-11 without 
   doses on the order day before the culture, and MGB courses that began earlier and continued past
   the order. This was adopted on 2026-09-27.
 
+### Culture-day records by agent
+
+A co-author asked whether clinicians' actual empiric choices could be scored as a decision policy.
+On 2026-10-29 the culture-day records were counted by agent, across every ordered culture in each
+release, without labels or partitions. Shares are of ordered cultures:
+
+| agent | Stanford, day 0 | MGB, last dose on or after the order day |
+|---|---|---|
+| any mapped antibacterial | 41.2% | 51.6% |
+| carbapenem | 0.1% | 2.8% |
+| piperacillin-tazobactam | 9.4% | 7.2% |
+| cefepime | 0.3% | 12.8% |
+| ceftriaxone or cefotaxime | 1.8% | 13.4% |
+| fluoroquinolone | 8.8% | 4.8% |
+
+- Stanford's `prior_med` names meropenem, ertapenem and ceftriaxone, and they map correctly, yet they
+  appear on the culture day for very few cultures. Prior 90-day carbapenem exposure is also 0.6% at
+  Stanford against 5.7% at MGB. Capture of the agents that decide broad coverage looks incomplete.
+- MGB's last doses mix empiric courses with courses that began earlier and continued past the order.
+- UTSW and ECUH hold no culture-day records.
+- Decision: clinicians' empiric choices are not scored in ARMD, and the OrderGap paper states this as
+  a limitation. MIMIC-IV, which records administrations, is the planned place to score them.
+
 ## Implied susceptibility
 
 `implied.py` applies Stanford's rules to any site's `isolate_ast`, and it runs only when a caller asks
