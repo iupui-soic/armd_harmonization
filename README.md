@@ -43,6 +43,14 @@ python analysis/06_figures.py                    # figures and the operating-poi
 .venv/bin/pytest
 ```
 
+OrderGap's external validation in MIMIC-IV 3.1 lives outside the library, in `analysis/mimic/`:
+
+```bash
+python analysis/07_mimic_build.py                # MIMIC-IV cultures, features, split and derivation cohorts
+python analysis/08_mimic_train.py [--specimen urine|blood]   # the same models, trained on MIMIC-IV
+python analysis/09_mimic_evaluate.py             # the only script that reads the MIMIC-IV test partition
+```
+
 Scripts write provenance to `results/<script>/<timestamp>/manifest.json`.
 
 ## Canonical tables
