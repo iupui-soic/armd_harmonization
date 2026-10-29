@@ -1,0 +1,302 @@
+{
+  "partition": "derivation",
+  "analysis_plan": {
+    "tag": "sap-v1.0",
+    "pinned_file": "SAP.md",
+    "pinned_sha256": "2a97fd68513bfc3c884596fba6b0d21aae03669043955570575ee64bc341bcce"
+  },
+  "cultures": {
+    "cultures": 1184778,
+    "cancelled": 37110,
+    "no_time": 0,
+    "kept": 1147668
+  },
+  "by_specimen": {
+    "blood": {
+      "cultures": 580919,
+      "grew_any_organism": 0.0571,
+      "inpatient": 0.9387,
+      "ed": 0.3498,
+      "outpatient": 0.0474,
+      "emar_covered": 0.3558
+    },
+    "respiratory": {
+      "cultures": 64227,
+      "grew_any_organism": 0.3582,
+      "inpatient": 0.9013,
+      "ed": 0.0104,
+      "outpatient": 0.0973,
+      "emar_covered": 0.3565
+    },
+    "urine": {
+      "cultures": 502522,
+      "grew_any_organism": 0.2205,
+      "inpatient": 0.5182,
+      "ed": 0.3715,
+      "outpatient": 0.3425,
+      "emar_covered": 0.2008
+    }
+  },
+  "split": {
+    "sha256": "f4f8e56ddd9cd80818b92a347e905ea66a99cba18f145a0e64e6a50851486507",
+    "patients": 188109,
+    "strata": {
+      "0": 184103,
+      "1": 4006
+    }
+  },
+  "cohorts": {
+    "E1": {
+      "name": "e1_composite_chained_14d_specimen_day",
+      "flow": [
+        {
+          "step": "ordered cultures",
+          "units": null,
+          "cultures": 1147668,
+          "patients": 188109,
+          "label_positive": null
+        },
+        {
+          "step": "index orders under chained_14d",
+          "units": 539295,
+          "cultures": 660726,
+          "patients": 188109,
+          "label_positive": null
+        },
+        {
+          "step": "evaluable for E1",
+          "units": 46307,
+          "cultures": 48941,
+          "patients": 26663,
+          "label_positive": null
+        },
+        {
+          "step": "in partition derivation",
+          "units": 36932,
+          "cultures": 39018,
+          "patients": 21250,
+          "label_positive": 4001
+        }
+      ],
+      "units": 36932,
+      "patients": 21250,
+      "label_positive": 4001,
+      "prevalence": 0.10833,
+      "by_specimen": {
+        "blood": {
+          "units": 1464,
+          "label_positive": 379
+        },
+        "respiratory": {
+          "units": 637,
+          "label_positive": 84
+        },
+        "urine": {
+          "units": 34831,
+          "label_positive": 3538
+        }
+      },
+      "feature_means": {
+        "age_encoded": 4.5421,
+        "gender_male": 0.2235,
+        "age_65plus": 0.5613,
+        "adi_score_clean": 0.0,
+        "adi_high": 0.0,
+        "adi_missing": 1.0,
+        "comorbid_heart_failure": 0.1531,
+        "comorbid_liver_disease": 0.0774,
+        "comorbid_lymphoma": 0.0164,
+        "comorbid_metastatic_cancer": 0.0417,
+        "comorbid_obesity": 0.1266,
+        "comorbid_renal_failure": 0.1651,
+        "elixhauser_count": 3.4655,
+        "hosp_ward_IP": 0.4058,
+        "hosp_ward_OP": 0.498,
+        "hosp_ward_ER": 0.367,
+        "hosp_ward_UC": 0.0,
+        "T_fq_90d": 0.054,
+        "T_ceph3_90d": 0.0856,
+        "T_carb_90d": 0.0222,
+        "T_glyco_90d": 0.0712,
+        "T_sulfa_90d": 0.0291,
+        "T_esp_90d": 0.0418,
+        "T_amino_90d": 0.0048,
+        "prior_ESBL": 0.0969,
+        "prior_MRSA": 0.0567,
+        "prior_CRE": 0.0012,
+        "prior_VRE": 0.0113,
+        "num_prior_orgs": 1.218,
+        "days_since_prior_org": 219.7654,
+        "proc_cvc": 0.1677,
+        "proc_mechvent": 0.0675,
+        "proc_dialysis": 0.0253,
+        "proc_urethral": 0.0091,
+        "proc_surgical": 0.5004,
+        "any_proc_30d": 0.0993,
+        "nursing_home_90d": 0.0625,
+        "fq_and_ceph3": 0.0265,
+        "multi_prior_resistant": 0.1661,
+        "any_immunocomp": 0.0568,
+        "any_invasive_proc": 0.1944,
+        "prior_esbl_and_ceph3": 0.0227,
+        "hospital_multiabx": 0.0468,
+        "renal_urine": 0.1531,
+        "nursing_home_flag": 0.0625,
+        "specimen_urine": 0.9431,
+        "specimen_blood": 0.0396,
+        "specimen_respiratory": 0.0172
+      },
+      "extra_means": {
+        "emar_covered": 0.1534,
+        "clin_carbapenem": 0.0125,
+        "clin_carbapenem_started_after": 0.0119,
+        "clin_broad": 0.0668,
+        "treated_at_order": 0.2514,
+        "tum_hosp_12m": 0.4086,
+        "tum_transfer": 0.0706,
+        "tum_charlson4": 0.2334,
+        "tum_age70": 0.4655,
+        "tum_catheter_30d": 0.0008
+      },
+      "provenance": {
+        "spec": {
+          "estimand": "E1",
+          "label": "composite"
+        },
+        "name": "e1_composite_chained_14d_specimen_day",
+        "repeat_rule": "chained_14d",
+        "unit": "specimen_day",
+        "split_manifest": {
+          "path": "/data0/mimiciv/3.1/ordergap/split_manifest.csv.gz",
+          "sha256": "f4f8e56ddd9cd80818b92a347e905ea66a99cba18f145a0e64e6a50851486507"
+        }
+      }
+    },
+    "E2": {
+      "name": "e2_composite_chained_14d_specimen_day",
+      "flow": [
+        {
+          "step": "ordered cultures",
+          "units": null,
+          "cultures": 1147668,
+          "patients": 188109,
+          "label_positive": null
+        },
+        {
+          "step": "index orders under chained_14d",
+          "units": 539295,
+          "cultures": 660726,
+          "patients": 188109,
+          "label_positive": null
+        },
+        {
+          "step": "evaluable for E2",
+          "units": 537556,
+          "cultures": 657238,
+          "patients": 187957,
+          "label_positive": null
+        },
+        {
+          "step": "in partition derivation",
+          "units": 430165,
+          "cultures": 526012,
+          "patients": 150367,
+          "label_positive": 4001
+        }
+      ],
+      "units": 430165,
+      "patients": 150367,
+      "label_positive": 4001,
+      "prevalence": 0.0093,
+      "by_specimen": {
+        "blood": {
+          "units": 126155,
+          "label_positive": 379
+        },
+        "respiratory": {
+          "units": 10755,
+          "label_positive": 84
+        },
+        "urine": {
+          "units": 293255,
+          "label_positive": 3538
+        }
+      },
+      "feature_means": {
+        "age_encoded": 3.9975,
+        "gender_male": 0.4039,
+        "age_65plus": 0.4388,
+        "adi_score_clean": 0.0,
+        "adi_high": 0.0,
+        "adi_missing": 1.0,
+        "comorbid_heart_failure": 0.1218,
+        "comorbid_liver_disease": 0.0882,
+        "comorbid_lymphoma": 0.023,
+        "comorbid_metastatic_cancer": 0.0404,
+        "comorbid_obesity": 0.1071,
+        "comorbid_renal_failure": 0.138,
+        "elixhauser_count": 3.0044,
+        "hosp_ward_IP": 0.5652,
+        "hosp_ward_OP": 0.3168,
+        "hosp_ward_ER": 0.5009,
+        "hosp_ward_UC": 0.0,
+        "T_fq_90d": 0.0663,
+        "T_ceph3_90d": 0.083,
+        "T_carb_90d": 0.0153,
+        "T_glyco_90d": 0.0783,
+        "T_sulfa_90d": 0.0297,
+        "T_esp_90d": 0.043,
+        "T_amino_90d": 0.0049,
+        "prior_ESBL": 0.0366,
+        "prior_MRSA": 0.0433,
+        "prior_CRE": 0.0009,
+        "prior_VRE": 0.0075,
+        "num_prior_orgs": 0.6584,
+        "days_since_prior_org": 185.8207,
+        "proc_cvc": 0.1518,
+        "proc_mechvent": 0.0615,
+        "proc_dialysis": 0.0307,
+        "proc_urethral": 0.0051,
+        "proc_surgical": 0.4574,
+        "any_proc_30d": 0.1217,
+        "nursing_home_90d": 0.0449,
+        "fq_and_ceph3": 0.0301,
+        "multi_prior_resistant": 0.0882,
+        "any_immunocomp": 0.0623,
+        "any_invasive_proc": 0.1812,
+        "prior_esbl_and_ceph3": 0.0107,
+        "hospital_multiabx": 0.0575,
+        "renal_urine": 0.0774,
+        "nursing_home_flag": 0.0449,
+        "specimen_urine": 0.6817,
+        "specimen_blood": 0.2933,
+        "specimen_respiratory": 0.025
+      },
+      "extra_means": {
+        "emar_covered": 0.221,
+        "clin_carbapenem": 0.0074,
+        "clin_carbapenem_started_after": 0.0065,
+        "clin_broad": 0.0793,
+        "treated_at_order": 0.2274,
+        "tum_hosp_12m": 0.3846,
+        "tum_transfer": 0.0972,
+        "tum_charlson4": 0.2113,
+        "tum_age70": 0.3433,
+        "tum_catheter_30d": 0.0005
+      },
+      "provenance": {
+        "spec": {
+          "estimand": "E2",
+          "label": "composite"
+        },
+        "name": "e2_composite_chained_14d_specimen_day",
+        "repeat_rule": "chained_14d",
+        "unit": "specimen_day",
+        "split_manifest": {
+          "path": "/data0/mimiciv/3.1/ordergap/split_manifest.csv.gz",
+          "sha256": "f4f8e56ddd9cd80818b92a347e905ea66a99cba18f145a0e64e6a50851486507"
+        }
+      }
+    }
+  }
+}
