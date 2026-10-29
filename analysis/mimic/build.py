@@ -385,8 +385,12 @@ def build_features(con, lists: dict, episodes: str = "mimic_culture_episodes", c
                 "proc_urethral": "urethral_catheter", "proc_surgical": "surgical"}
     proc_match = {n: _icd_match(proc_lists[k].get("icd9", []), proc_lists[k].get("icd10pcs", []), "x.icd_code", "x.icd_version")
                   for n, k in proc_map.items()}
-    proc_flags = ", ".join(f"MAX(CAST({m} AS INTEGER)) AS {n}" for n, m in proc_match.items())
+    # Operating-room code lists also hold catheter, dialysis, ventilation and line codes, so surgery
+    # counts only codes outside the other four lists.
     any_proc = " OR ".join(proc_match.values())
+    others = " OR ".join(m for n, m in proc_match.items() if n != "proc_surgical")
+    proc_match["proc_surgical"] = f"({proc_match['proc_surgical']} AND NOT ({others}))"
+    proc_flags = ", ".join(f"MAX(CAST({m} AS INTEGER)) AS {n}" for n, m in proc_match.items())
     proc_day = "CAST(TRY_CAST(x.chartdate AS TIMESTAMP) AS DATE)"
     proc = f"""
         SELECT e.culture_id, {proc_flags},

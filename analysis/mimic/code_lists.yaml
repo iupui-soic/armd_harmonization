@@ -1,0 +1,490 @@
+# ICD code lists for the MIMIC-IV 3.1 analysis.
+#
+# A script transcribed every list from the machine-readable sources below and checked each entry
+# against official code sets. No list was typed from memory.
+#
+# MATCHING RULE
+#   Entries are dotless prefixes, because MIMIC-IV 3.1 stores icd_code without dots. A code
+#   matches an entry when the code starts with the entry. Apply icd9 lists only to rows with
+#   icd_version 9, and icd10 or icd10pcs lists only to rows with icd_version 10. The diagnosis
+#   lists (elixhauser_quan2005, charlson_quan2005, heart_failure_ccsr) apply to diagnoses_icd. The
+#   procedures lists apply to procedures_icd. ICD-9-CM procedure entries assume that codes keep
+#   their leading zero ("0131", not "131").
+#   [C] and [S] below use the same prefix rule, so these lists flag the same codes they do.
+#
+# SOURCES (all retrieved 2026-10-29)
+#   [Q] Quan H, Sundararajan V, Halfon P, et al. Coding algorithms for defining comorbidities in
+#       ICD-9-CM and ICD-10 administrative data. Med Care 2005;43(11):1130-9. Table 1 (Charlson)
+#       and Table 2 (Elixhauser), columns "Enhanced ICD-9-CM" and "ICD-10". The paper itself was
+#       not read for this file. [C] and [S] are its machine-readable versions, and they agree.
+#   [C] R package comorbidity 1.1.0 by A. Gasparini (CRAN release 2024-07-16). This file follows
+#       [C]. Source data-raw/make-mapping.R at git tag 1.1.0, commit
+#       0785f506dfff07be77566a2ce9163403b36dfd67, identical on master at
+#       8f5f79d379c3198b807e824b0f2d703688818fda.
+#       https://raw.githubusercontent.com/ellessenne/comorbidity/0785f506dfff07be77566a2ce9163403b36dfd67/data-raw/make-mapping.R
+#       sha256 416fde64064b3a3999180f8c8f08e73c73febbff765c377b32bf2f4155124421
+#       Maps used: elixhauser_icd9_quan, elixhauser_icd10_quan, charlson_icd9_quan and
+#       charlson_icd10_quan. Charlson weights come from data-raw/make-weights.R at the same
+#       commit, weight set "charlson" (original 1987 weights).
+#   [S] SAS programs headed with the Quan 2005 citation, as redistributed in the R package icd
+#       (github jackwasey/icd, version 4.0.9.9000, commit 124d824a1b06cb73fb0dbfd1ef6e3c4a666dc9d0):
+#       data-raw/ICD9_E_Elixhauser.sas, ICD10_Elixhauser.sas, ICD9_E_Charlson.sas and
+#       ICD10_Charlson.sas. Used as a cross-check only.
+#   [M] MIT-LCP/mimic-code commit 303d26c623dcc9c49cc0f204468d4acc2f063797,
+#       mimic-iv/concepts/comorbidity/charlson.sql. Used as a cross-check only.
+#   [H] HCUP Clinical Classifications Software Refined (CCSR) for ICD-10-CM diagnoses, v2026.1,
+#       file DXCCSR_v2026-1.csv in https://hcup-us.ahrq.gov/toolssoftware/ccsr/DXCCSR-v2026-1.zip
+#       (zip sha256 093ea8f925606eea74a9342395eed440e7635293d0abf031d8c89d1183cde310).
+#       Also serves as the ICD-10-CM code set for the match checks (75,725 codes).
+#   [P] HCUP CCSR for ICD-10-PCS procedures, v2026.1, file PRCCSR_v2026-1.csv in
+#       https://hcup-us.ahrq.gov/toolssoftware/ccsr/PRCCSR_v2026-1.zip
+#       (zip sha256 b6537c78874bf11071a4f83b801fbb8a1f9a01dd377e45d40f69c0295791729d).
+#       Also serves as the ICD-10-PCS code set (82,327 codes, including some retired codes).
+#   [K] HCUP single-level CCS for ICD-9-CM, final 2015 release, files "$dxref 2015.csv" and
+#       "$prref 2015.csv" in https://hcup-us.ahrq.gov/toolssoftware/ccs/Single_Level_CCS_2015.zip
+#       (zip sha256 a1e31709cc4fa7d67fc254a7421ec9686030098af9225d5f7ba73ae28deaa283).
+#       Also serves as the ICD-9-CM code sets (15,072 diagnosis and 3,948 procedure codes).
+#   [G] CMS 2018 General Equivalence Mappings (GEMs). Diagnoses: 2018_I10gem.txt and
+#       2018_I9gem.txt in
+#       https://www.cms.gov/Medicare/Coding/ICD10/Downloads/2018-ICD-10-CM-General-Equivalence-Mappings.zip
+#       (zip sha256 1c5e5f14026ace48437a0d1c485d282fb5d171c357c6ab4f7798fc0a1e3624a2).
+#       Procedures: gem_i9pcs.txt and gem_pcsi9.txt in
+#       https://www.cms.gov/Medicare/Coding/ICD10/Downloads/2018-ICD-10-PCS-General-Equivalence-Mappings.zip
+#       (zip sha256 7410a56e04411030739bfa2d300ce7e42ea23e8f9281c45d04dc4d6c678f9db0).
+
+# ------------------------------------------------------------------------------------------------
+# A. Elixhauser comorbidities, Quan 2005 Table 2: 31 categories.
+#   Transcribed from [C]. Category names follow [Q] in snake_case. The comment after each name
+#   gives the [Q] label and the [C] key.
+#   Cross-check against [S]: the ICD-10 lists are identical. For ICD-9, [C] has a few extra
+#   prefixes that [S] lacks, which look like ranges such as 425.4-425.9 expanded digit by digit.
+#   None of them matches an ICD-9-CM code in [K], so [C] and [S] flag the same codes. Each case is
+#   noted above its category.
+#   ICD-10 here is WHO ICD-10, as in [Q], not ICD-10-CM. Entries with no ICD-10-CM counterpart are
+#   kept for fidelity and noted. They never match. ICD-10-CM codes with no WHO counterpart are
+#   NOT covered, for example E08 and E09 (diabetes due to an underlying condition or to a drug),
+#   C4A, C7A and C7B (Merkel cell and neuroendocrine tumours) and Z49.3 (dialysis adequacy
+#   encounters).
+#   Overlaps are part of [Q]. For example F31.5 is in both psychoses and depression, and K70.0,
+#   K70.3 and K70.9 are in both liver_disease and alcohol_abuse.
+#   Hierarchy, NOT applied in this file: [C] with assign0 = TRUE zeroes
+#   hypertension_uncomplicated when hypertension_complicated is present, diabetes_uncomplicated
+#   when diabetes_complicated is present, and solid_tumor_without_metastasis when
+#   metastatic_cancer is present.
+elixhauser_quan2005:
+  # ICD-9 entry 4256 is in [C] but not in [S]. It matches no ICD-9-CM code in [K].
+  congestive_heart_failure:  # Congestive heart failure. [C] key: chf
+    icd9: ["39891", "40201", "40211", "40291", "40401", "40403", "40411", "40413", "40491", "40493",
+      "4254", "4255", "4256", "4257", "4258", "4259", "428"]
+    icd10: ["I099", "I110", "I130", "I132", "I255", "I420", "I425", "I426", "I427", "I428", "I429",
+      "I43", "I50", "P290"]
+  # ICD-9 entry 4277 is in [C] but not in [S]. It matches no ICD-9-CM code in [K].
+  cardiac_arrhythmias:  # Cardiac arrhythmias. [C] key: carit
+    icd9: ["4260", "42613", "4267", "4269", "42610", "42612", "4270", "4271", "4272", "4273",
+      "4274", "4276", "4277", "4278", "4279", "7850", "99601", "99604", "V450", "V533"]
+    icd10: ["I441", "I442", "I443", "I456", "I459", "I47", "I48", "I49", "R000", "R001", "R008",
+      "T821", "Z450", "Z950"]
+  valvular_disease:  # Valvular disease. [C] key: valv
+    icd9: ["0932", "394", "395", "396", "397", "424", "7463", "7464", "7465", "7466", "V422", "V433"]
+    icd10: ["A520", "I05", "I06", "I07", "I08", "I091", "I098", "I34", "I35", "I36", "I37", "I38",
+      "I39", "Q230", "Q231", "Q232", "Q233", "Z952", "Z953", "Z954"]
+  pulmonary_circulation_disorders:  # Pulmonary circulation disorders. [C] key: pcd
+    icd9: ["4150", "4151", "416", "4170", "4178", "4179"]
+    icd10: ["I26", "I27", "I280", "I288", "I289"]
+  # ICD-9 entries 4433, 4434, 4435, 4436, 4437 are in [C] but not in [S]. They match no ICD-9-CM
+  # code in [K].
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: I792.
+  peripheral_vascular_disorders:  # Peripheral vascular disorders. [C] key: pvd
+    icd9: ["0930", "4373", "440", "441", "4431", "4432", "4433", "4434", "4435", "4436", "4437",
+      "4438", "4439", "4471", "5571", "5579", "V434"]
+    icd10: ["I70", "I71", "I731", "I738", "I739", "I771", "I790", "I792", "K551", "K558", "K559",
+      "Z958", "Z959"]
+  hypertension_uncomplicated:  # Hypertension, uncomplicated. [C] key: hypunc
+    icd9: ["401"]
+    icd10: ["I10"]
+  hypertension_complicated:  # Hypertension, complicated. [C] key: hypc
+    icd9: ["402", "403", "404", "405"]
+    icd10: ["I11", "I12", "I13", "I15"]
+  paralysis:  # Paralysis. [C] key: para
+    icd9: ["3341", "342", "343", "3440", "3441", "3442", "3443", "3444", "3445", "3446", "3449"]
+    icd10: ["G041", "G114", "G801", "G802", "G81", "G82", "G830", "G831", "G832", "G833", "G834",
+      "G839"]
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: G22, G41.
+  other_neurological_disorders:  # Other neurological disorders. [C] key: ond
+    icd9: ["3319", "3320", "3321", "3334", "3335", "33392", "334", "335", "3362", "340", "341",
+      "345", "3481", "3483", "7803", "7843"]
+    icd10: ["G10", "G11", "G12", "G13", "G20", "G21", "G22", "G254", "G255", "G312", "G318", "G319",
+      "G32", "G35", "G36", "G37", "G40", "G41", "G931", "G934", "R470", "R56"]
+  # ICD-9 entries 497, 498, 499 are in [C] but not in [S]. They match no ICD-9-CM code in [K].
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: J46.
+  chronic_pulmonary_disease:  # Chronic pulmonary disease. [C] key: cpd
+    icd9: ["4168", "4169", "490", "491", "492", "493", "494", "495", "496", "497", "498", "499",
+      "500", "501", "502", "503", "504", "505", "5064", "5081", "5088"]
+    icd10: ["I278", "I279", "J40", "J41", "J42", "J43", "J44", "J45", "J46", "J47", "J60", "J61",
+      "J62", "J63", "J64", "J65", "J66", "J67", "J684", "J701", "J703"]
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: E100, E120, E121, E129, E140, E141, E149.
+  diabetes_uncomplicated:  # Diabetes, uncomplicated. [C] key: diabunc
+    icd9: ["2500", "2501", "2502", "2503"]
+    icd10: ["E100", "E101", "E109", "E110", "E111", "E119", "E120", "E121", "E129", "E130", "E131",
+      "E139", "E140", "E141", "E149"]
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: E107, E117, E122, E123, E124, E125, E126,
+  # E127, E128, E137, E142, E143, E144, E145, E146, E147, E148.
+  diabetes_complicated:  # Diabetes, complicated. [C] key: diabc
+    icd9: ["2504", "2505", "2506", "2507", "2508", "2509"]
+    icd10: ["E102", "E103", "E104", "E105", "E106", "E107", "E108", "E112", "E113", "E114", "E115",
+      "E116", "E117", "E118", "E122", "E123", "E124", "E125", "E126", "E127", "E128", "E132",
+      "E133", "E134", "E135", "E136", "E137", "E138", "E142", "E143", "E144", "E145", "E146",
+      "E147", "E148"]
+  hypothyroidism:  # Hypothyroidism. [C] key: hypothy
+    icd9: ["2409", "243", "244", "2461", "2468"]
+    icd10: ["E00", "E01", "E02", "E03", "E890"]
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: Z491, Z492.
+  # As published, N18 includes ICD-10-CM chronic kidney disease stages 1 and 2 (N18.1, N18.2).
+  renal_failure:  # Renal failure. [C] key: rf
+    icd9: ["40301", "40311", "40391", "40402", "40403", "40412", "40413", "40492", "40493", "585",
+      "586", "5880", "V420", "V451", "V56"]
+    icd10: ["I120", "I131", "N18", "N19", "N250", "Z490", "Z491", "Z492", "Z940", "Z992"]
+  # ICD-9 entries 5725, 5726, 5727 are in [C] but not in [S]. They match no ICD-9-CM code in [K].
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: I982.
+  liver_disease:  # Liver disease. [C] key: ld
+    icd9: ["07022", "07023", "07032", "07033", "07044", "07054", "0706", "0709", "4560", "4561",
+      "4562", "570", "571", "5722", "5723", "5724", "5725", "5726", "5727", "5728", "5733", "5734",
+      "5738", "5739", "V427"]
+    icd10: ["B18", "I85", "I864", "I982", "K70", "K711", "K713", "K714", "K715", "K717", "K72",
+      "K73", "K74", "K760", "K762", "K763", "K764", "K765", "K766", "K767", "K768", "K769", "Z944"]
+  peptic_ulcer_disease_excluding_bleeding:  # Peptic ulcer disease excluding bleeding. [C] key: pud
+    icd9: ["5317", "5319", "5327", "5329", "5337", "5339", "5347", "5349"]
+    icd10: ["K257", "K259", "K267", "K269", "K277", "K279", "K287", "K289"]
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: B21, B22, B24.
+  aids_hiv:  # AIDS/HIV. [C] key: aids
+    icd9: ["042", "043", "044"]
+    icd10: ["B20", "B21", "B22", "B24"]
+  lymphoma:  # Lymphoma. [C] key: lymph
+    icd9: ["200", "201", "202", "2030", "2386"]
+    icd10: ["C81", "C82", "C83", "C84", "C85", "C88", "C96", "C900", "C902"]
+  metastatic_cancer:  # Metastatic cancer. [C] key: metacanc
+    icd9: ["196", "197", "198", "199"]
+    icd10: ["C77", "C78", "C79", "C80"]
+  # ICD-9 entries in both [C] and [S] that match no ICD-9-CM code in [K]: 166, 167, 168, 169, 177,
+  # 178.
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: C97.
+  solid_tumor_without_metastasis:  # Solid tumor without metastasis. [C] key: solidtum
+    icd9: ["140", "141", "142", "143", "144", "145", "146", "147", "148", "149", "150", "151",
+      "152", "153", "154", "155", "156", "157", "158", "159", "160", "161", "162", "163", "164",
+      "165", "166", "167", "168", "169", "170", "171", "172", "174", "175", "176", "177", "178",
+      "179", "180", "181", "182", "183", "184", "185", "186", "187", "188", "189", "190", "191",
+      "192", "193", "194", "195"]
+    icd10: ["C00", "C01", "C02", "C03", "C04", "C05", "C06", "C07", "C08", "C09", "C10", "C11",
+      "C12", "C13", "C14", "C15", "C16", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24",
+      "C25", "C26", "C30", "C31", "C32", "C33", "C34", "C37", "C38", "C39", "C40", "C41", "C43",
+      "C45", "C46", "C47", "C48", "C49", "C50", "C51", "C52", "C53", "C54", "C55", "C56", "C57",
+      "C58", "C60", "C61", "C62", "C63", "C64", "C65", "C66", "C67", "C68", "C69", "C70", "C71",
+      "C72", "C73", "C74", "C75", "C76", "C97"]
+  rheumatoid_arthritis_collagen_vascular_diseases:  # Rheumatoid arthritis/collagen vascular diseases. [C] key: rheumd
+    icd9: ["446", "7010", "7100", "7101", "7102", "7103", "7104", "7108", "7109", "7112", "714",
+      "7193", "720", "725", "7285", "72889", "72930"]
+    icd10: ["L940", "L941", "L943", "M05", "M06", "M08", "M120", "M123", "M30", "M310", "M311",
+      "M312", "M313", "M32", "M33", "M34", "M35", "M45", "M461", "M468", "M469"]
+  coagulopathy:  # Coagulopathy. [C] key: coag
+    icd9: ["286", "2871", "2873", "2874", "2875"]
+    icd10: ["D65", "D66", "D67", "D68", "D691", "D693", "D694", "D695", "D696"]
+  # As published, this includes overweight: ICD-9-CM 278.02 and ICD-10-CM E66.3.
+  obesity:  # Obesity. [C] key: obes
+    icd9: ["2780"]
+    icd10: ["E66"]
+  weight_loss:  # Weight loss. [C] key: wloss
+    icd9: ["260", "261", "262", "263", "7832", "7994"]
+    icd10: ["E40", "E41", "E42", "E43", "E44", "E45", "E46", "R634", "R64"]
+  fluid_electrolyte_disorders:  # Fluid and electrolyte disorders. [C] key: fed
+    icd9: ["2536", "276"]
+    icd10: ["E222", "E86", "E87"]
+  blood_loss_anemia:  # Blood loss anemia. [C] key: blane
+    icd9: ["2800"]
+    icd10: ["D500"]
+  # ICD-9 entries 2802, 2803, 2804, 2805, 2806, 2807 are in [C] but not in [S]. They match no
+  # ICD-9-CM code in [K].
+  deficiency_anemia:  # Deficiency anemia. [C] key: dane
+    icd9: ["2801", "2802", "2803", "2804", "2805", "2806", "2807", "2808", "2809", "281"]
+    icd10: ["D508", "D509", "D51", "D52", "D53"]
+  # ICD-9 entries 2916, 2917 are in [C] but not in [S]. They match no ICD-9-CM code in [K].
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: Z502, Z721.
+  alcohol_abuse:  # Alcohol abuse. [C] key: alcohol
+    icd9: ["2652", "2911", "2912", "2913", "2915", "2916", "2917", "2918", "2919", "3030", "3039",
+      "3050", "3575", "4255", "5353", "5710", "5711", "5712", "5713", "980", "V113"]
+    icd10: ["F10", "E52", "G621", "I426", "K292", "K700", "K703", "K709", "T51", "Z502", "Z714",
+      "Z721"]
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: Z722.
+  drug_abuse:  # Drug abuse. [C] key: drug
+    icd9: ["292", "304", "3052", "3053", "3054", "3055", "3056", "3057", "3058", "3059", "V6542"]
+    icd10: ["F11", "F12", "F13", "F14", "F15", "F16", "F18", "F19", "Z715", "Z722"]
+  psychoses:  # Psychoses. [C] key: psycho
+    icd9: ["2938", "295", "29604", "29614", "29644", "29654", "297", "298"]
+    icd10: ["F20", "F22", "F23", "F24", "F25", "F28", "F29", "F302", "F312", "F315"]
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: F204, F412.
+  depression:  # Depression. [C] key: depre
+    icd9: ["2962", "2963", "2965", "3004", "309", "311"]
+    icd10: ["F204", "F313", "F314", "F315", "F32", "F33", "F341", "F412", "F432"]
+
+# ------------------------------------------------------------------------------------------------
+# B. Charlson comorbidities, Quan 2005 Table 1: 17 categories.
+#   Transcribed from [C]. weight is the original Charlson 1987 weight (Charlson ME, Pompei P,
+#   Ales KL, MacKenzie CR. J Chronic Dis 1987;40:373-83). It equals the "charlson" weight set in
+#   [C], and [M] scores with the same weights.
+#   Cross-check: the ICD-10 lists are identical to [S]. The ICD-9 lists differ from [S] only as for
+#   Elixhauser, by extra [C] prefixes that match no ICD-9-CM code. [M] uses the same codes, with
+#   one exception noted under any_malignancy.
+#   WHO ICD-10 versus ICD-10-CM: as for Elixhauser above.
+#   Hierarchy rules, NOT applied in this file. Apply them when scoring, as [C] (assign0 = TRUE)
+#   and [M] do:
+#     - mild_liver_disease counts 0 when moderate_or_severe_liver_disease is present.
+#     - diabetes_without_chronic_complication counts 0 when diabetes_with_chronic_complication is
+#       present.
+#     - any_malignancy counts 0 when metastatic_solid_tumor is present.
+charlson_quan2005:
+  myocardial_infarction:  # Myocardial infarction. [C] key: mi
+    icd9: ["410", "412"]
+    icd10: ["I21", "I22", "I252"]
+    weight: 1
+  # ICD-9 entry 4256 is in [C] but not in [S]. It matches no ICD-9-CM code in [K].
+  congestive_heart_failure:  # Congestive heart failure. [C] key: chf
+    icd9: ["39891", "40201", "40211", "40291", "40401", "40403", "40411", "40413", "40491", "40493",
+      "4254", "4255", "4256", "4257", "4258", "4259", "428"]
+    icd10: ["I099", "I110", "I130", "I132", "I255", "I420", "I425", "I426", "I427", "I428", "I429",
+      "I43", "I50", "P290"]
+    weight: 1
+  # ICD-9 entries 4433, 4434, 4435, 4436, 4437 are in [C] but not in [S]. They match no ICD-9-CM
+  # code in [K].
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: I792.
+  peripheral_vascular_disease:  # Peripheral vascular disease. [C] key: pvd
+    icd9: ["0930", "4373", "440", "441", "4431", "4432", "4433", "4434", "4435", "4436", "4437",
+      "4438", "4439", "4471", "5571", "5579", "V434"]
+    icd10: ["I70", "I71", "I731", "I738", "I739", "I771", "I790", "I792", "K551", "K558", "K559",
+      "Z958", "Z959"]
+    weight: 1
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: I64.
+  cerebrovascular_disease:  # Cerebrovascular disease. [C] key: cevd
+    icd9: ["36234", "430", "431", "432", "433", "434", "435", "436", "437", "438"]
+    icd10: ["G45", "G46", "H340", "I60", "I61", "I62", "I63", "I64", "I65", "I66", "I67", "I68",
+      "I69"]
+    weight: 1
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: F00, F051.
+  dementia:  # Dementia. [C] key: dementia
+    icd9: ["290", "2941", "3312"]
+    icd10: ["F00", "F01", "F02", "F03", "F051", "G30", "G311"]
+    weight: 1
+  # ICD-9 entries 497, 498, 499 are in [C] but not in [S]. They match no ICD-9-CM code in [K].
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: J46.
+  chronic_pulmonary_disease:  # Chronic pulmonary disease. [C] key: cpd
+    icd9: ["4168", "4169", "490", "491", "492", "493", "494", "495", "496", "497", "498", "499",
+      "500", "501", "502", "503", "504", "505", "5064", "5081", "5088"]
+    icd10: ["I278", "I279", "J40", "J41", "J42", "J43", "J44", "J45", "J46", "J47", "J60", "J61",
+      "J62", "J63", "J64", "J65", "J66", "J67", "J684", "J701", "J703"]
+    weight: 1
+  rheumatic_disease:  # Rheumatic disease. [C] key: rheumd
+    icd9: ["4465", "7100", "7101", "7102", "7103", "7104", "7140", "7141", "7142", "7148", "725"]
+    icd10: ["M05", "M06", "M315", "M32", "M33", "M34", "M351", "M353", "M360"]
+    weight: 1
+  peptic_ulcer_disease:  # Peptic ulcer disease. [C] key: pud
+    icd9: ["531", "532", "533", "534"]
+    icd10: ["K25", "K26", "K27", "K28"]
+    weight: 1
+  mild_liver_disease:  # Mild liver disease. [C] key: mld
+    icd9: ["07022", "07023", "07032", "07033", "07044", "07054", "0706", "0709", "570", "571",
+      "5733", "5734", "5738", "5739", "V427"]
+    icd10: ["B18", "K700", "K701", "K702", "K703", "K709", "K713", "K714", "K715", "K717", "K73",
+      "K74", "K760", "K762", "K763", "K764", "K768", "K769", "Z944"]
+    weight: 1
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: E100, E120, E121, E126, E128, E129, E140,
+  # E141, E146, E148, E149.
+  diabetes_without_chronic_complication:  # Diabetes without chronic complication. [C] key: diab
+    icd9: ["2500", "2501", "2502", "2503", "2508", "2509"]
+    icd10: ["E100", "E101", "E106", "E108", "E109", "E110", "E111", "E116", "E118", "E119", "E120",
+      "E121", "E126", "E128", "E129", "E130", "E131", "E136", "E138", "E139", "E140", "E141",
+      "E146", "E148", "E149"]
+    weight: 1
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: E107, E117, E122, E123, E124, E125, E127,
+  # E137, E142, E143, E144, E145, E147.
+  diabetes_with_chronic_complication:  # Diabetes with chronic complication. [C] key: diabwc
+    icd9: ["2504", "2505", "2506", "2507"]
+    icd10: ["E102", "E103", "E104", "E105", "E107", "E112", "E113", "E114", "E115", "E117", "E122",
+      "E123", "E124", "E125", "E127", "E132", "E133", "E134", "E135", "E137", "E142", "E143",
+      "E144", "E145", "E147"]
+    weight: 2
+  hemiplegia_or_paraplegia:  # Hemiplegia or paraplegia. [C] key: hp
+    icd9: ["3341", "342", "343", "3440", "3441", "3442", "3443", "3444", "3445", "3446", "3449"]
+    icd10: ["G041", "G114", "G801", "G802", "G81", "G82", "G830", "G831", "G832", "G833", "G834",
+      "G839"]
+    weight: 2
+  # ICD-9 entries 5833, 5835 are in [C] but not in [S]. They match no ICD-9-CM code in [K].
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: Z491, Z492.
+  # As published, N18 includes ICD-10-CM chronic kidney disease stages 1 and 2 (N18.1, N18.2).
+  renal_disease:  # Renal disease. [C] key: rend
+    icd9: ["40301", "40311", "40391", "40402", "40403", "40412", "40413", "40492", "40493", "582",
+      "5830", "5831", "5832", "5833", "5834", "5835", "5836", "5837", "585", "586", "5880", "V420",
+      "V451", "V56"]
+    icd10: ["I120", "I131", "N032", "N033", "N034", "N035", "N036", "N037", "N052", "N053", "N054",
+      "N055", "N056", "N057", "N18", "N19", "N250", "Z490", "Z491", "Z492", "Z940", "Z992"]
+    weight: 2
+  # ICD-9 entries 166, 167, 168, 169, 177, 178 are in [C] but not in [S]. They match no ICD-9-CM
+  # code in [K].
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: C97.
+  # [M] also matches the 26 ICD-10-CM C4A codes (Merkel cell carcinoma), because its string range
+  # C45 to C58 sorts C4A inside it. [C] and [S] do not, and this file follows [C].
+  any_malignancy:  # Any malignancy, including lymphoma and leukemia, except skin. [C] key: canc
+    icd9: ["140", "141", "142", "143", "144", "145", "146", "147", "148", "149", "150", "151",
+      "152", "153", "154", "155", "156", "157", "158", "159", "160", "161", "162", "163", "164",
+      "165", "166", "167", "168", "169", "170", "171", "172", "174", "175", "176", "177", "178",
+      "179", "180", "181", "182", "183", "184", "185", "186", "187", "188", "189", "190", "191",
+      "192", "193", "194", "195", "200", "201", "202", "203", "204", "205", "206", "207", "208",
+      "2386"]
+    icd10: ["C00", "C01", "C02", "C03", "C04", "C05", "C06", "C07", "C08", "C09", "C10", "C11",
+      "C12", "C13", "C14", "C15", "C16", "C17", "C18", "C19", "C20", "C21", "C22", "C23", "C24",
+      "C25", "C26", "C30", "C31", "C32", "C33", "C34", "C37", "C38", "C39", "C40", "C41", "C43",
+      "C45", "C46", "C47", "C48", "C49", "C50", "C51", "C52", "C53", "C54", "C55", "C56", "C57",
+      "C58", "C60", "C61", "C62", "C63", "C64", "C65", "C66", "C67", "C68", "C69", "C70", "C71",
+      "C72", "C73", "C74", "C75", "C76", "C81", "C82", "C83", "C84", "C85", "C88", "C90", "C91",
+      "C92", "C93", "C94", "C95", "C96", "C97"]
+    weight: 2
+  # ICD-9 entries 5725, 5726, 5727 are in [C] but not in [S]. They match no ICD-9-CM code in [K].
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: I859, I982.
+  moderate_or_severe_liver_disease:  # Moderate or severe liver disease. [C] key: msld
+    icd9: ["4560", "4561", "4562", "5722", "5723", "5724", "5725", "5726", "5727", "5728"]
+    icd10: ["I850", "I859", "I864", "I982", "K704", "K711", "K721", "K729", "K765", "K766", "K767"]
+    weight: 3
+  metastatic_solid_tumor:  # Metastatic solid tumor. [C] key: metacanc
+    icd9: ["196", "197", "198", "199"]
+    icd10: ["C77", "C78", "C79", "C80"]
+    weight: 6
+  # WHO ICD-10 entries with no ICD-10-CM match in [H]: B21, B22, B24.
+  aids_hiv:  # AIDS/HIV. [C] key: aids
+    icd9: ["042", "043", "044"]
+    icd10: ["B20", "B21", "B22", "B24"]
+    weight: 6
+
+# ------------------------------------------------------------------------------------------------
+# C. Heart failure: HCUP CCSR category CIR019 "Heart failure" [H].
+#   icd10 covers every ICD-10-CM code that [H] assigns to CIR019 in any of its six CCSR slots (35
+#   codes in v2026.1), not only codes whose default category is CIR019. I50 is used as a prefix
+#   because every ICD-10-CM I50 code is in CIR019. The script checked that these entries match
+#   exactly the 35 CIR019 codes in [H]. Members whose default inpatient category is not CIR019:
+#   I13.2 (GEN003), I97.130 and I97.131 (CIR038, postprocedural heart failure), O29.121 to
+#   O29.129 (PRG025, cardiac failure due to anaesthesia in pregnancy), and Z95.811 and Z95.812
+#   (XXX000, presence of a heart assist device or a fully implantable artificial heart). Drop
+#   them for a default-category definition.
+#   icd9: CCSR covers ICD-10-CM only. The ICD-9-CM list holds the counterparts of I50, I11.0,
+#   I13.0 and I13.2, namely 428, 402.01, 402.11, 402.91, 404.01, 404.03, 404.11, 404.13, 404.91
+#   and 404.93, plus 398.91, V43.21 and V43.22. Those last three are the one-to-one [G]
+#   equivalents of I09.81, Z95.811 and Z95.812 in both directions. Every ICD-9-CM code these
+#   entries match maps forward in [G] only to CIR019 codes (checked). Not carried over: I97.13x,
+#   whose [G] targets are 429.4 and 997.1, and O29.12x, whose [G] targets are 646.8x. Those
+#   ICD-9-CM codes are broader than heart failure.
+#   The congestive_heart_failure lists in A and B are wider than this one. They also include
+#   cardiomyopathy and other codes.
+heart_failure_ccsr:
+  icd9: ["39891", "40201", "40211", "40291", "40401", "40403", "40411", "40413", "40491", "40493",
+    "428", "V4321", "V4322"]
+  icd10: ["I0981", "I110", "I130", "I132", "I50", "I97130", "I97131", "O29121", "O29122", "O29123",
+    "O29129", "Z95811", "Z95812"]
+
+# ------------------------------------------------------------------------------------------------
+# D. Procedures, for procedures_icd. icd9 is ICD-9-CM volume 3 and icd10pcs is ICD-10-PCS.
+#   cvc, mechvent, dialysis and urethral_catheter are subsets of published HCUP groupings ([P] for
+#   ICD-10-PCS and [K] for ICD-9-CM), checked against the [G] procedure crosswalk. The subsets were
+#   chosen for this file and are not a published list. Every code was checked to exist in [P] or
+#   [K].
+#   Bedside procedures such as catheters and intubation are often left uncoded in administrative
+#   data, so these flags have limited sensitivity.
+procedures:
+  # cvc: central venous catheter insertion, including PICCs, dialysis catheters, tunneled
+  # catheters and ports.
+  #   icd9: 38.93 venous catheterization NEC and 38.97 central venous catheter placement with
+  #     guidance ([K] CCS 54), 38.95 venous catheterization for renal dialysis ([K] CCS 63) and
+  #     86.07 insertion of totally implantable vascular access device ([K] CCS 174). Left out of
+  #     CCS 54: 38.91 arterial and 38.92 umbilical vein catheterization.
+  #   icd10pcs: from [P] CAR024 "Venous and arterial catheter placement", the insertion of an
+  #     infusion device (6th character 3, qualifier Z) by open or percutaneous approach into a
+  #     central vein: superior vena cava, right atrium, innominate, subclavian, internal and
+  #     external jugular, upper vein, inferior vena cava, common and external iliac, femoral and
+  #     lower vein (38 codes). Plus all 40 insertion codes (0JH, device W or X) in [P] CAR025
+  #     "Placement of tunneled or implantable portion of a vascular access device". [G] links
+  #     every one of these codes except 02H603Z to 38.93, 38.95, 38.97 or 86.07.
+  #     Left out: arterial and pulmonary artery catheters, monitoring devices (6th character 2),
+  #     peripheral and midline veins (axillary, brachial, basilic, cephalic, hand, saphenous and
+  #     foot), and the umbilical-vein qualifier T. The [G] targets of 38.93 also include the right
+  #     ventricle and pulmonary veins (02HK, 02HS, 02HT). They are left out as implausible.
+  #     Caveats: upper vein (05HY) and lower vein (06HY) are unspecified body parts and may catch
+  #     some peripheral lines. External jugular is kept because [G] maps 38.97 to it.
+  cvc:
+    icd9: ["3893", "3895", "3897", "8607"]
+    icd10pcs: ["02H603Z", "02H633Z", "02HV03Z", "02HV33Z", "05H303Z", "05H333Z", "05H403Z",
+      "05H433Z", "05H503Z", "05H533Z", "05H603Z", "05H633Z", "05HM03Z", "05HM33Z", "05HN03Z",
+      "05HN33Z", "05HP03Z", "05HP33Z", "05HQ03Z", "05HQ33Z", "05HY03Z", "05HY33Z", "06H003Z",
+      "06H033Z", "06HC03Z", "06HC33Z", "06HD03Z", "06HD33Z", "06HF03Z", "06HF33Z", "06HG03Z",
+      "06HG33Z", "06HM03Z", "06HM33Z", "06HN03Z", "06HN33Z", "06HY03Z", "06HY33Z", "0JH60WZ",
+      "0JH60XZ", "0JH63WZ", "0JH63XZ", "0JH80WZ", "0JH80XZ", "0JH83WZ", "0JH83XZ", "0JHD0WZ",
+      "0JHD0XZ", "0JHD3WZ", "0JHD3XZ", "0JHF0WZ", "0JHF0XZ", "0JHF3WZ", "0JHF3XZ", "0JHG0WZ",
+      "0JHG0XZ", "0JHG3WZ", "0JHG3XZ", "0JHH0WZ", "0JHH0XZ", "0JHH3WZ", "0JHH3XZ", "0JHL0WZ",
+      "0JHL0XZ", "0JHL3WZ", "0JHL3XZ", "0JHM0WZ", "0JHM0XZ", "0JHM3WZ", "0JHM3XZ", "0JHN0WZ",
+      "0JHN0XZ", "0JHN3WZ", "0JHN3XZ", "0JHP0WZ", "0JHP0XZ", "0JHP3WZ", "0JHP3XZ"]
+  # mechvent: invasive mechanical ventilation, including endotracheal intubation.
+  #   icd9: 96.04 insertion of endotracheal tube, and 96.70, 96.71 and 96.72 continuous invasive
+  #     mechanical ventilation, all in [K] CCS 216. Left out of CCS 216: 93.90 CPAP and 93.92
+  #     (non-invasive, the latter retired in 1991), 96.01 to 96.03 (nasopharyngeal, oropharyngeal
+  #     and oesophageal obturator airways) and 96.05 (other intubation, which [G] maps to tracheal
+  #     stents).
+  #   icd10pcs: all of [P] ESA003 "Mechanical ventilation" (5A1935Z, 5A1945Z and 5A1955Z, plus
+  #     the intubated prone-positioning codes 5A09B5K, 5A09C5K and 5A09D5K) and the endotracheal
+  #     codes in [P] RES007 "Airway intubation" (0BH17EZ, 0BH18EZ). Left out of RES007: the
+  #     oesophageal airways 0DH57BZ and 0DH58BZ. [G] maps 96.04 to 0BH17EZ and 0BH18EZ, and 96.70
+  #     to 96.72 to 5A1935Z, 5A1945Z and 5A1955Z. Non-invasive ventilation (for example 5A09357)
+  #     sits in [P] ESA004 and is not included. Tracheostomy is not included.
+  mechvent:
+    icd9: ["9604", "9670", "9671", "9672"]
+    icd10pcs: ["5A1935Z", "5A1945Z", "5A1955Z", "5A09B5K", "5A09C5K", "5A09D5K", "0BH17EZ",
+      "0BH18EZ"]
+  # dialysis: haemodialysis, CRRT and peritoneal dialysis.
+  #   icd9: 39.95 hemodialysis ([K] CCS 58), which ICD-9-CM also uses for haemofiltration and
+  #     CRRT, and 54.98 peritoneal dialysis ([K] CCS 91).
+  #   icd10pcs: all of [P] ESA001 "Hemodialysis", which is performance of urinary filtration
+  #     (5A1D00Z single and 5A1D60Z multiple, older codes absent from the 2018 [G]; 5A1D70Z
+  #     intermittent, 5A1D80Z prolonged intermittent and 5A1D90Z continuous), and [P] ADM013
+  #     "Peritoneal dialysis" (3E1M39Z). [G] maps 39.95 to 5A1D70Z, 5A1D80Z and 5A1D90Z, and 54.98
+  #     to 3E1M39Z.
+  #   Dialysis access procedures and dialysis status diagnoses are not included.
+  dialysis:
+    icd9: ["3995", "5498"]
+    icd10pcs: ["5A1D00Z", "5A1D60Z", "5A1D70Z", "5A1D80Z", "5A1D90Z", "3E1M39Z"]
+  # urethral_catheter: insertion or replacement of an indwelling urinary catheter.
+  #   icd9: 57.94 insertion of indwelling urinary catheter ([K] CCS 108 "Indwelling catheter")
+  #     and 57.95 replacement of indwelling urinary catheter ([K] CCS 111).
+  #   icd10pcs: the [G] targets of those two codes, all in [P] URN006 "Bladder catheterization and
+  #     drainage": 0T9B70Z and 0T9B80Z (drainage of bladder with drainage device, via natural or
+  #     artificial opening, without or with an endoscope), and 0T2BX0Z (change drainage device in
+  #     bladder). Left out of URN006: suprapubic and open drainage (0T9B00Z, 0T9B30Z, 0T9B40Z),
+  #     drainage without a device left in (0T9B7ZZ), urethral body-part codes (0T9D, 0T2D),
+  #     removals and revisions. "Artificial opening" means some coded events may be
+  #     catheterization through a stoma.
+  urethral_catheter:
+    icd9: ["5794", "5795"]
+    icd10pcs: ["0T9B70Z", "0T9B80Z", "0T2BX0Z"]
+  # surgical: an operating-room procedure, broadly defined.
+  #   icd9: the ICD-9-CM operations chapters, codes 01 to 86, as two-digit prefixes. This leaves
+  #     out 00 (procedures and interventions NEC) and 87 to 99 (diagnostic and therapeutic
+  #     procedures). It still over-includes bedside procedures, for example 38.93 venous
+  #     catheterization, 39.95 hemodialysis, 57.94 urinary catheter, 34.91 thoracentesis and 54.91
+  #     paracentesis.
+  #   icd10pcs: the Medical and Surgical section, first character 0. This OVER-INCLUDES many
+  #     bedside and non-operating-room procedures, for example 0BH17EZ endotracheal intubation,
+  #     02HV33Z central line, 0T9B70Z urinary catheter, 0W9G3ZZ paracentesis, 0W993ZZ
+  #     thoracentesis, 009U3ZX lumbar puncture and 0DJ08ZZ upper endoscopy.
+  #   Source: the chapter and section structure of ICD-9-CM and ICD-10-PCS, checked against [K]
+  #   and [P]. A narrower published alternative, not used here, is the HCUP Surgery Flags
+  #   Software for ICD-9-CM (https://hcup-us.ahrq.gov/toolssoftware/surgflags/surgeryflags.jsp).
+  surgical:
+    icd9: ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15",
+      "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30",
+      "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45",
+      "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60",
+      "61", "62", "63", "64", "65", "66", "67", "68", "69", "70", "71", "72", "73", "74", "75",
+      "76", "77", "78", "79", "80", "81", "82", "83", "84", "85", "86"]
+    icd10pcs: ["0"]
