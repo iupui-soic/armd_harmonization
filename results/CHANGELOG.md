@@ -115,3 +115,11 @@
 - Among E2 derivation units, 3.7% have an earlier ESBL phenotype, 8.3% an extended-spectrum cephalosporin and 6.6% a fluoroquinolone in 90 days. The deprivation index is missing for every unit.
 - eMAR covers 22.1% of E2 derivation units (inpatient, 2014 to 2022). Over all units, 0.7% had a carbapenem and 7.9% a carbapenem, piperacillin-tazobactam or cefepime given within 24 hours of collection.
 - Flagged: 25.9% of positive blood cultures are resistant at BIDMC (379 of 1,464 derivation units), against 10.5% to 17.5% at the ARMD sites. Urinary catheter procedure codes are rare (0.5%), and the operating-room surgery flag is broad (45.7%).
+
+## 2026-10-29 08_mimic_train (results/08_mimic_train/20261029T132532Z, 20261029T132609Z and 20261029T132646Z, commit 68b32cd, SAP amendment E-9)
+
+- Trained XGBoost and logistic models on MIMIC-IV derivation units with the frozen settings of SAP section 6, through 02_train_e1's train_site: all specimens (36,932 E1 and 430,165 E2 units, 4,001 resistant), urine only (34,831 and 293,255, 3,538 resistant) and blood only (1,464 and 126,155, 379 resistant).
+- Platt maps from E1 toward E2 have XGBoost intercepts of -2.92 for all specimens, -1.88 for urine and -4.20 for blood, with slopes of 0.93, 1.17 and 1.49.
+- The 90%-sensitivity thresholds of the E2 XGBoost models are 0.0037 for all specimens, 0.0051 for urine and 0.0017 for blood.
+- The all-specimen intercept lies beyond the ARMD range (-1.71 to -2.73), in line with BIDMC's lower E2 prevalence of 9.3 per 1,000.
+- Flagged: the blood E1 model learns from 1,464 units, the fewest of any model in the study, so blood results at BIDMC are noisy.

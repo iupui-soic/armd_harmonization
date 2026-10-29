@@ -1,0 +1,71 @@
+{
+  "partition": "derivation",
+  "analysis_plan": {
+    "tag": "sap-v1.0",
+    "pinned_file": "SAP.md",
+    "pinned_sha256": "2a97fd68513bfc3c884596fba6b0d21aae03669043955570575ee64bc341bcce"
+  },
+  "specimen": "blood",
+  "model_folder": "chained_14d_specimen_day_blood",
+  "sites": {
+    "mimic": {
+      "specimen": "blood",
+      "cohorts": {
+        "E1": {
+          "name": "e1_composite_chained_14d_specimen_day",
+          "units": 1464,
+          "label_positive": 379
+        },
+        "E2": {
+          "name": "e2_composite_chained_14d_specimen_day",
+          "units": 126155,
+          "label_positive": 379
+        }
+      },
+      "models": {
+        "xgboost_E1": {
+          "trained_on": "e1_composite_chained_14d_specimen_day",
+          "model_file": "xgboost.ubj",
+          "threshold_90_sensitivity": 0.1750590205192566,
+          "recalibration_to_E2": {
+            "fitted_on": "e2_composite_chained_14d_specimen_day",
+            "platt": {
+              "intercept": -4.204435250356866,
+              "slope": 1.4937065135211438
+            },
+            "isotonic_file": "xgboost_isotonic_to_E2.pkl",
+            "threshold_90_sensitivity_uncalibrated": 0.1750590205192566,
+            "threshold_90_sensitivity_platt": 0.001471556199832311,
+            "threshold_90_sensitivity_isotonic": 0.001395795167059234
+          }
+        },
+        "xgboost_E2": {
+          "trained_on": "e2_composite_chained_14d_specimen_day",
+          "model_file": "xgboost.ubj",
+          "threshold_90_sensitivity": 0.0016875216970220208
+        },
+        "logistic_E1": {
+          "trained_on": "e1_composite_chained_14d_specimen_day",
+          "model_file": "logistic.pkl",
+          "threshold_90_sensitivity": 0.1116846576333046,
+          "recalibration_to_E2": {
+            "fitted_on": "e2_composite_chained_14d_specimen_day",
+            "platt": {
+              "intercept": -5.033380346988338,
+              "slope": 0.7109914302474158
+            },
+            "isotonic_file": "logistic_isotonic_to_E2.pkl",
+            "threshold_90_sensitivity_uncalibrated": 0.1116846576333046,
+            "threshold_90_sensitivity_platt": 0.001489646148538847,
+            "threshold_90_sensitivity_isotonic": 0.001216895635187498
+          }
+        },
+        "logistic_E2": {
+          "trained_on": "e2_composite_chained_14d_specimen_day",
+          "model_file": "logistic.pkl",
+          "threshold_90_sensitivity": 0.0011294956784695387
+        }
+      }
+    }
+  }
+}
