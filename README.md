@@ -54,11 +54,11 @@ python analysis/09_mimic_evaluate.py             # the only script that reads th
 
 Scripts write provenance to `results/<script>/<timestamp>/manifest.json`.
 
-OrderGap's statistical analysis plan, frozen on 2026-09-27, and its deviations log are deposited at
-[doi:10.5281/zenodo.23797402](https://doi.org/10.5281/zenodo.23797402). References to "SAP section"
-in the code and in `results/` point there. Scripts 02, 03 and 07 to 09 refuse to run without the git
-tag `sap-v1.0`, whose message holds the frozen plan's SHA-256, and record the SHA-256 of a local
-`SAP.md` when one is present.
+OrderGap's statistical analysis plan, frozen on 2026-09-27, and every version of its deviations log
+are deposited at [doi:10.5281/zenodo.23797401](https://doi.org/10.5281/zenodo.23797401), which
+resolves to the latest version. References to "SAP section" in the code and in `results/` point
+there. Scripts 02, 03 and 07 to 09 refuse to run without the git tag `sap-v1.0`, whose message holds
+the frozen plan's SHA-256, and record the SHA-256 of a local `SAP.md` when one is present.
 
 ## Canonical tables
 
