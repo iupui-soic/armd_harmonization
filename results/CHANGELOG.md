@@ -187,3 +187,19 @@
 - Prior ESBL alone (R1) flags 54 per 1,000 and catches 40%, and prior ESBL or a recent beta-lactam or fluoroquinolone (R2) flags 240 and catches 59% with a standardized net benefit of -0.44. Both are within two points of the 1.0.0 values.
 - The five-input model keeps its shape on the new release: blood -2.93 against -2.75, prior ESBL 2.59 against 2.55, recent treatment 0.60 against 0.60.
 - Within urine the urine-trained recalibrated model reaches AUROC 0.740 and standardized net benefit 0.27 against 0.801 and 0.31 for the urine-trained all-orders model, a gap of 0.04, against 0.723, 0.787 and a gap of 0.03 at 1.0.0. Per 1,000 orders at 0.10 the recalibrated model flags 29 and covers 6 of 24 resistant, and the all-orders model flags 35 and covers 10. To catch 90% of resistant orders the positive-culture model flags 866 per 1,000 against 395.
+
+## 2026-11-03 03_exploratory_2 at mgb2 (results/03_exploratory_2/20261103T120908Z, SAP section 17 E-6 to E-8 and amendment E-10, one read of the mgb2 test partition and a repeat read of the other three)
+
+- Reran the second exploratory amendment with mgb2 in place of mgb. Stanford, UTSW and ECUH reproduce their 2026-10-07 values byte for byte.
+- With ceftriaxone resistance as the outcome at mgb2, the positive-culture model has a calibration intercept of -1.87 and AUROC 0.701 against 0.877 for the all-orders model, on 67,653 test units with 1,528 resistant. At MGB 1.0.0 the same cells were -1.76, 0.696 and 0.855. The ceftriaxone label leaves 17.6% of mgb2 E1 test units not evaluable, against 15.1% at 1.0.0.
+- Blood-only models at mgb2 reach AUROC 0.727 recalibrated and 0.773 all-orders, on 108 resistant of 32,711 test units, against 0.747 and 0.777 on 180 of 38,776 at 1.0.0.
+- Specimen type alone reaches AUROC 0.709 fitted on all orders and 0.305 fitted on positive cultures, against 0.688 and 0.323 at 1.0.0, so the ranking reversal between the two training populations is a little stronger on the new release.
+- Thresholds set within specimen type barely move: urine 0.0430 for the positive-culture model against 0.0194 for the all-orders model, and blood 0.0781 against 0.0019, where 1.0.0 gave 0.0428, 0.0201, 0.0791 and 0.0026. The published score at 6 points or more flags 94 of every 1,000 orders and catches 23%, for a standardized net benefit of -0.17.
+
+## 2026-11-03 paper rebuild for ARMD-MGB 2.0.0 (paper/ordergap, untracked)
+
+- Repointed build_numbers.py at the four new runs, merging the frozen Stanford, UTSW and ECUH training and cascade runs with the mgb2 ones by site. Every number, table and figure in the manuscript and supplement is regenerated from committed summaries, as before.
+- The manuscript is 3,438 words of the 3,500 limit (3,446 before) with 49 of 50 references, no undefined reference and the release 2.0.0 citation resolved to doi:10.13026/1smb-ts67.
+- The supplement now states that release 2.0.0 supersedes 1.0.0 at Mass General Brigham, what 2.0.0 changed, that its 14-day exclusion is applied at source, and that it keeps at most one culture per patient-day inside a recorded encounter window, so that site's specimen mix is not the mix of orders placed.
+- The culture-day antibiotic capture table is now Stanford alone, because 2.0.0 records prior antibiotic orders only from the day before collection and so holds no culture-day record.
+- The MIMIC-IV transport tables keep the frozen release 1.0.0 Mass General Brigham models, which were not rerun, and name that release in their rows.
