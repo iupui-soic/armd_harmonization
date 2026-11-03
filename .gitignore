@@ -17,6 +17,7 @@ data/
 # MGB IDs are small integers, so its patient hashes are reversible. Keep that manifest local until
 # PhysioNet terms allow release. benchmarks/manifests/SHA256SUMS still pins it.
 benchmarks/manifests/mgb.csv.gz
+benchmarks/manifests/mgb2.csv.gz
 
 # Agent instructions and the project plans stay local
 CLAUDE.md

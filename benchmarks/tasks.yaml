@@ -8,6 +8,8 @@ version: 1
 
 # Decided on 2026-09-11: every task uses all 48 harmonized features, cross-site pairs included, and
 # MGB uses the lab interpretation (CLSI 2022 is a sensitivity analysis).
+# Decided on 2026-11-03: MGB means ARMD-MGB 2.0.0, site key mgb2. The 1.0.0 site key mgb is kept
+# for reproducing earlier results only.
 defaults:
   seed: 20260911
   repeat_rule: chained_14d
@@ -36,7 +38,7 @@ tasks:
   esbl_composite_e1:
     description: Status quo estimand. Cultures that grew Enterobacterales and had at least one sentinel agent reported.
     estimand: E1
-    sites: [stanford, mgb, utsw, ecuh]
+    sites: [stanford, mgb2, utsw, ecuh]
     label:
       constructor: esbl_phenotype_composite
       agents: [CRO, CAZ, FEP, TZP]
@@ -46,7 +48,7 @@ tasks:
   esbl_composite_e2:
     description: Decision-time estimand. Every ordered culture. Negative and non-Enterobacterales cultures are Y = 0.
     estimand: E2
-    sites: [stanford, mgb, utsw, ecuh]
+    sites: [stanford, mgb2, utsw, ecuh]
     label:
       constructor: esbl_decision_time
       agents: [CRO, CAZ, FEP, TZP]
@@ -56,7 +58,7 @@ tasks:
   esbl_idsa_strict:
     description: Ceftriaxone non-susceptible E. coli, K. pneumoniae, K. oxytoca or P. mirabilis.
     estimand: E1
-    sites: [stanford, mgb, utsw, ecuh]
+    sites: [stanford, mgb2, utsw, ecuh]
     label:
       constructor: esbl_phenotype_idsa
       nonsusceptible: true
@@ -66,7 +68,7 @@ tasks:
     description: Train on one site and test on another, for every ordered pair, under the E1 composite label.
     estimand: E1
     pairs: all_ordered
-    sites: [stanford, mgb, utsw, ecuh]
+    sites: [stanford, mgb2, utsw, ecuh]
     label:
       constructor: esbl_phenotype_composite
       agents: [CRO, CAZ, FEP, TZP]

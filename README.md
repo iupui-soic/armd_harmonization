@@ -18,7 +18,8 @@ cp .env.example .env    # set ARMD_DATA_ROOT, and Dryad API credentials for UTSW
 | site | source | folder under `ARMD_DATA_ROOT` |
 |---|---|---|
 | Stanford | Dryad, doi:10.5061/dryad.jq2bvq8kp | `armd-stanford` |
-| MGB | PhysioNet credentialed access, doi:10.13026/2r5k-b955 | `armd-mgb/physionet.org/files/armd-mgb/1.0.0` |
+| MGB 2.0.0 (site `mgb2`) | PhysioNet credentialed access, doi:10.13026/1smb-ts67 | `armd-mgb/2.0.0`, derived files under `armd-mgb/v2` |
+| MGB 1.0.0 (site `mgb`) | PhysioNet credentialed access, doi:10.13026/2r5k-b955 | `armd-mgb/1.0.0`, kept so earlier results stay reproducible |
 | UTSW | `python -m armd_common.download --site utsw` | `armd-utsw` |
 | ECUH | `python -m armd_common.download --site ecuh` | `armd-ecuh` |
 
@@ -75,7 +76,7 @@ e2 = labels.esbl_decision_time(loader.con, tables["culture_episodes"], tables["i
 |---|---|
 | `culture_episodes` | one row per culture |
 | `isolate_ast` | one row per distinct culture, organism, antibiotic and result |
-| `enzyme_tests` | one row per culture, organism and enzyme test (MGB only) |
+| `enzyme_tests` | one row per culture, organism and enzyme test (MGB 1.0.0 only; 2.0.0 folds them into susceptibility) |
 | `culture_keys` | raw IDs and order date for joining staged feature tables |
 
 Every label constructor returns a frame with `culture_id`, `label`, `evaluable` and `reason`, plus a
