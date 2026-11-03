@@ -152,9 +152,9 @@
 
 - Trained XGBoost and logistic models on mgb2 derivation units with the frozen settings of SAP section 6: all specimens (67,249 E1 and 282,822 E2 units, 7,039 resistant), urine only (62,757 and 143,020, 6,313) and blood only (3,015 and 131,644, 442). Stanford, UTSW and ECUH were not retrained.
 - The Platt map from E1 toward E2 has an XGBoost intercept of -1.87 and slope 0.93 for all specimens, -0.82 and 1.07 for urine and -3.32 and 1.33 for blood. The all-specimen values are close to MGB 1.0.0's -1.75 and 0.95 and inside the range of the other three sites.
-- The 90%-sensitivity thresholds of the E2 XGBoost models are 0.0149 for all specimens, 0.0196 for urine and 0.0016 for blood, against 0.0153, 0.0208 and 0.0015 at MGB 1.0.0.
+- The 90%-sensitivity thresholds of the E2 XGBoost models are 0.0149 for all specimens, 0.0196 for urine and 0.0016 for blood, against 0.0153, 0.0201 and 0.0023 at MGB 1.0.0.
 - The recalibrated E1 threshold on E2 is 0.0087, close to the E2 model's 0.0149 but not equal, the same pattern as every other site.
-- Flagged: the blood E1 model learns from 3,015 units with 442 resistant, double MIMIC-IV's 1,464 but a third of MGB 1.0.0's, so blood results at this site are noisier than before.
+- Flagged: the blood E1 model learns from 3,015 units with 442 resistant, double MIMIC-IV's 1,464 but two thirds of MGB 1.0.0's 4,614 units and 674 resistant, so blood results at this site are noisier than before.
 
 ## 2026-11-03 04_cascade_sensitivity at mgb2 (results/04_cascade_sensitivity/20261103T090150Z, SAP amendment E-10)
 
