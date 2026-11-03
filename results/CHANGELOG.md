@@ -179,3 +179,11 @@
 - The mgb2 tipping ratios sit between ECUH's 15.3 and 2.9 and Stanford's 29.6 and 4.8, so no site changes the conclusion that the published estimand cannot be rescued by assuming uncultured patients are sicker.
 - Redrew all six figures over Stanford, mgb2, UTSW and ECUH: 35 files, each with the CSV of its plotted values. Figure 1 now shows mgb2's flow of 353,603 ordered cultures to 353,466 E2 units and 84,226 E1 units.
 - The figures script and the paper's number builder now accept several result runs and merge them by site, so the three frozen sites keep their 2026-09-27 and 2026-10-07 runs while mgb2 joins from its own.
+
+## 2026-11-03 03_exploratory at mgb2 (results/03_exploratory/20261103T114621Z, SAP section 17 E-1 to E-5 and amendment E-10, one read of the mgb2 test partition and a repeat read of the other three)
+
+- Reran the first exploratory amendment with mgb2 in place of mgb. Stanford, UTSW and ECUH reproduce their 2026-09-27 values byte for byte, so only the Mass General Brigham column changes.
+- The approximated Tumbarello score at 3 points or more flags 425 of every 1,000 mgb2 orders and catches 73%, for a standardized net benefit at 0.10 of -1.12, against 397 per 1,000, 71% and -0.81 at MGB 1.0.0. Among positive cultures it ranks at AUROC 0.638, against 0.645.
+- Prior ESBL alone (R1) flags 54 per 1,000 and catches 40%, and prior ESBL or a recent beta-lactam or fluoroquinolone (R2) flags 240 and catches 59% with a standardized net benefit of -0.44. Both are within two points of the 1.0.0 values.
+- The five-input model keeps its shape on the new release: blood -2.93 against -2.75, prior ESBL 2.59 against 2.55, recent treatment 0.60 against 0.60.
+- Within urine the urine-trained recalibrated model reaches AUROC 0.740 and standardized net benefit 0.27 against 0.801 and 0.31 for the urine-trained all-orders model, a gap of 0.04, against 0.723, 0.787 and a gap of 0.03 at 1.0.0. Per 1,000 orders at 0.10 the recalibrated model flags 29 and covers 6 of 24 resistant, and the all-orders model flags 35 and covers 10. To catch 90% of resistant orders the positive-culture model flags 866 per 1,000 against 395.
