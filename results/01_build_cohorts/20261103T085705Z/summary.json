@@ -1,0 +1,1424 @@
+{
+  "partition": "derivation",
+  "sites": {
+    "mgb2": {
+      "cohorts": {
+        "e1_composite": {
+          "provenance": {
+            "spec": {
+              "estimand": "E1",
+              "label": "composite",
+              "nonsusceptible": false,
+              "interpretation": "lab",
+              "implied_susceptibility": null,
+              "exclude_recent_antibiotics": false,
+              "repeat_rule": "release",
+              "unit": "culture"
+            },
+            "name": "e1_composite",
+            "partitions": [
+              "derivation"
+            ],
+            "label": {
+              "constructor": "esbl_phenotype_composite",
+              "estimand": "E1",
+              "target": "is_enterobacterales",
+              "rule": {
+                "resistant": 1,
+                "not_resistant": 0
+              },
+              "agents": [
+                "CRO",
+                "CAZ",
+                "FEP",
+                "TZP"
+              ],
+              "hit_values": [
+                "R"
+              ],
+              "sir_column": "sir",
+              "reason_counts": {
+                "culture_negative": 239806,
+                "resistant": 8762,
+                "not_resistant": 75464,
+                "not_tested": 137,
+                "organism_unidentified": 0,
+                "organism_absent": 29434
+              }
+            },
+            "repeat_rule": "release",
+            "unit": "culture",
+            "split_manifest": {
+              "path": "/home/jupyter-saptpurk/armd_harmonization/benchmarks/manifests/mgb2.csv.gz",
+              "sha256": "ce3cc1e82a57b1e470f46ba645ad84a0848114602a16b5dedbb7ed81d4bccf2d"
+            },
+            "features_table": "mgb2_features_lab",
+            "adi_quintile_cuts": [
+              7.4851607584501245,
+              14.459417475728156,
+              20.832706350962603,
+              27.24422110552764
+            ]
+          },
+          "flow": [
+            {
+              "step": "ordered cultures",
+              "units": null,
+              "cultures": 353603,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "evaluable for E1",
+              "units": 84226,
+              "cultures": 84226,
+              "patients": 52599,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "in partition derivation",
+              "units": 67249,
+              "cultures": 67249,
+              "patients": 42079,
+              "label_positive": 7039,
+              "prevalence": 0.1047
+            }
+          ]
+        },
+        "e2_composite": {
+          "provenance": {
+            "spec": {
+              "estimand": "E2",
+              "label": "composite",
+              "nonsusceptible": false,
+              "interpretation": "lab",
+              "implied_susceptibility": null,
+              "exclude_recent_antibiotics": false,
+              "repeat_rule": "release",
+              "unit": "culture"
+            },
+            "name": "e2_composite",
+            "partitions": [
+              "derivation"
+            ],
+            "label": {
+              "constructor": "esbl_decision_time",
+              "estimand": "E2",
+              "target": "is_enterobacterales",
+              "rule": {
+                "resistant": 1,
+                "not_resistant": 0,
+                "culture_negative": 0,
+                "organism_absent": 0
+              },
+              "agents": [
+                "CRO",
+                "CAZ",
+                "FEP",
+                "TZP"
+              ],
+              "hit_values": [
+                "R"
+              ],
+              "sir_column": "sir",
+              "reason_counts": {
+                "culture_negative": 239806,
+                "resistant": 8762,
+                "not_resistant": 75464,
+                "not_tested": 137,
+                "organism_unidentified": 0,
+                "organism_absent": 29434
+              }
+            },
+            "repeat_rule": "release",
+            "unit": "culture",
+            "split_manifest": {
+              "path": "/home/jupyter-saptpurk/armd_harmonization/benchmarks/manifests/mgb2.csv.gz",
+              "sha256": "ce3cc1e82a57b1e470f46ba645ad84a0848114602a16b5dedbb7ed81d4bccf2d"
+            },
+            "features_table": "mgb2_features_lab",
+            "adi_quintile_cuts": [
+              7.4851607584501245,
+              14.459417475728156,
+              20.832706350962603,
+              27.24422110552764
+            ]
+          },
+          "flow": [
+            {
+              "step": "ordered cultures",
+              "units": null,
+              "cultures": 353603,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "evaluable for E2",
+              "units": 353466,
+              "cultures": 353466,
+              "patients": 200491,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "in partition derivation",
+              "units": 282822,
+              "cultures": 282822,
+              "patients": 160397,
+              "label_positive": 7039,
+              "prevalence": 0.0249
+            }
+          ]
+        },
+        "e1_composite_nonsusceptible": {
+          "provenance": {
+            "spec": {
+              "estimand": "E1",
+              "label": "composite",
+              "nonsusceptible": true,
+              "interpretation": "lab",
+              "implied_susceptibility": null,
+              "exclude_recent_antibiotics": false,
+              "repeat_rule": "release",
+              "unit": "culture"
+            },
+            "name": "e1_composite_nonsusceptible",
+            "partitions": [
+              "derivation"
+            ],
+            "label": {
+              "constructor": "esbl_phenotype_composite",
+              "estimand": "E1",
+              "target": "is_enterobacterales",
+              "rule": {
+                "resistant": 1,
+                "not_resistant": 0
+              },
+              "agents": [
+                "CRO",
+                "CAZ",
+                "FEP",
+                "TZP"
+              ],
+              "hit_values": [
+                "I",
+                "R"
+              ],
+              "sir_column": "sir",
+              "reason_counts": {
+                "culture_negative": 239806,
+                "resistant": 9969,
+                "not_resistant": 74257,
+                "not_tested": 137,
+                "organism_unidentified": 0,
+                "organism_absent": 29434
+              }
+            },
+            "repeat_rule": "release",
+            "unit": "culture",
+            "split_manifest": {
+              "path": "/home/jupyter-saptpurk/armd_harmonization/benchmarks/manifests/mgb2.csv.gz",
+              "sha256": "ce3cc1e82a57b1e470f46ba645ad84a0848114602a16b5dedbb7ed81d4bccf2d"
+            },
+            "features_table": "mgb2_features_lab",
+            "adi_quintile_cuts": [
+              7.4851607584501245,
+              14.459417475728156,
+              20.832706350962603,
+              27.24422110552764
+            ]
+          },
+          "flow": [
+            {
+              "step": "ordered cultures",
+              "units": null,
+              "cultures": 353603,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "evaluable for E1",
+              "units": 84226,
+              "cultures": 84226,
+              "patients": 52599,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "in partition derivation",
+              "units": 67249,
+              "cultures": 67249,
+              "patients": 42079,
+              "label_positive": 7992,
+              "prevalence": 0.1188
+            }
+          ]
+        },
+        "e2_composite_nonsusceptible": {
+          "provenance": {
+            "spec": {
+              "estimand": "E2",
+              "label": "composite",
+              "nonsusceptible": true,
+              "interpretation": "lab",
+              "implied_susceptibility": null,
+              "exclude_recent_antibiotics": false,
+              "repeat_rule": "release",
+              "unit": "culture"
+            },
+            "name": "e2_composite_nonsusceptible",
+            "partitions": [
+              "derivation"
+            ],
+            "label": {
+              "constructor": "esbl_decision_time",
+              "estimand": "E2",
+              "target": "is_enterobacterales",
+              "rule": {
+                "resistant": 1,
+                "not_resistant": 0,
+                "culture_negative": 0,
+                "organism_absent": 0
+              },
+              "agents": [
+                "CRO",
+                "CAZ",
+                "FEP",
+                "TZP"
+              ],
+              "hit_values": [
+                "I",
+                "R"
+              ],
+              "sir_column": "sir",
+              "reason_counts": {
+                "culture_negative": 239806,
+                "resistant": 9969,
+                "not_resistant": 74257,
+                "not_tested": 137,
+                "organism_unidentified": 0,
+                "organism_absent": 29434
+              }
+            },
+            "repeat_rule": "release",
+            "unit": "culture",
+            "split_manifest": {
+              "path": "/home/jupyter-saptpurk/armd_harmonization/benchmarks/manifests/mgb2.csv.gz",
+              "sha256": "ce3cc1e82a57b1e470f46ba645ad84a0848114602a16b5dedbb7ed81d4bccf2d"
+            },
+            "features_table": "mgb2_features_lab",
+            "adi_quintile_cuts": [
+              7.4851607584501245,
+              14.459417475728156,
+              20.832706350962603,
+              27.24422110552764
+            ]
+          },
+          "flow": [
+            {
+              "step": "ordered cultures",
+              "units": null,
+              "cultures": 353603,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "evaluable for E2",
+              "units": 353466,
+              "cultures": 353466,
+              "patients": 200491,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "in partition derivation",
+              "units": 282822,
+              "cultures": 282822,
+              "patients": 160397,
+              "label_positive": 7992,
+              "prevalence": 0.0283
+            }
+          ]
+        },
+        "e1_idsa": {
+          "provenance": {
+            "spec": {
+              "estimand": "E1",
+              "label": "idsa",
+              "nonsusceptible": false,
+              "interpretation": "lab",
+              "implied_susceptibility": null,
+              "exclude_recent_antibiotics": false,
+              "repeat_rule": "release",
+              "unit": "culture"
+            },
+            "name": "e1_idsa",
+            "partitions": [
+              "derivation"
+            ],
+            "label": {
+              "constructor": "esbl_phenotype_idsa",
+              "estimand": "E1",
+              "target": "idsa_esbl_species",
+              "rule": {
+                "resistant": 1,
+                "not_resistant": 0
+              },
+              "agents": [
+                "CRO"
+              ],
+              "hit_values": [
+                "I",
+                "R"
+              ],
+              "sir_column": "sir",
+              "reason_counts": {
+                "culture_negative": 239806,
+                "resistant": 6719,
+                "not_resistant": 55489,
+                "not_tested": 14069,
+                "organism_unidentified": 0,
+                "organism_absent": 37520
+              }
+            },
+            "repeat_rule": "release",
+            "unit": "culture",
+            "split_manifest": {
+              "path": "/home/jupyter-saptpurk/armd_harmonization/benchmarks/manifests/mgb2.csv.gz",
+              "sha256": "ce3cc1e82a57b1e470f46ba645ad84a0848114602a16b5dedbb7ed81d4bccf2d"
+            },
+            "features_table": "mgb2_features_lab",
+            "adi_quintile_cuts": [
+              7.4851607584501245,
+              14.459417475728156,
+              20.832706350962603,
+              27.24422110552764
+            ]
+          },
+          "flow": [
+            {
+              "step": "ordered cultures",
+              "units": null,
+              "cultures": 353603,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "evaluable for E1",
+              "units": 62208,
+              "cultures": 62208,
+              "patients": 40884,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "in partition derivation",
+              "units": 49735,
+              "cultures": 49735,
+              "patients": 32781,
+              "label_positive": 5404,
+              "prevalence": 0.1087
+            }
+          ]
+        },
+        "e1_composite_implied_strict": {
+          "provenance": {
+            "spec": {
+              "estimand": "E1",
+              "label": "composite",
+              "nonsusceptible": false,
+              "interpretation": "lab",
+              "implied_susceptibility": "strict",
+              "exclude_recent_antibiotics": false,
+              "repeat_rule": "release",
+              "unit": "culture"
+            },
+            "name": "e1_composite_implied_strict",
+            "partitions": [
+              "derivation"
+            ],
+            "label": {
+              "constructor": "esbl_phenotype_composite",
+              "estimand": "E1",
+              "target": "is_enterobacterales",
+              "rule": {
+                "resistant": 1,
+                "not_resistant": 0
+              },
+              "agents": [
+                "CRO",
+                "CAZ",
+                "FEP",
+                "TZP"
+              ],
+              "hit_values": [
+                "R"
+              ],
+              "sir_column": "sir",
+              "reason_counts": {
+                "culture_negative": 239806,
+                "resistant": 8762,
+                "not_resistant": 75464,
+                "not_tested": 137,
+                "organism_unidentified": 0,
+                "organism_absent": 29434
+              }
+            },
+            "repeat_rule": "release",
+            "unit": "culture",
+            "split_manifest": {
+              "path": "/home/jupyter-saptpurk/armd_harmonization/benchmarks/manifests/mgb2.csv.gz",
+              "sha256": "ce3cc1e82a57b1e470f46ba645ad84a0848114602a16b5dedbb7ed81d4bccf2d"
+            },
+            "features_table": "mgb2_features_lab",
+            "adi_quintile_cuts": [
+              7.4851607584501245,
+              14.459417475728156,
+              20.832706350962603,
+              27.24422110552764
+            ]
+          },
+          "flow": [
+            {
+              "step": "ordered cultures",
+              "units": null,
+              "cultures": 353603,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "evaluable for E1",
+              "units": 84226,
+              "cultures": 84226,
+              "patients": 52599,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "in partition derivation",
+              "units": 67249,
+              "cultures": 67249,
+              "patients": 42079,
+              "label_positive": 7039,
+              "prevalence": 0.1047
+            }
+          ]
+        },
+        "e2_composite_implied_strict": {
+          "provenance": {
+            "spec": {
+              "estimand": "E2",
+              "label": "composite",
+              "nonsusceptible": false,
+              "interpretation": "lab",
+              "implied_susceptibility": "strict",
+              "exclude_recent_antibiotics": false,
+              "repeat_rule": "release",
+              "unit": "culture"
+            },
+            "name": "e2_composite_implied_strict",
+            "partitions": [
+              "derivation"
+            ],
+            "label": {
+              "constructor": "esbl_decision_time",
+              "estimand": "E2",
+              "target": "is_enterobacterales",
+              "rule": {
+                "resistant": 1,
+                "not_resistant": 0,
+                "culture_negative": 0,
+                "organism_absent": 0
+              },
+              "agents": [
+                "CRO",
+                "CAZ",
+                "FEP",
+                "TZP"
+              ],
+              "hit_values": [
+                "R"
+              ],
+              "sir_column": "sir",
+              "reason_counts": {
+                "culture_negative": 239806,
+                "resistant": 8762,
+                "not_resistant": 75464,
+                "not_tested": 137,
+                "organism_unidentified": 0,
+                "organism_absent": 29434
+              }
+            },
+            "repeat_rule": "release",
+            "unit": "culture",
+            "split_manifest": {
+              "path": "/home/jupyter-saptpurk/armd_harmonization/benchmarks/manifests/mgb2.csv.gz",
+              "sha256": "ce3cc1e82a57b1e470f46ba645ad84a0848114602a16b5dedbb7ed81d4bccf2d"
+            },
+            "features_table": "mgb2_features_lab",
+            "adi_quintile_cuts": [
+              7.4851607584501245,
+              14.459417475728156,
+              20.832706350962603,
+              27.24422110552764
+            ]
+          },
+          "flow": [
+            {
+              "step": "ordered cultures",
+              "units": null,
+              "cultures": 353603,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "evaluable for E2",
+              "units": 353466,
+              "cultures": 353466,
+              "patients": 200491,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "in partition derivation",
+              "units": 282822,
+              "cultures": 282822,
+              "patients": 160397,
+              "label_positive": 7039,
+              "prevalence": 0.0249
+            }
+          ]
+        },
+        "e2_composite_no_antibiotics_3d": {
+          "provenance": {
+            "spec": {
+              "estimand": "E2",
+              "label": "composite",
+              "nonsusceptible": false,
+              "interpretation": "lab",
+              "implied_susceptibility": null,
+              "exclude_recent_antibiotics": true,
+              "repeat_rule": "release",
+              "unit": "culture"
+            },
+            "name": "e2_composite_no_antibiotics_3d",
+            "partitions": [
+              "derivation"
+            ],
+            "label": {
+              "constructor": "esbl_decision_time",
+              "estimand": "E2",
+              "target": "is_enterobacterales",
+              "rule": {
+                "resistant": 1,
+                "not_resistant": 0,
+                "culture_negative": 0,
+                "organism_absent": 0
+              },
+              "agents": [
+                "CRO",
+                "CAZ",
+                "FEP",
+                "TZP"
+              ],
+              "hit_values": [
+                "R"
+              ],
+              "sir_column": "sir",
+              "reason_counts": {
+                "culture_negative": 239806,
+                "resistant": 8762,
+                "not_resistant": 75464,
+                "not_tested": 137,
+                "organism_unidentified": 0,
+                "organism_absent": 29434
+              }
+            },
+            "repeat_rule": "release",
+            "unit": "culture",
+            "split_manifest": {
+              "path": "/home/jupyter-saptpurk/armd_harmonization/benchmarks/manifests/mgb2.csv.gz",
+              "sha256": "ce3cc1e82a57b1e470f46ba645ad84a0848114602a16b5dedbb7ed81d4bccf2d"
+            },
+            "features_table": "mgb2_features_lab",
+            "adi_quintile_cuts": [
+              7.4851607584501245,
+              14.459417475728156,
+              20.832706350962603,
+              27.24422110552764
+            ]
+          },
+          "flow": [
+            {
+              "step": "ordered cultures",
+              "units": null,
+              "cultures": 353603,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "evaluable for E2",
+              "units": 353466,
+              "cultures": 353466,
+              "patients": 200491,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "in partition derivation",
+              "units": 282822,
+              "cultures": 282822,
+              "patients": 160397,
+              "label_positive": 7039,
+              "prevalence": 0.0249
+            },
+            {
+              "step": "no antibacterial record 1 to 3 days before the order",
+              "units": 263410,
+              "cultures": 263410,
+              "patients": 152460,
+              "label_positive": 6681,
+              "prevalence": 0.0254
+            }
+          ]
+        },
+        "e1_composite_chained_14d_specimen_day": {
+          "provenance": {
+            "spec": {
+              "estimand": "E1",
+              "label": "composite",
+              "nonsusceptible": false,
+              "interpretation": "lab",
+              "implied_susceptibility": null,
+              "exclude_recent_antibiotics": false,
+              "repeat_rule": "chained_14d",
+              "unit": "specimen_day"
+            },
+            "name": "e1_composite_chained_14d_specimen_day",
+            "partitions": [
+              "derivation"
+            ],
+            "label": {
+              "constructor": "esbl_phenotype_composite",
+              "estimand": "E1",
+              "target": "is_enterobacterales",
+              "rule": {
+                "resistant": 1,
+                "not_resistant": 0
+              },
+              "agents": [
+                "CRO",
+                "CAZ",
+                "FEP",
+                "TZP"
+              ],
+              "hit_values": [
+                "R"
+              ],
+              "sir_column": "sir",
+              "reason_counts": {
+                "culture_negative": 239806,
+                "resistant": 8762,
+                "not_resistant": 75464,
+                "not_tested": 137,
+                "organism_unidentified": 0,
+                "organism_absent": 29434
+              }
+            },
+            "repeat_rule": "chained_14d",
+            "unit": "specimen_day",
+            "split_manifest": {
+              "path": "/home/jupyter-saptpurk/armd_harmonization/benchmarks/manifests/mgb2.csv.gz",
+              "sha256": "ce3cc1e82a57b1e470f46ba645ad84a0848114602a16b5dedbb7ed81d4bccf2d"
+            },
+            "features_table": "mgb2_features_lab",
+            "adi_quintile_cuts": [
+              7.4851607584501245,
+              14.459417475728156,
+              20.832706350962603,
+              27.24422110552764
+            ]
+          },
+          "flow": [
+            {
+              "step": "ordered cultures",
+              "units": null,
+              "cultures": 353603,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "index orders under chained_14d",
+              "units": 353603,
+              "cultures": 353603,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "evaluable for E1",
+              "units": 84226,
+              "cultures": 84226,
+              "patients": 52599,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "in partition derivation",
+              "units": 67249,
+              "cultures": 67249,
+              "patients": 42079,
+              "label_positive": 7039,
+              "prevalence": 0.1047
+            }
+          ]
+        },
+        "e2_composite_chained_14d_specimen_day": {
+          "provenance": {
+            "spec": {
+              "estimand": "E2",
+              "label": "composite",
+              "nonsusceptible": false,
+              "interpretation": "lab",
+              "implied_susceptibility": null,
+              "exclude_recent_antibiotics": false,
+              "repeat_rule": "chained_14d",
+              "unit": "specimen_day"
+            },
+            "name": "e2_composite_chained_14d_specimen_day",
+            "partitions": [
+              "derivation"
+            ],
+            "label": {
+              "constructor": "esbl_decision_time",
+              "estimand": "E2",
+              "target": "is_enterobacterales",
+              "rule": {
+                "resistant": 1,
+                "not_resistant": 0,
+                "culture_negative": 0,
+                "organism_absent": 0
+              },
+              "agents": [
+                "CRO",
+                "CAZ",
+                "FEP",
+                "TZP"
+              ],
+              "hit_values": [
+                "R"
+              ],
+              "sir_column": "sir",
+              "reason_counts": {
+                "culture_negative": 239806,
+                "resistant": 8762,
+                "not_resistant": 75464,
+                "not_tested": 137,
+                "organism_unidentified": 0,
+                "organism_absent": 29434
+              }
+            },
+            "repeat_rule": "chained_14d",
+            "unit": "specimen_day",
+            "split_manifest": {
+              "path": "/home/jupyter-saptpurk/armd_harmonization/benchmarks/manifests/mgb2.csv.gz",
+              "sha256": "ce3cc1e82a57b1e470f46ba645ad84a0848114602a16b5dedbb7ed81d4bccf2d"
+            },
+            "features_table": "mgb2_features_lab",
+            "adi_quintile_cuts": [
+              7.4851607584501245,
+              14.459417475728156,
+              20.832706350962603,
+              27.24422110552764
+            ]
+          },
+          "flow": [
+            {
+              "step": "ordered cultures",
+              "units": null,
+              "cultures": 353603,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "index orders under chained_14d",
+              "units": 353603,
+              "cultures": 353603,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "evaluable for E2",
+              "units": 353466,
+              "cultures": 353466,
+              "patients": 200491,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "in partition derivation",
+              "units": 282822,
+              "cultures": 282822,
+              "patients": 160397,
+              "label_positive": 7039,
+              "prevalence": 0.0249
+            }
+          ]
+        },
+        "e1_composite_chained_14d_order_event": {
+          "provenance": {
+            "spec": {
+              "estimand": "E1",
+              "label": "composite",
+              "nonsusceptible": false,
+              "interpretation": "lab",
+              "implied_susceptibility": null,
+              "exclude_recent_antibiotics": false,
+              "repeat_rule": "chained_14d",
+              "unit": "order_event"
+            },
+            "name": "e1_composite_chained_14d_order_event",
+            "partitions": [
+              "derivation"
+            ],
+            "label": {
+              "constructor": "esbl_phenotype_composite",
+              "estimand": "E1",
+              "target": "is_enterobacterales",
+              "rule": {
+                "resistant": 1,
+                "not_resistant": 0
+              },
+              "agents": [
+                "CRO",
+                "CAZ",
+                "FEP",
+                "TZP"
+              ],
+              "hit_values": [
+                "R"
+              ],
+              "sir_column": "sir",
+              "reason_counts": {
+                "culture_negative": 239806,
+                "resistant": 8762,
+                "not_resistant": 75464,
+                "not_tested": 137,
+                "organism_unidentified": 0,
+                "organism_absent": 29434
+              }
+            },
+            "repeat_rule": "chained_14d",
+            "unit": "order_event",
+            "split_manifest": {
+              "path": "/home/jupyter-saptpurk/armd_harmonization/benchmarks/manifests/mgb2.csv.gz",
+              "sha256": "ce3cc1e82a57b1e470f46ba645ad84a0848114602a16b5dedbb7ed81d4bccf2d"
+            },
+            "features_table": "mgb2_features_lab",
+            "adi_quintile_cuts": [
+              7.4851607584501245,
+              14.459417475728156,
+              20.832706350962603,
+              27.24422110552764
+            ]
+          },
+          "flow": [
+            {
+              "step": "ordered cultures",
+              "units": null,
+              "cultures": 353603,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "index orders under chained_14d",
+              "units": 353603,
+              "cultures": 353603,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "evaluable for E1",
+              "units": 84226,
+              "cultures": 84226,
+              "patients": 52599,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "in partition derivation",
+              "units": 67249,
+              "cultures": 67249,
+              "patients": 42079,
+              "label_positive": 7039,
+              "prevalence": 0.1047
+            }
+          ]
+        },
+        "e2_composite_chained_14d_order_event": {
+          "provenance": {
+            "spec": {
+              "estimand": "E2",
+              "label": "composite",
+              "nonsusceptible": false,
+              "interpretation": "lab",
+              "implied_susceptibility": null,
+              "exclude_recent_antibiotics": false,
+              "repeat_rule": "chained_14d",
+              "unit": "order_event"
+            },
+            "name": "e2_composite_chained_14d_order_event",
+            "partitions": [
+              "derivation"
+            ],
+            "label": {
+              "constructor": "esbl_decision_time",
+              "estimand": "E2",
+              "target": "is_enterobacterales",
+              "rule": {
+                "resistant": 1,
+                "not_resistant": 0,
+                "culture_negative": 0,
+                "organism_absent": 0
+              },
+              "agents": [
+                "CRO",
+                "CAZ",
+                "FEP",
+                "TZP"
+              ],
+              "hit_values": [
+                "R"
+              ],
+              "sir_column": "sir",
+              "reason_counts": {
+                "culture_negative": 239806,
+                "resistant": 8762,
+                "not_resistant": 75464,
+                "not_tested": 137,
+                "organism_unidentified": 0,
+                "organism_absent": 29434
+              }
+            },
+            "repeat_rule": "chained_14d",
+            "unit": "order_event",
+            "split_manifest": {
+              "path": "/home/jupyter-saptpurk/armd_harmonization/benchmarks/manifests/mgb2.csv.gz",
+              "sha256": "ce3cc1e82a57b1e470f46ba645ad84a0848114602a16b5dedbb7ed81d4bccf2d"
+            },
+            "features_table": "mgb2_features_lab",
+            "adi_quintile_cuts": [
+              7.4851607584501245,
+              14.459417475728156,
+              20.832706350962603,
+              27.24422110552764
+            ]
+          },
+          "flow": [
+            {
+              "step": "ordered cultures",
+              "units": null,
+              "cultures": 353603,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "index orders under chained_14d",
+              "units": 353603,
+              "cultures": 353603,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "evaluable for E2",
+              "units": 353466,
+              "cultures": 353466,
+              "patients": 200491,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "in partition derivation",
+              "units": 282822,
+              "cultures": 282822,
+              "patients": 160397,
+              "label_positive": 7039,
+              "prevalence": 0.0249
+            }
+          ]
+        },
+        "e1_composite_first_per_patient_specimen_day": {
+          "provenance": {
+            "spec": {
+              "estimand": "E1",
+              "label": "composite",
+              "nonsusceptible": false,
+              "interpretation": "lab",
+              "implied_susceptibility": null,
+              "exclude_recent_antibiotics": false,
+              "repeat_rule": "first_per_patient",
+              "unit": "specimen_day"
+            },
+            "name": "e1_composite_first_per_patient_specimen_day",
+            "partitions": [
+              "derivation"
+            ],
+            "label": {
+              "constructor": "esbl_phenotype_composite",
+              "estimand": "E1",
+              "target": "is_enterobacterales",
+              "rule": {
+                "resistant": 1,
+                "not_resistant": 0
+              },
+              "agents": [
+                "CRO",
+                "CAZ",
+                "FEP",
+                "TZP"
+              ],
+              "hit_values": [
+                "R"
+              ],
+              "sir_column": "sir",
+              "reason_counts": {
+                "culture_negative": 239806,
+                "resistant": 8762,
+                "not_resistant": 75464,
+                "not_tested": 137,
+                "organism_unidentified": 0,
+                "organism_absent": 29434
+              }
+            },
+            "repeat_rule": "first_per_patient",
+            "unit": "specimen_day",
+            "split_manifest": {
+              "path": "/home/jupyter-saptpurk/armd_harmonization/benchmarks/manifests/mgb2.csv.gz",
+              "sha256": "ce3cc1e82a57b1e470f46ba645ad84a0848114602a16b5dedbb7ed81d4bccf2d"
+            },
+            "features_table": "mgb2_features_lab",
+            "adi_quintile_cuts": [
+              7.4851607584501245,
+              14.459417475728156,
+              20.832706350962603,
+              27.24422110552764
+            ]
+          },
+          "flow": [
+            {
+              "step": "ordered cultures",
+              "units": null,
+              "cultures": 353603,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "index orders under first_per_patient",
+              "units": 200543,
+              "cultures": 200543,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "evaluable for E1",
+              "units": 40961,
+              "cultures": 40961,
+              "patients": 40961,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "in partition derivation",
+              "units": 32738,
+              "cultures": 32738,
+              "patients": 32738,
+              "label_positive": 2293,
+              "prevalence": 0.07
+            }
+          ]
+        },
+        "e2_composite_first_per_patient_specimen_day": {
+          "provenance": {
+            "spec": {
+              "estimand": "E2",
+              "label": "composite",
+              "nonsusceptible": false,
+              "interpretation": "lab",
+              "implied_susceptibility": null,
+              "exclude_recent_antibiotics": false,
+              "repeat_rule": "first_per_patient",
+              "unit": "specimen_day"
+            },
+            "name": "e2_composite_first_per_patient_specimen_day",
+            "partitions": [
+              "derivation"
+            ],
+            "label": {
+              "constructor": "esbl_decision_time",
+              "estimand": "E2",
+              "target": "is_enterobacterales",
+              "rule": {
+                "resistant": 1,
+                "not_resistant": 0,
+                "culture_negative": 0,
+                "organism_absent": 0
+              },
+              "agents": [
+                "CRO",
+                "CAZ",
+                "FEP",
+                "TZP"
+              ],
+              "hit_values": [
+                "R"
+              ],
+              "sir_column": "sir",
+              "reason_counts": {
+                "culture_negative": 239806,
+                "resistant": 8762,
+                "not_resistant": 75464,
+                "not_tested": 137,
+                "organism_unidentified": 0,
+                "organism_absent": 29434
+              }
+            },
+            "repeat_rule": "first_per_patient",
+            "unit": "specimen_day",
+            "split_manifest": {
+              "path": "/home/jupyter-saptpurk/armd_harmonization/benchmarks/manifests/mgb2.csv.gz",
+              "sha256": "ce3cc1e82a57b1e470f46ba645ad84a0848114602a16b5dedbb7ed81d4bccf2d"
+            },
+            "features_table": "mgb2_features_lab",
+            "adi_quintile_cuts": [
+              7.4851607584501245,
+              14.459417475728156,
+              20.832706350962603,
+              27.24422110552764
+            ]
+          },
+          "flow": [
+            {
+              "step": "ordered cultures",
+              "units": null,
+              "cultures": 353603,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "index orders under first_per_patient",
+              "units": 200543,
+              "cultures": 200543,
+              "patients": 200543,
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "evaluable for E2",
+              "units": 200488,
+              "cultures": 200488,
+              "patients": "withheld, within 10 of another count",
+              "label_positive": null,
+              "prevalence": null
+            },
+            {
+              "step": "in partition derivation",
+              "units": 160395,
+              "cultures": 160395,
+              "patients": "withheld, within 10 of another count",
+              "label_positive": 2293,
+              "prevalence": 0.0143
+            }
+          ]
+        }
+      },
+      "analysis_1": {
+        "ordered_derivation_cultures": 282924,
+        "negative_share": 0.6784,
+        "positive_without_enterobacterales_share": 0.0835,
+        "covariates": {
+          "age_65plus": {
+            "E1_mean": 0.586,
+            "E2_mean": 0.4937,
+            "smd_E2_minus_E1": -0.186
+          },
+          "gender_male": {
+            "E1_mean": 0.2046,
+            "E2_mean": 0.4368,
+            "smd_E2_minus_E1": 0.514
+          },
+          "hosp_ward_IP": {
+            "E1_mean": 0.1245,
+            "E2_mean": 0.2483,
+            "smd_E2_minus_E1": 0.322
+          },
+          "hosp_ward_OP": {
+            "E1_mean": 0.6443,
+            "E2_mean": 0.3882,
+            "smd_E2_minus_E1": -0.53
+          },
+          "hosp_ward_ER": {
+            "E1_mean": 0.2335,
+            "E2_mean": 0.365,
+            "smd_E2_minus_E1": 0.29
+          },
+          "specimen_urine": {
+            "E1_mean": 0.9332,
+            "E2_mean": 0.5057,
+            "smd_E2_minus_E1": -1.082
+          },
+          "specimen_blood": {
+            "E1_mean": 0.0448,
+            "E2_mean": 0.4655,
+            "smd_E2_minus_E1": 1.102
+          },
+          "specimen_respiratory": {
+            "E1_mean": 0.022,
+            "E2_mean": 0.0288,
+            "smd_E2_minus_E1": 0.044
+          },
+          "prior_culture_history": {
+            "E1_mean": 0.5448,
+            "E2_mean": 0.3552,
+            "smd_E2_minus_E1": -0.388
+          },
+          "prior_ESBL": {
+            "E1_mean": 0.1036,
+            "E2_mean": 0.0555,
+            "smd_E2_minus_E1": -0.178
+          },
+          "T_ceph3_90d": {
+            "E1_mean": 0.0791,
+            "E2_mean": 0.1223,
+            "smd_E2_minus_E1": 0.144
+          },
+          "T_fq_90d": {
+            "E1_mean": 0.0744,
+            "E2_mean": 0.0999,
+            "smd_E2_minus_E1": 0.091
+          },
+          "nursing_home_90d": {
+            "E1_mean": 0.0146,
+            "E2_mean": 0.0168,
+            "smd_E2_minus_E1": 0.018
+          },
+          "adi_missing": {
+            "E1_mean": 0.433,
+            "E2_mean": 0.362,
+            "smd_E2_minus_E1": -0.146
+          },
+          "elixhauser_count": {
+            "E1_mean": 6.5458,
+            "E2_mean": 9.8554,
+            "smd_E2_minus_E1": 0.395
+          },
+          "num_prior_orgs": {
+            "E1_mean": 1.1396,
+            "E2_mean": 0.7342,
+            "smd_E2_minus_E1": -0.28
+          }
+        },
+        "covariates_proposed_unit": {
+          "age_65plus": {
+            "E1_mean": 0.586,
+            "E2_mean": 0.4937,
+            "smd_E2_minus_E1": -0.186
+          },
+          "gender_male": {
+            "E1_mean": 0.2046,
+            "E2_mean": 0.4368,
+            "smd_E2_minus_E1": 0.514
+          },
+          "hosp_ward_IP": {
+            "E1_mean": 0.1245,
+            "E2_mean": 0.2483,
+            "smd_E2_minus_E1": 0.322
+          },
+          "hosp_ward_OP": {
+            "E1_mean": 0.6443,
+            "E2_mean": 0.3882,
+            "smd_E2_minus_E1": -0.53
+          },
+          "hosp_ward_ER": {
+            "E1_mean": 0.2335,
+            "E2_mean": 0.365,
+            "smd_E2_minus_E1": 0.29
+          },
+          "specimen_urine": {
+            "E1_mean": 0.9332,
+            "E2_mean": 0.5057,
+            "smd_E2_minus_E1": -1.082
+          },
+          "specimen_blood": {
+            "E1_mean": 0.0448,
+            "E2_mean": 0.4655,
+            "smd_E2_minus_E1": 1.102
+          },
+          "specimen_respiratory": {
+            "E1_mean": 0.022,
+            "E2_mean": 0.0288,
+            "smd_E2_minus_E1": 0.044
+          },
+          "prior_culture_history": {
+            "E1_mean": 0.5448,
+            "E2_mean": 0.3552,
+            "smd_E2_minus_E1": -0.388
+          },
+          "prior_ESBL": {
+            "E1_mean": 0.1036,
+            "E2_mean": 0.0555,
+            "smd_E2_minus_E1": -0.178
+          },
+          "T_ceph3_90d": {
+            "E1_mean": 0.0791,
+            "E2_mean": 0.1223,
+            "smd_E2_minus_E1": 0.144
+          },
+          "T_fq_90d": {
+            "E1_mean": 0.0744,
+            "E2_mean": 0.0999,
+            "smd_E2_minus_E1": 0.091
+          },
+          "nursing_home_90d": {
+            "E1_mean": 0.0146,
+            "E2_mean": 0.0168,
+            "smd_E2_minus_E1": 0.018
+          },
+          "adi_missing": {
+            "E1_mean": 0.433,
+            "E2_mean": 0.362,
+            "smd_E2_minus_E1": -0.146
+          },
+          "elixhauser_count": {
+            "E1_mean": 6.5458,
+            "E2_mean": 9.8554,
+            "smd_E2_minus_E1": 0.395
+          },
+          "num_prior_orgs": {
+            "E1_mean": 1.1396,
+            "E2_mean": 0.7342,
+            "smd_E2_minus_E1": -0.28
+          }
+        }
+      }
+    }
+  }
+}
