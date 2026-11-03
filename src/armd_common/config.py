@@ -111,9 +111,11 @@ SITES: dict[str, SiteConfig] = {
             "implied_susceptibility_rules": "implied_susceptibility_rules.csv",
         },
     ),
+    # ARMD-MGB 1.0.0. Kept so every result recorded before 2026-11-03 stays reproducible. The raw
+    # folder moved from armd-mgb/physionet.org/files/armd-mgb/1.0.0 to armd-mgb/1.0.0 on 2026-11-03.
     "mgb": SiteConfig(
         site="mgb",
-        raw_subdir="armd-mgb/physionet.org/files/armd-mgb/1.0.0",
+        raw_subdir="armd-mgb/1.0.0",
         parquet_subdir="armd-mgb/parquet",
         tables={
             "cohort": "microbiology_cohort_deid_tj_updated.csv",
@@ -126,6 +128,28 @@ SITES: dict[str, SiteConfig] = {
             "prior_org": "prior_org_deid_tj.csv",
             "prior_procedures": "prior_procedures_deid_tj.csv",
             "ward_info": "ward_type_deid_tj.csv",
+        },
+    ),
+    # ARMD-MGB 2.0.0, re-de-identified and laid out like ARMD-Stanford. Its patients cannot be linked
+    # to 1.0.0, so it is its own site with its own Parquet, split, cohorts and models under armd-mgb/v2.
+    "mgb2": SiteConfig(
+        site="mgb2",
+        raw_subdir="armd-mgb/2.0.0",
+        parquet_subdir="armd-mgb/v2/parquet",
+        tables={
+            "cohort": "microbiology_cohort.csv",
+            "adi_scores": "adi_scores.csv",
+            "antibiotic_subtype_exposure": "prior_abx.csv",
+            "comorbidity": "comorbidity.csv",
+            "demographics": "demographics.csv",
+            "implied_susceptibility": "implied_susceptibility.csv",
+            "labs": "labs.csv",
+            "microbial_resistance": "prior_microbial_resistance.csv",
+            "nursing_home_visits": "nursing_home_visits.csv",
+            "prior_infecting_organism": "prior_org.csv",
+            "prior_procedures": "prior_procedures.csv",
+            "vitals": "vitals.csv",
+            "ward_info": "ward_type.csv",
         },
     ),
     "utsw": SiteConfig(

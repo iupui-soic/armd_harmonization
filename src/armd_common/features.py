@@ -87,7 +87,7 @@ COMORBIDITY_RULES = {
     "comorbid_obesity": "obesity",
     "comorbid_renal_failure": "renal failure|renal sclerosis",
 }
-COMORBIDITY_COLUMN = {"mgb": "category"}
+COMORBIDITY_COLUMN = {"mgb": "category", "mgb2": "category"}
 
 PROCEDURES = {
     "proc_cvc": "cvc",

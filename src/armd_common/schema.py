@@ -14,7 +14,7 @@ from __future__ import annotations
 from .organisms import ORGANISM_GROUPS
 from .vocab import AGE_BANDS, SETTINGS, SEX_VALUES, SIR_VALUES, SPECIMEN_TYPES
 
-SITES = ("stanford", "mgb", "utsw", "ecuh")
+SITES = ("stanford", "mgb", "mgb2", "utsw", "ecuh")
 
 CULTURE_EPISODES = {
     "site": "VARCHAR",

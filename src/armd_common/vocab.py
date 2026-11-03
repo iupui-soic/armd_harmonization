@@ -22,8 +22,9 @@ SPECIMEN = {"URINE": "urine", "BLOOD": "blood", "RESPIRATORY": "respiratory", "R
 AGE_BANDS = ("18-24", "25-34", "35-44", "45-54", "55-64", "65-74", "75-84", "85-89", "90+")
 
 SEX_VALUES = ("f", "m", "unknown")
-# MGB discloses sex. "X" covers 11 cultures and has no slot in the canonical enum.
-SEX = {"female": "f", "male": "m", "unknown": "unknown", "x": "unknown"}
+# MGB discloses sex. "X" covers 11 cultures in 1.0.0 and has no slot in the canonical enum. 2.0.0
+# collapses everything but Female and Male into "Others".
+SEX = {"female": "f", "male": "m", "unknown": "unknown", "x": "unknown", "others": "unknown"}
 
 SETTINGS = ("inpatient", "ed", "urgent_care", "outpatient", "unknown")
 
@@ -38,6 +39,8 @@ SIR = {
     # Only drugs without an R breakpoint report non-susceptible, so it is treated as R.
     "non-susceptible": "R",
     "not tested": "NT",
+    # ARMD-MGB 2.0.0 writes "Unknown" for a lab phenotype its build did not recognize.
+    "unknown": "other",
     "inconclusive": "other",
     "synergism": "other",
     "positive": "other",
@@ -172,6 +175,10 @@ ALIASES = {
     "ticacarcillin_clavulanic_acid": "TIM",
     "ticarcillin_clavulanic_acid": "TIM",
     "rifampicin": "RIF",
+    # ARMD-MGB 2.0.0 reports one combined carbapenem result under this name in its culture and prior
+    # resistance tables. It is read as meropenem: every use of carbapenem results in armd-common is
+    # by class (prior carbapenem resistance, prior carbapenem exposure), so the agent does not matter.
+    "meropenem_imipenem": "MEM",
     # UTSW spellings.
     "pip_tazobactam": "TZP",
     "amox_clavulanate": "AMC",

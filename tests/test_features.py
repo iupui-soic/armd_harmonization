@@ -185,3 +185,28 @@ def test_rejects_unknown_interpretation(mgb):
     loader, built = mgb
     with pytest.raises(ValueError):
         features.build_features(loader, built, "eucast")
+
+
+@pytest.fixture()
+def mgb2(tmp_path, monkeypatch):
+    from armd_common.sites import MGB2Loader
+    from test_sites import build_mgb2_release
+
+    monkeypatch.setenv("ARMD_DATA_ROOT", str(tmp_path))
+    build_mgb2_release(tmp_path)
+    loader = MGB2Loader(connect())
+    return loader, loader.build()
+
+
+def test_mgb2_features(mgb2):
+    loader, built = mgb2
+    table = features.build_features(loader, built, "lab")
+    names = ["T_ceph3_90d", "T_esp_90d", "prior_ESBL", "comorbid_heart_failure", "comorbid_obesity", "comorbid_renal_failure",
+             "elixhauser_count", "proc_urethral", "any_proc_30d", "proc_cvc", "num_prior_orgs", "days_since_prior_org",
+             "nursing_home_90d", "hosp_ward_UC", "hosp_ward_ER", "gender_male", "age_encoded", "adi_missing", "specimen_respiratory"]
+    got = feature_rows(loader, table, names)
+    # Ceftriaxone 20 days before, prior ESBL from the resistance table, two comorbidities, a catheter 12 days before.
+    assert got["mgb2:1:500"] == dict(zip(names, [1, 0, 1, 1, 1, 0, 2, 1, 1, 0, 2, 45.0, 0, 0, 0, 0, 7, 0, 0]))
+    # Piperacillin-tazobactam 100 days before is outside the window, a day 0 line is dropped, a 30-day nursing home visit counts.
+    assert got["mgb2:3:700"] == dict(zip(names, [0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0.0, 1, 0, 1, 1, 1, 0, 1]))
+    assert got["mgb2:2:600"]["hosp_ward_UC"] == 1 and got["mgb2:2:600"]["adi_missing"] == 1

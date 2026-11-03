@@ -1,4 +1,4 @@
-"""Loaders for releases that follow the ARMD-Stanford layout: Stanford, UTSW and ECUH.
+"""Loaders for releases that follow the ARMD-Stanford layout: Stanford, UTSW, ECUH and MGB 2.0.0.
 
 UTSW and ECUH reuse the Stanford file structure. A column that a release lacks, such as the ICU
 ward flag or ordering_mode, becomes NULL instead of failing the build.
@@ -48,6 +48,10 @@ class DryadStandardLoader(SiteLoader):
         "prior_procedures": ("procedure_time_to_culturetime",),
     }
 
+    # Settings the ward table lacks, derived from cohort rows instead: flag -> boolean SQL over one
+    # cohort row. Used only when the ward table has no column for that flag.
+    cohort_setting_sql: dict[str, str] = {}
+
     def culture_stage_sql(self) -> str:
         cohort_columns = set(self.columns("cohort"))
         ward_columns = set(self.columns("ward_info"))
@@ -55,10 +59,18 @@ class DryadStandardLoader(SiteLoader):
         if order_time is None:
             raise ValueError(f"{self.site}: no order time column among {self.order_time_columns}")
         mode = "ANY_VALUE(ordering_mode)" if "ordering_mode" in cohort_columns else "CAST(NULL AS VARCHAR)"
-        flags = ",\n                       ".join(
-            f"MAX(TRY_CAST({col} AS INTEGER)) = 1 AS {key}" if col in ward_columns else f"CAST(NULL AS BOOLEAN) AS {key}"
-            for key, col in WARD_FLAGS.items()
-        )
+        ward_flags, cohort_flags = [], []
+        for key, col in WARD_FLAGS.items():
+            if col in ward_columns:
+                ward_flags.append(f"MAX(TRY_CAST({col} AS INTEGER)) = 1 AS {key}")
+            elif key in self.cohort_setting_sql and "ordering_mode" in cohort_columns:
+                cohort_flags.append(f"BOOL_OR({self.cohort_setting_sql[key]}) AS {key}")
+            else:
+                ward_flags.append(f"CAST(NULL AS BOOLEAN) AS {key}")
+        sep = ",\n                       "
+        flags = sep.join(ward_flags)
+        extra = "".join(sep + f for f in cohort_flags)
+        ward_select = ", ".join(f"w.{f.rsplit(' AS ', 1)[1]}" for f in ward_flags)
         return f"""
             WITH c AS (
                 SELECT anon_id, order_proc_id_coded,
@@ -67,7 +79,7 @@ class DryadStandardLoader(SiteLoader):
                        ANY_VALUE(culture_description) AS specimen_raw,
                        BOOL_OR({self.positive_row_sql}) AS culture_positive,
                        BOOL_OR({self.positive_row_sql} AND organism IS NULL) AS any_unidentified,
-                       {mode} AS ordering_mode_raw
+                       {mode} AS ordering_mode_raw{extra}
                 FROM {self.raw('cohort')}
                 GROUP BY anon_id, order_proc_id_coded
             ),
@@ -89,7 +101,7 @@ class DryadStandardLoader(SiteLoader):
                 FROM {self.raw('adi_scores')}
                 GROUP BY anon_id, order_proc_id_coded
             )
-            SELECT c.*, w.inpatient, w.outpatient, w.ed, w.icu, w.urgent_care, w.day_surgery,
+            SELECT c.*, {ward_select},
                    d.age_raw, d.gender_raw, a.adi_score, a.adi_state_rank
             FROM c
             LEFT JOIN w USING (anon_id, order_proc_id_coded)

@@ -69,7 +69,7 @@ FEMALE_ONLY = (
     "OB-related trauma to perineum and vulva",
 )
 
-COMPONENT_COLUMN = {"stanford": "comorbidity_component", "utsw": "comorbidity_component", "ecuh": "comorbidity_component", "mgb": "category"}
+COMPONENT_COLUMN = {"stanford": "comorbidity_component", "utsw": "comorbidity_component", "ecuh": "comorbidity_component", "mgb": "category", "mgb2": "category"}
 
 # Strata smaller than this at either site are left out of the pattern comparison.
 MIN_STRATUM = 100

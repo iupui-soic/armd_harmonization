@@ -2,6 +2,7 @@
 # armd_common.convert checks every raw CSV against these sizes and digests before staging.
 # Dryad sizes and digests come from the Dryad v2 API. MGB digests come from SHA256SUMS.txt.
 # Stanford and MGB downloaded_on is inferred from local file timestamps because no download log was kept.
+# MGB 2.0.0 was fetched by hand from PhysioNet on 2026-11-03 and verified with sha256sum -c SHA256SUMS.txt.
 # UTSW and ECUH were fetched with armd_common.download, which logs to _download.json in each site folder.
 
 stanford:
@@ -54,6 +55,32 @@ mgb:
     prior_org_deid_tj.csv: {bytes: 189615382, sha256: b59b10b96683ca2ad00e90a5e11c81109317121cea3ea44d2626cd6b4f66c71b}
     prior_procedures_deid_tj.csv: {bytes: 21091249, sha256: ceaa08554cea90585a6fd16d0de9f78aab9b97c884f6c6e71091d6d989ba6fb7}
     ward_type_deid_tj.csv: {bytes: 46083190, sha256: 1ee051bbb566e4bece2a44d7b47f5695c568fa1ca542f084b92d68f7356e3534}
+
+mgb2:
+  name: ARMD-MGB (Mass General Brigham), version 2.0.0
+  repository: PhysioNet
+  doi: 10.13026/1smb-ts67
+  url: https://doi.org/10.13026/1smb-ts67
+  version: "2.0.0"
+  version_date: "2026-11-02"
+  license: PhysioNet Credentialed Health Data License 1.5.0
+  downloaded_on: "2026-11-03"
+  files:
+    LICENSE.txt: {bytes: 2518, sha256: 60f826ec54111bd7ab8ba9a04771b92fe60cc92d306137bb61fd1dd46080caa0}
+    README.txt: {bytes: 6286, sha256: 5d1ef4c85b9b83a7b656c3045363ea69bcb17900572ab655059a23d92d487291}
+    adi_scores.csv: {bytes: 145248814, sha256: 7a47eb412b02e6fd8c533a3b72d00a1f4b13adf87936afe687d367fa3add732f}
+    comorbidity.csv: {bytes: 2445463390, sha256: c1dd610d97fb19f8a4e8baa10b102b85ed6ccb3839d45d73afbdb197e89f456b}
+    demographics.csv: {bytes: 13498836, sha256: 7ceb7e3c26d6229e1fa7b928526ffb95cf43f3dad74b5c40218e23b2cbc92056}
+    implied_susceptibility.csv: {bytes: 239365104, sha256: 7501aa281121bbbe176158243ade6d06fb78490cb218e227e718ddb4c33662cb}
+    labs.csv: {bytes: 213517330, sha256: a076246873ca859045bcabda832488d7497275331a7c302319a384149d0560cd}
+    microbiology_cohort.csv: {bytes: 246942548, sha256: 9b4b0427b11b153c078e78d80e560f889871c86bcfd1b44d86c61c6a0e65cf0a}
+    nursing_home_visits.csv: {bytes: 12125076, sha256: ce750f690eb5276f77b9969b9922c18d327325ca30148afd1549bb830b10cbc7}
+    prior_abx.csv: {bytes: 352020796, sha256: 582c4a3dd730eab35ddbc61d83a15d99d0d69bb0105e3e91cd057bfff62931e7}
+    prior_microbial_resistance.csv: {bytes: 284650361, sha256: 7cc493ab663fddde90e882db81d3f0c84d2ea8c43851ada7995f64c0ebd13862}
+    prior_org.csv: {bytes: 137304282, sha256: 1c1c813958db0cb607ac2775e43e0cbb353f4dab5fc3bc6eeb8a9dcad2f82133}
+    prior_procedures.csv: {bytes: 20059765, sha256: 10b05ff0fe2ba73f69d667abcd3db27e6bb84b005ce5d64e721c6a20784a459a}
+    vitals.csv: {bytes: 32468343, sha256: f34b9f909fbf6e59f7ac12d0bcee52606f28c21e1b5c98a087c38a6080056c30}
+    ward_type.csv: {bytes: 18863801, sha256: 421a0cedbaca4f85e8da8672ca04e922fbc773ec30513ddefa9fe87a956dcf0a}
 
 utsw:
   name: ARMD-UTSW (UT Southwestern Medical Center)

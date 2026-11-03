@@ -3,10 +3,12 @@
 from .base import SiteLoader
 from .dryad import ECUHLoader, StanfordLoader, UTSWLoader
 from .mgb import MGBLoader
+from .mgb2 import MGB2Loader
 
 LOADERS: dict[str, type[SiteLoader]] = {
     "stanford": StanfordLoader,
     "mgb": MGBLoader,
+    "mgb2": MGB2Loader,
     "utsw": UTSWLoader,
     "ecuh": ECUHLoader,
 }

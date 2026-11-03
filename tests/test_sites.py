@@ -6,7 +6,7 @@ import pytest
 from armd_common import labels
 from armd_common.db import connect
 from armd_common.schema import validate
-from armd_common.sites import MGBLoader, StanfordLoader, UTSWLoader
+from armd_common.sites import MGB2Loader, MGBLoader, StanfordLoader, UTSWLoader
 
 
 def write_table(root, site_dir, table, ddl, rows, part=0):
@@ -269,3 +269,127 @@ def test_mgb_date_linked_feature_table(mgb):
         ("mgb:2:501", "E11.9"),
         ("mgb:2:501", "E11.9"),
     ]
+
+
+# ARMD-MGB 2.0.0 follows the Stanford layout with its own quirks ----------------------------------
+
+def build_mgb2_release(root):
+    site = "armd-mgb/v2"
+    cohort = (
+        f"{IDS}, ordering_mode VARCHAR, culture_description VARCHAR, was_positive BIGINT, organism VARCHAR, "
+        "antibiotic VARCHAR, susceptibility VARCHAR, order_time_jittered_utc_shifted TIMESTAMP"
+    )
+    ecoli = "ESCHERICHIA COLI"
+    rows = [
+        # Culture 500 spans two encounters, so every row appears twice.
+        ("1", "10", "500", "Inpatient", "URINE", 1, ecoli, "Ceftriaxone", "Resistant", "2090-05-01 10:15:00"),
+        ("1", "11", "500", "Inpatient", "URINE", 1, ecoli, "Ceftriaxone", "Resistant", "2090-05-01 10:15:00"),
+        ("1", "10", "500", "Inpatient", "URINE", 1, ecoli, "Cefepime", "Unknown", "2090-05-01 10:15:00"),
+        ("1", "11", "500", "Inpatient", "URINE", 1, ecoli, "Cefepime", "Unknown", "2090-05-01 10:15:00"),
+        ("2", "20", "600", "Urgent Care", "BLOOD", 0, None, None, None, "2091-01-02 08:00:00"),
+        ("3", "30", "700", "Emergency", "RESPIRATORY_TRACT", 1, "KLEBSIELLA PNEUMONIAE", "Cefepime", "Susceptible", "2092-03-03 23:30:00"),
+    ]
+    write_table(root, site, "cohort", cohort, rows)
+    write_table(root, site, "ward_info",
+                f"{IDS}, hosp_ward_IP BIGINT, hosp_ward_OP BIGINT, hosp_ward_ER BIGINT, hosp_ward_ICU BIGINT, order_time_jittered_utc_shifted TIMESTAMP", [
+                    ("1", "10", "500", 1, 0, 0, None, "2090-05-01 10:15:00"),
+                    ("1", "11", "500", 1, 0, 0, None, "2090-05-01 10:15:00"),
+                    ("2", "20", "600", 0, 1, 0, None, "2091-01-02 08:00:00"),
+                    ("3", "30", "700", 0, 0, 1, None, "2092-03-03 23:30:00"),
+                ])
+    write_table(root, site, "demographics", f"{IDS}, age VARCHAR, gender VARCHAR", [
+        ("1", "10", "500", "85-89 years", "Female"),
+        ("1", "11", "500", "85-89 years", "Female"),
+        ("2", "20", "600", "above 90", "Others"),
+        ("3", "30", "700", "25-34 years", "Male"),
+    ])
+    write_table(root, site, "adi_scores", f"{IDS}, adi_score DOUBLE, adi_state_rank DOUBLE, order_time_jittered_utc_shifted TIMESTAMP", [
+        ("1", "10", "500", 12.0, 2.0, "2090-05-01 10:15:00"),
+        ("1", "11", "500", 12.0, 2.0, "2090-05-01 10:15:00"),
+        ("3", "30", "700", 90.0, 9.0, "2092-03-03 23:30:00"),
+    ])
+    # 2.0.0 fixed the ID mismatch, so comorbidity rows carry the cohort's own encounter and culture IDs.
+    write_table(root, site, "comorbidity", f"{IDS}, ICD10 VARCHAR, category VARCHAR, order_time_jittered_utc_shifted TIMESTAMP", [
+        ("1", "10", "500", "I50.9", "Heart failure", "2090-05-01 10:15:00"),
+        ("1", "11", "500", "I50.9", "Heart failure", "2090-05-01 10:15:00"),
+        ("1", "10", "500", "E66.9", "Obesity", "2090-05-01 10:15:00"),
+        ("3", "30", "700", "N18.6", "Renal failure", "2092-03-03 23:30:00"),
+    ])
+    write_table(root, site, "prior_procedures", f"{IDS}, procedure_description VARCHAR, procedure_days_culture DOUBLE, order_time_jittered_utc_shifted TIMESTAMP", [
+        ("1", "10", "500", "urethral_catheter", 12.0, "2090-05-01 10:15:00"),
+        ("3", "30", "700", "cvc", 0.0, "2092-03-03 23:30:00"),
+    ])
+    write_table(root, site, "antibiotic_subtype_exposure",
+                f"{IDS}, medication_name VARCHAR, medication_time_to_cultureTime DOUBLE, medication_category VARCHAR, order_time_jittered_utc_shifted TIMESTAMP", [
+                    ("1", "10", "500", "CEFTRIAXONE", 20.0, "CEF2", "2090-05-01 10:15:00"),
+                    ("3", "30", "700", "PIPERACILLIN-TAZOBACTAM", 100.0, "PIP1", "2092-03-03 23:30:00"),
+                ])
+    write_table(root, site, "microbial_resistance",
+                f"{IDS}, organism VARCHAR, antibiotic VARCHAR, resistant_time_to_cultureTime DOUBLE, order_time_jittered_utc_shifted TIMESTAMP", [
+                    ("1", "10", "500", ecoli, "Ceftriaxone", 300.0, "2090-05-01 10:15:00"),
+                ])
+    write_table(root, site, "prior_infecting_organism",
+                f"{IDS}, prior_infecting_organism_days_to_culture DOUBLE, prior_organism VARCHAR, order_time_jittered_utc_shifted TIMESTAMP", [
+                    ("1", "10", "500", 300.0, "Escherichia", "2090-05-01 10:15:00"),
+                    ("1", "10", "500", 45.0, "Enterococcus", "2090-05-01 10:15:00"),
+                ])
+    write_table(root, site, "nursing_home_visits", f"{IDS}, nursing_home_visit_culture DOUBLE, order_time_jittered_utc_shifted TIMESTAMP", [
+        ("1", "10", "500", None, "2090-05-01 10:15:00"),
+        ("3", "30", "700", 30.0, "2092-03-03 23:30:00"),
+    ])
+
+
+@pytest.fixture()
+def mgb2(tmp_path, monkeypatch):
+    monkeypatch.setenv("ARMD_DATA_ROOT", str(tmp_path))
+    build_mgb2_release(tmp_path)
+    loader = MGB2Loader(connect())
+    return loader, loader.build()
+
+
+def test_mgb2_schema(mgb2):
+    loader, built = mgb2
+    for kind, table in built.items():
+        assert validate(loader.con, table, kind) == [], kind
+    assert loader.con.execute(f"SELECT COUNT(*) FROM {built['enzyme_tests']}").fetchone()[0] == 0
+
+
+def test_mgb2_culture_episodes(mgb2):
+    loader, built = mgb2
+    got = rows_by_id(loader.con, built["culture_episodes"],
+                     "n_encounters, culture_positive, organism_group, setting_primary, setting_raw_urgent_care, setting_raw_icu, "
+                     "sex, sex_code_masked, age_band, adi_score, order_time_resolution, CAST(order_time AS VARCHAR), ordering_mode_raw")
+    assert got == {
+        "mgb2:1:500": (2, True, "ecoli", "inpatient", False, None, "f", None, "85-89", 12.0, "second", "2090-05-01 10:15:00", "Inpatient"),
+        "mgb2:2:600": (1, False, "none", "urgent_care", True, None, "unknown", None, "90+", None, "second", "2091-01-02 08:00:00", "Urgent Care"),
+        "mgb2:3:700": (1, True, "klebsiella", "ed", False, None, "m", None, "25-34", 90.0, "second", "2092-03-03 23:30:00", "Emergency"),
+    }
+
+
+def test_mgb2_isolate_ast_collapses_encounters(mgb2):
+    loader, built = mgb2
+    rows = loader.con.execute(
+        f"SELECT culture_id, antibiotic_code, sir, sir_raw, n_source_rows FROM {built['isolate_ast']} ORDER BY 1, 2"
+    ).fetchall()
+    assert rows == [
+        ("mgb2:1:500", "CRO", "R", "Resistant", 2),
+        ("mgb2:1:500", "FEP", "other", "Unknown", 2),
+        ("mgb2:3:700", "FEP", "S", "Susceptible", 1),
+    ]
+
+
+def test_mgb2_labels(mgb2):
+    loader, built = mgb2
+    ep, ast = built["culture_episodes"], built["isolate_ast"]
+    assert reasons(labels.esbl_phenotype_composite(loader.con, ep, ast))["mgb2:1:500"] == (1, "resistant")
+    e2 = reasons(labels.esbl_decision_time(loader.con, ep, ast))
+    assert e2["mgb2:2:600"] == (0, "culture_negative")
+    assert e2["mgb2:3:700"] == (0, "not_resistant")
+
+
+def test_mgb2_feature_tables_link_by_culture(mgb2):
+    loader, _ = mgb2
+    for table in ("comorbidity", "nursing_home_visits", "prior_procedures"):
+        assert loader.feature_link(table)[2] == "culture_id"
+    rows = loader.con.execute(f"SELECT culture_id, ICD10 FROM ({loader.feature_rows_sql('comorbidity')}) ORDER BY 1, 2").fetchall()
+    assert rows == [("mgb2:1:500", "E66.9"), ("mgb2:1:500", "I50.9"), ("mgb2:1:500", "I50.9"), ("mgb2:3:700", "N18.6")]
