@@ -73,3 +73,23 @@ def test_withheld_flow_counts_are_marked_not_plotted(tmp_path):
     cohorts["sites"]["mgb"]["cohorts"]["e1_composite"]["flow"][1]["units"] = figures.WITHHELD
     csv_path = [p for p in figures.figure_flow(cohorts, {"E1": "e1_composite", "E2": "e2_composite"}, tmp_path) if p.suffix == ".csv"][0]
     assert figures.WITHHELD in csv_path.read_text()
+
+
+def test_merge_summaries_joins_sites_from_several_runs(tmp_path):
+    for name, sites in (("a", ("stanford", "utsw")), ("b", ("mgb2",))):
+        (tmp_path / name).mkdir()
+        (tmp_path / name / "summary.json").write_text(json.dumps({"partition": "derivation", "sites": {s: {"k": name} for s in sites}}))
+    merged = figures.merge_summaries([tmp_path / "a", tmp_path / "b"])
+    assert set(merged["sites"]) == {"stanford", "utsw", "mgb2"} and merged["partition"] == "derivation"
+    assert figures.run_paths(f"{tmp_path / 'a'},{tmp_path / 'b'}", "01_build_cohorts") == [tmp_path / "a", tmp_path / "b"]
+
+
+def test_merge_summaries_selects_and_orders_sites(tmp_path):
+    for name, sites in (("a", ("stanford", "mgb")), ("b", ("mgb2",))):
+        (tmp_path / name).mkdir()
+        (tmp_path / name / "summary.json").write_text(json.dumps({"sites": {s: {"k": name} for s in sites}}))
+    paths = [tmp_path / "a", tmp_path / "b"]
+    merged = figures.merge_summaries(paths, ["stanford", "mgb2"])
+    assert list(merged["sites"]) == ["stanford", "mgb2"]
+    with pytest.raises(SystemExit):
+        figures.merge_summaries(paths, ["utsw"])

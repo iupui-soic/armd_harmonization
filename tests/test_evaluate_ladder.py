@@ -174,3 +174,23 @@ def test_null_result():
     assert evaluate.null_result(site_with(WITHHELD, WITHHELD, [0.9, 1.1]))["negligible"] is None
     assert evaluate.null_result(site_with(WITHHELD, WITHHELD, [1.2, 1.5]))["negligible"] is False
     assert evaluate.conjunction([True, None, False]) is False and evaluate.conjunction([True, None]) is None
+
+
+def test_training_runs_merge_sites_and_check_settings(tmp_path):
+    def write(name, sites, **overrides):
+        d = tmp_path / name
+        d.mkdir()
+        (d / "summary.json").write_text(json.dumps({"partition": "derivation", "sites": {s: {"n": s} for s in sites}}))
+        args = {"repeat_rule": "chained_14d", "unit": "specimen_day", "models": "xgboost,logistic", "specimen": None, **overrides}
+        (d / "manifest.json").write_text(json.dumps({"args": args}))
+        return d
+
+    a = write("a", ["stanford", "mgb"])
+    b = write("b", ["mgb2"])
+    dirs, trained, args = evaluate.training_runs(f"{a},{b}")
+    assert dirs == [a, b]
+    assert set(trained["sites"]) == {"stanford", "mgb", "mgb2"}
+    assert args["unit"] == "specimen_day"
+    c = write("c", ["utsw"], unit="culture")
+    with pytest.raises(SystemExit):
+        evaluate.training_runs(f"{a},{c}")

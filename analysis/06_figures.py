@@ -46,8 +46,8 @@ SURFACE, INK, INK_2, MUTED, GRID, AXIS = "#fcfcfb", "#0b0b0b", "#52514e", "#8987
 # Categorical slots 1 to 4 of the reference palette, which pass the adjacent-pair checks in this order.
 VARIANT_COLORS = {"E2": "#2a78d6", "E1": "#eb6834", "E1_platt": "#1baf7a", "E1_isotonic": "#eda100"}
 VARIANT_LABELS = {"E2": "E2-trained", "E1": "E1-trained", "E1_platt": "E1-trained, Platt", "E1_isotonic": "E1-trained, isotonic"}
-SITE_COLORS = {"stanford": "#2a78d6", "mgb": "#eb6834", "utsw": "#1baf7a", "ecuh": "#eda100"}
-SITE_LABELS = {"stanford": "Stanford", "mgb": "MGB", "utsw": "UTSW", "ecuh": "ECUH"}
+SITE_COLORS = {"stanford": "#2a78d6", "mgb": "#eb6834", "mgb2": "#eb6834", "utsw": "#1baf7a", "ecuh": "#eda100"}
+SITE_LABELS = {"stanford": "Stanford", "mgb": "MGB", "mgb2": "MGB", "utsw": "UTSW", "ecuh": "ECUH"}
 PRIMARY_MODEL = "xgboost"
 AGENTS = ("CRO", "CAZ", "FEP", "TZP")
 TIPPING_THRESHOLD = "0.10"
@@ -313,10 +313,33 @@ def latest_run(script: str) -> Path | None:
     return runs[-1] if runs else None
 
 
+def run_paths(spec: str | None, script: str) -> list[Path]:
+    """Run folders named in a comma-separated list, or the latest run. Several runs are merged by site,
+    later runs winning, so a site built later joins the frozen runs of the others."""
+    if spec:
+        return [Path(p) for p in spec.split(",")]
+    latest = latest_run(script)
+    return [latest] if latest else []
+
+
+def merge_summaries(paths: list[Path], sites: list[str] | None = None) -> dict:
+    merged: dict = {}
+    for path in paths:
+        summary = json.loads((path / "summary.json").read_text())
+        merged = {**merged, **summary, "sites": {**merged.get("sites", {}), **summary.get("sites", {})}}
+    if sites is not None:
+        missing = [s for s in sites if s not in merged["sites"]]
+        if missing:
+            raise SystemExit(f"no results for {missing} in {[str(p) for p in paths]}")
+        merged["sites"] = {s: merged["sites"][s] for s in sites}
+    return merged
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     for script in ("cohorts", "evaluate", "cascade", "bounds"):
-        parser.add_argument(f"--{script}-run", help="a results run folder (default: the latest)")
+        parser.add_argument(f"--{script}-run", help="a results run folder, or several joined by commas and merged by site (default: the latest)")
+    parser.add_argument("--sites", help="comma-separated sites to plot, in order (default: every site in the runs)")
     parser.add_argument("--repeat-rule", default="release", choices=REPEAT_RULES)
     parser.add_argument("--unit", default="culture", choices=UNITS)
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
@@ -325,18 +348,19 @@ def main() -> int:
     run = RunManifest("06_figures", seed=args.seed, args=vars(args))
     out = run.dir
     sources = {
-        "cohorts": Path(args.cohorts_run) if args.cohorts_run else latest_run("01_build_cohorts"),
-        "evaluate": Path(args.evaluate_run) if args.evaluate_run else latest_run("03_evaluate_ladder"),
-        "cascade": Path(args.cascade_run) if args.cascade_run else latest_run("04_cascade_sensitivity"),
-        "bounds": Path(args.bounds_run) if args.bounds_run else latest_run("05_e3_bounds"),
+        "cohorts": run_paths(args.cohorts_run, "01_build_cohorts"),
+        "evaluate": run_paths(args.evaluate_run, "03_evaluate_ladder"),
+        "cascade": run_paths(args.cascade_run, "04_cascade_sensitivity"),
+        "bounds": run_paths(args.bounds_run, "05_e3_bounds"),
     }
     loaded = {}
-    for key, path in sources.items():
-        if path is None:
+    for key, paths in sources.items():
+        if not paths:
             print(f"figures: no {key} run yet, skipping its figures")
             continue
-        run.add_input(f"{key}.summary", path / "summary.json", sha256_file(path / "summary.json"))
-        loaded[key] = json.loads((path / "summary.json").read_text())
+        for path in paths:
+            run.add_input(f"{key}.summary:{path.name}", path / "summary.json", sha256_file(path / "summary.json"))
+        loaded[key] = merge_summaries(paths, args.sites.split(",") if args.sites else None)
     written = []
     if "cohorts" in loaded:
         names = {e: CohortSpec(e, repeat_rule=args.repeat_rule, unit=args.unit).name for e in ("E1", "E2")}

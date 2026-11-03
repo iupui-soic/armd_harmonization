@@ -675,22 +675,20 @@ def render_exploratory(summary: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
-def run_exploratory(args, frozen: dict, train_dir: Path) -> int:
-    trained = json.loads((train_dir / "summary.json").read_text())
-    train_args = json.loads((train_dir / "manifest.json").read_text())["args"]
-    urine_dir = Path(args.urine_train_run) if args.urine_train_run else latest_run("02_train_e1", "urine")
-    urine_trained = json.loads((urine_dir / "summary.json").read_text())
-    urine_args = json.loads((urine_dir / "manifest.json").read_text())["args"]
+def run_exploratory(args, frozen: dict, train_dirs: list[Path], trained: dict, train_args: dict) -> int:
+    urine_dirs, urine_trained, urine_args = training_runs(args.urine_train_run, "urine")
     rule, unit, kinds = train_args["repeat_rule"], train_args["unit"], train_args["models"].split(",")
     if (urine_args["repeat_rule"], urine_args["unit"]) != (rule, unit):
         raise SystemExit("the urine training run must use the primary repeat rule and unit")
     sites = args.sites.split(",") if args.sites else list(trained["sites"])
+    train_dir, urine_dir = (",".join(str(d) for d in dirs) for dirs in (train_dirs, urine_dirs))
 
     run = RunManifest("03_exploratory", seed=args.seed, args=vars(args))
     run.set("analysis_plan", frozen)
     run.set("amendment", "SAP section 17, exploratory analyses E-1 to E-5")
-    for label, d in (("02_train_e1.summary", train_dir), ("02_train_e1_urine.summary", urine_dir)):
-        run.add_input(label, d / "summary.json", sha256_file(d / "summary.json"))
+    for label, dirs in (("02_train_e1.summary", train_dirs), ("02_train_e1_urine.summary", urine_dirs)):
+        for d in dirs:
+            run.add_input(f"{label}:{d.name}", d / "summary.json", sha256_file(d / "summary.json"))
     base = {"repeat_rule": rule, "unit": unit}
     specs = {"E1": CohortSpec("E1", **base), "E2": CohortSpec("E2", **base)}
     names = {e: specs[e].name for e in specs}
@@ -880,22 +878,20 @@ def render_second_exploratory(summary: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
-def run_second_exploratory(args, frozen: dict, train_dir: Path) -> int:
-    trained = json.loads((train_dir / "summary.json").read_text())
-    train_args = json.loads((train_dir / "manifest.json").read_text())["args"]
-    blood_dir = Path(args.blood_train_run) if args.blood_train_run else latest_run("02_train_e1", "blood")
-    blood_trained = json.loads((blood_dir / "summary.json").read_text())
-    blood_args = json.loads((blood_dir / "manifest.json").read_text())["args"]
+def run_second_exploratory(args, frozen: dict, train_dirs: list[Path], trained: dict, train_args: dict) -> int:
+    blood_dirs, blood_trained, blood_args = training_runs(args.blood_train_run, "blood")
     rule, unit, kinds = train_args["repeat_rule"], train_args["unit"], train_args["models"].split(",")
     if (blood_args["repeat_rule"], blood_args["unit"]) != (rule, unit):
         raise SystemExit("the blood training run must use the primary repeat rule and unit")
     sites = args.sites.split(",") if args.sites else list(trained["sites"])
+    train_dir, blood_dir = (",".join(str(d) for d in dirs) for dirs in (train_dirs, blood_dirs))
 
     run = RunManifest("03_exploratory_2", seed=args.seed, args=vars(args))
     run.set("analysis_plan", frozen)
     run.set("amendment", "SAP section 17, exploratory analyses E-6 to E-8")
-    for label, d in (("02_train_e1.summary", train_dir), ("02_train_e1_blood.summary", blood_dir)):
-        run.add_input(label, d / "summary.json", sha256_file(d / "summary.json"))
+    for label, dirs in (("02_train_e1.summary", train_dirs), ("02_train_e1_blood.summary", blood_dirs)):
+        for d in dirs:
+            run.add_input(f"{label}:{d.name}", d / "summary.json", sha256_file(d / "summary.json"))
     base = {"repeat_rule": rule, "unit": unit}
     specs = {"E1": CohortSpec("E1", **base), "E2": CohortSpec("E2", **base),
              f"{CEFTRIAXONE}:E1": CohortSpec("E1", label=CEFTRIAXONE, **base),
@@ -948,33 +944,56 @@ def latest_run(script: str, specimen: str | None = None) -> Path:
     return runs[-1]
 
 
+def training_runs(spec: str | None, specimen: str | None = None) -> tuple[list[Path], dict, dict]:
+    """The training runs named in a comma-separated list, or the latest one, with their summaries merged.
+
+    Site entries from later runs win. This lets a site trained later (ARMD-MGB 2.0.0, 2026-11-03) join
+    the frozen runs of the other sites without retraining them. Every run must share the repeat
+    rule, unit, model list and specimen restriction, and the merged args are those of the first run.
+    """
+    dirs = [Path(p) for p in spec.split(",")] if spec else [latest_run("02_train_e1", specimen)]
+    trained, train_args = None, None
+    for d in dirs:
+        summary = json.loads((d / "summary.json").read_text())
+        a = json.loads((d / "manifest.json").read_text())["args"]
+        if train_args is None:
+            trained, train_args = summary, a
+            continue
+        settings = ("repeat_rule", "unit", "models", "specimen")
+        if tuple(a.get(k) for k in settings) != tuple(train_args.get(k) for k in settings):
+            raise SystemExit(f"{d} differs from {dirs[0]} in repeat rule, unit, models or specimen")
+        trained = {**trained, "sites": {**trained["sites"], **summary["sites"]}}
+    return dirs, trained, train_args
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--train-run", help="results/02_train_e1/<timestamp> (default: the latest)")
+    parser.add_argument("--train-run", help="results/02_train_e1/<timestamp>, or several joined by commas whose "
+                        "site entries are merged, later runs winning (default: the latest)")
     parser.add_argument("--sites", help="comma-separated sites (default: every site in the training run)")
     parser.add_argument("--boot", type=int, default=N_BOOT)
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     parser.add_argument("--exploratory", action="store_true", help="run the SAP's exploratory amendment E-1 to E-4")
-    parser.add_argument("--urine-train-run", help="the urine-only training run for E-3 (default: the latest)")
+    parser.add_argument("--urine-train-run", help="the urine-only training run or runs for E-3 (default: the latest)")
     parser.add_argument("--second-exploratory", action="store_true", help="run the SAP's second exploratory amendment E-6 to E-8")
-    parser.add_argument("--blood-train-run", help="the blood-only training run for E-7 (default: the latest)")
+    parser.add_argument("--blood-train-run", help="the blood-only training run or runs for E-7 (default: the latest)")
     args = parser.parse_args()
     if args.exploratory and args.second_exploratory:
         parser.error("choose one exploratory amendment")
     frozen = require_frozen_plan()
-    train_dir = Path(args.train_run) if args.train_run else latest_run("02_train_e1")
+    train_dirs, trained, train_args = training_runs(args.train_run)
     if args.exploratory:
-        return run_exploratory(args, frozen, train_dir)
+        return run_exploratory(args, frozen, train_dirs, trained, train_args)
     if args.second_exploratory:
-        return run_second_exploratory(args, frozen, train_dir)
-    trained = json.loads((train_dir / "summary.json").read_text())
-    train_args = json.loads((train_dir / "manifest.json").read_text())["args"]
+        return run_second_exploratory(args, frozen, train_dirs, trained, train_args)
     rule, unit, kinds = train_args["repeat_rule"], train_args["unit"], train_args["models"].split(",")
     sites = args.sites.split(",") if args.sites else list(trained["sites"])
 
     run = RunManifest("03_evaluate_ladder", seed=args.seed, args=vars(args))
     run.set("analysis_plan", frozen)
-    run.add_input("02_train_e1.summary", train_dir / "summary.json", sha256_file(train_dir / "summary.json"))
+    for d in train_dirs:
+        run.add_input(f"02_train_e1.summary:{d.name}", d / "summary.json", sha256_file(d / "summary.json"))
+    train_dir = ",".join(str(d) for d in train_dirs)
     base = {"repeat_rule": rule, "unit": unit}
     specs = {"E1": CohortSpec("E1", **base), "E2": CohortSpec("E2", **base)}
     for key, overrides in SENSITIVITY.items():
