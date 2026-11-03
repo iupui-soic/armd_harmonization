@@ -10,13 +10,19 @@ to 10 are never reported.
 | site | source | version | license | downloaded |
 |---|---|---|---|---|
 | Stanford | Dryad doi:10.5061/dryad.jq2bvq8kp | 20 (2025-10-22) | CC0-1.0 | 2026-02-26 |
-| MGB | PhysioNet doi:10.13026/2r5k-b955 | 1.0.0 (2025-12-05) | PhysioNet Credentialed Health Data License 1.5.0 | 2026-02-23 |
+| MGB (site `mgb2`) | PhysioNet doi:10.13026/1smb-ts67 | 2.0.0 (2026-11-02) | PhysioNet Credentialed Health Data License 1.5.0 | 2026-11-03 |
+| MGB 1.0.0 (site `mgb`) | PhysioNet doi:10.13026/2r5k-b955 | 1.0.0 (2025-12-05) | PhysioNet Credentialed Health Data License 1.5.0 | 2026-02-23 |
 | UTSW | Dryad doi:10.5061/dryad.0rxwdbsd5 | 5 (2025-09-26) | CC0-1.0 | 2026-09-11 |
 | ECUH | Dryad doi:10.5061/dryad.7sqv9s55x | 4 (2025-11-10) | CC0-1.0 | 2026-09-11 |
 
 `src/armd_common/data_sources.yaml` pins the size and SHA-256 of every file. Stanford matches all
-17 Dryad digests and MGB matches all 12 entries in its SHA256SUMS.txt. UTSW and ECUH were verified
-against the Dryad digests during download.
+17 Dryad digests, MGB 1.0.0 matches all 12 entries in its SHA256SUMS.txt and MGB 2.0.0 all 15 in
+its own. UTSW and ECUH were verified against the Dryad digests during download.
+
+Since 2026-11-03 "MGB" means ARMD-MGB 2.0.0, the site `mgb2`, at every place below that does not
+name a version. Statements about 1.0.0 are kept because they explain the decisions taken before
+2.0.0 existed and because the 1.0.0 results in `results/CHANGELOG.md` depend on them. The section
+"ARMD-MGB 2.0.0" under "Repeat cultures and the unit of analysis" lists what changed.
 
 ## Staging
 
@@ -40,14 +46,14 @@ the CSV reader quote raw lines, so the converter reports only a line number and 
 
 `culture_id` is `<site>:<anon_id>:<order_proc_id_coded>` and `patient_id` is `<site>:<anon_id>`.
 
-- **The patient is part of the culture key.** MGB reuses `order_proc_id_coded` across patients:
+- **The patient is part of the culture key.** MGB 1.0.0 reuses `order_proc_id_coded` across patients:
   2,633 values belong to two patients each. The maintainers explained on 2026-10-06 that different
-  hospitals issued the same accession numbers independently. Order IDs will be unique in the revised
-  release.
-- **MGB rows repeat once per linked encounter.** 118,408 MGB cultures link to more than one
+  hospitals issued the same accession numbers independently. In 2.0.0 no order ID is shared by two
+  patients, and the key is kept for uniformity.
+- **MGB rows repeat once per linked encounter.** 118,408 MGB 1.0.0 cultures link to more than one
   encounter, and every cohort and feature row is repeated for each. Loaders collapse these rows
   before counting or labelling.
-- **Three MGB tables need a different link.** In `comorbidity`, `nursing_home_visits` and
+- **Three MGB 1.0.0 tables need a different link.** In `comorbidity`, `nursing_home_visits` and
   `prior_procedures`, encounter and culture IDs come from a different mapping than the cohort. No
   ordering of the three ID columns links any of their rows to cohort cultures. Yet every
   (anon_id, order date) pair in those files exists in the cohort: 407,018 of 407,018, 386,657 of
@@ -55,7 +61,9 @@ the CSV reader quote raw lines, so the converter reports only a line number and 
   are measured relative to the order date, so a patient's same-day cultures share the same values
   and nothing is lost at MGB's day resolution. The maintainers confirmed the defect on 2026-10-06.
   They also confirmed that `anon_id` and the date shift are consistent across files, so the link by
-  patient and order date is correct for 1.0.0. The revised release synchronizes the IDs.
+  patient and order date is correct for 1.0.0. In 2.0.0 the IDs are synchronized: every distinct
+  (anon_id, order_proc_id_coded) pair in all twelve feature tables exists in the cohort, so every
+  table links by culture.
 - **The MGB defect is in the release, not our copy.** It reproduces on the raw CSVs read with
   Python's csv module, outside the staging pipeline, and every row has the header's field count.
   All 12 local files match PhysioNet's SHA256SUMS.txt and the byte sizes in the server's directory
@@ -196,22 +204,26 @@ both are kept.
 same culture, organism and agent (77,786 groups). Preliminary-only results are kept with
 `preliminary = TRUE` (44,871 groups).
 
-## Enzyme tests (MGB only)
+## Enzyme tests (MGB 1.0.0 only)
 
-MGB reports ESBL, carbapenemase, beta-lactamase and PBP2a tests as their own rows. These rows also
+MGB 1.0.0 reports ESBL, carbapenemase, beta-lactamase and PBP2a tests as their own rows. These rows also
 carry an `AST_code` (`ESBL`, `CARBA`, `BLAC`, `MEC`), so the loader keeps them out of `isolate_ast`.
 A few other MGB test rows, such as mCIM and inducible clindamycin resistance, have no enzyme class.
 They stay in `isolate_ast`, with their Positive or Negative results mapped to other.
 ESBL tests cover 8,181 cultures, almost all E. coli, K. pneumoniae or K. oxytoca. Only 24 cultures
 have both a positive and a negative ESBL result, and pooling makes them positive. The
 `esbl_enzyme_class` label is therefore evaluable for a small, selected subset of MGB cultures.
+2.0.0 folds enzyme detections into the three-valued `susceptibility` column (Positive becomes
+Resistant, Negative becomes Susceptible) under the drug name, and its antibiotic vocabulary holds
+no enzyme test name, so they cannot be separated. `enzyme_tests` is empty at `mgb2`.
 
 ## Setting
 
 | site | raw structure |
 |---|---|
 | Stanford | One row per culture with IP, OP, ER and ICU flags. Emergency visits appear only together with IP. |
-| MGB | One flag per linked encounter (IP, OP, ER, UC, day surgery). Flags are OR-ed across a culture's encounters. |
+| MGB 1.0.0 | One flag per linked encounter (IP, OP, ER, UC, day surgery). Flags are OR-ed across a culture's encounters. |
+| MGB 2.0.0 | Stanford layout with IP, OP and ER flags and an all-NULL ICU flag. Urgent care and day surgery come from `ordering_mode` (the encounter class), where the release says they live. |
 | UTSW, ECUH | Stanford layout. ED-only cultures number 27 at UTSW and fewer than 11 at ECUH. |
 
 - `setting_primary` takes the first setting present in this order: inpatient, ed, urgent_care,
@@ -222,6 +234,11 @@ have both a positive and a negative ESBL result, and pooling makes them positive
 - So `ed` is effectively empty at all three Dryad sites, and only MGB separates ED cultures
   (114,704). Setting is unknown for 11,658 Stanford, 229 UTSW and 3,662 ECUH cultures.
 - ICU exists only at the Dryad sites, and urgent care and day surgery only at MGB.
+- MGB 2.0.0 `ordering_mode` takes nine values: Day Surgery, ED Observation, Emergency, Inpatient,
+  Observation, Outpatient, Psych Inpatient, Surgery Admit and Urgent Care. Only Urgent Care and Day
+  Surgery feed the two flags. Surgery Admit is an admission for surgery and is left to the ward
+  flags. 431 cultures are urgent care and 128,948 are `ed`, 94,999 of them inside an encounter whose
+  class is Inpatient, because the ward flags describe where the culture was taken.
 
 ## Age
 
@@ -275,7 +292,8 @@ The state rank is not usable at UTSW or ECUH.
 ## Time
 
 - Stanford order times resolve to the second in `order_time_jittered_utc`. UTSW and ECUH use
-  `order_time_jittered`, also to the second. MGB gives a date only.
+  `order_time_jittered`, also to the second. MGB 1.0.0 gives a date only. MGB 2.0.0 gives a shifted
+  collection timestamp to the second, so `order_time_resolution` is `second` at `mgb2`.
 - **The MGB date is the specimen collection date, not the order date.** The maintainers stated this
   on 2026-10-07, despite the column name `order_time_jittered_utc_shifted`. The canonical
   `order_time` therefore means collection date at MGB and order time at the Dryad sites. The two
@@ -285,8 +303,8 @@ The state rank is not usable at UTSW or ECUH.
   two months. Calendar time is not usable, so every temporal feature must use the release's
   days-to-culture columns. The MGB maintainers confirmed on 2026-10-06 that each patient has one
   random offset across all tables, so intervals within a patient are preserved.
-- Stanford, UTSW and ECUH exclude repeat cultures within 14 days, and MGB 1.0.0 does not. See the
-  next section.
+- Stanford, UTSW and ECUH exclude repeat cultures within 14 days, MGB 1.0.0 does not, and MGB 2.0.0
+  does, at source. See the next section.
 
 ## Repeat cultures and the unit of analysis
 
@@ -487,16 +505,63 @@ stands. They have submitted a revised release to PhysioNet that applies the excl
   trained on 1.0.0 cannot be tested on it without leakage, because the same patients return under
   new IDs.
 
+### ARMD-MGB 2.0.0
+
+PhysioNet published 2.0.0 on 2026-11-02 (doi:10.13026/1smb-ts67, authors Ziming Wei and Sanjat
+Kanjilal). The build code is public at github.com/AlexWei21/ARMD-MGB. The release was downloaded on
+2026-11-03, verified against its SHA256SUMS.txt, staged as the site `mgb2` and checked as the previous
+section asked. Counts are over the whole release, before any split.
+
+- **What changed.** The schema follows ARMD-Stanford: `was_positive`, one three-valued
+  `susceptibility` column, `ordering_mode`, and the Stanford feature-table names and columns. The ID
+  mismatch of 1.0.0 is fixed. `labs`, `vitals` and an `implied_susceptibility` table are new. The MIC,
+  method, preliminary-result, CLSI 2022 and enzyme fields and the `prior_micro` table are gone. The
+  prior resistance table holds resistant results only, like Stanford's. Prior antibiotics are dated by
+  order time, not last dose, and start at day 1. Patient, encounter and culture IDs and the date
+  offsets were drawn again.
+- **The repeat rule at source.** The build keeps a culture if it is the patient's first or was
+  collected more than 14 whole days after the patient's previous blood, urine or respiratory culture,
+  kept or not. In the release the smallest gap between a patient's cultures is 15 days, no two
+  cultures of a patient share a day, and the first gap bin holds 667 cultures at 15 days. So the rule
+  chains, as `chained_14d` does, drops the day-14 boundary that `chained_14d` keeps, and drops
+  same-day cultures, which `chained_14d` keeps. Applied to 2.0.0, `chained_14d` removes nothing, and
+  culture, specimen-day and order event are the same unit: 353,603 of each.
+- **Size.** 353,603 cultures from 200,543 patients: 179,107 urine (52.8% positive), 164,366 blood
+  (6.9% positive) and 10,130 respiratory (77.5% positive). 3,461 cultures span two encounters, as the
+  release notes say, and are collapsed. The 1.0.0 cohort under `chained_14d` had 632,625 cultures on
+  410,763 dates, so a same-day rule alone would predict about 410,000 cultures. **Flagged:** 2.0.0
+  holds 57,000 fewer. The build also requires the collection time to fall inside an encounter's
+  admission and discharge window and age over 18 at that admission, which 1.0.0 did not visibly
+  apply. This is not settled from the releases and is a question for the maintainers.
+- **Positivity and E2.** 32.2% of cultures are positive, against 21.3% in 1.0.0 as released and 26.2%
+  under `chained_14d`. E1 composite prevalence is 10.4% and E2 is 2.5% over the whole release. The
+  maintainers' statement that growth without AST is absent from their source data still applies.
+- **Vocabulary.** Every antibiotic name maps except `meropenem_imipenem`, one combined carbapenem
+  result that appears in the culture and prior resistance tables. It is read as meropenem, because
+  armd-common uses carbapenem results by class only. Sex is Female, Male or Others (17 cultures,
+  mapped to unknown). Age bands, specimen names, procedure names and prior organism genera match the
+  Dryad releases. Comorbidity `category` holds 506 Elixhauser and CCSR names, with the same heart
+  failure catch-all as 1.0.0.
+- **Coverage.** ADI is missing for 36.2% of cultures. Labs cover 62.1% and vitals 59.6%. A prior
+  antibiotic order exists for 70.7% of cultures and 6.8% have one 1 to 3 days before collection. No
+  prior antibiotic, resistance, organism or procedure record sits on day 0, so 2.0.0 has no
+  culture-day antibiotic record at all, where 1.0.0 recorded last doses on and after the order day.
+  Nursing home visits carry a value for 6,033 of 359,615 rows.
+- **What this means for armd-common.** `mgb2` is a Stanford-layout site. The `chained_14d` rule and
+  `specimen_day` unit stay in force for uniformity and change nothing there. The CLSI 2022
+  interpretation, the enzyme label and the 1.0.0 cross-checks exist at `mgb` only. Models trained on
+  1.0.0 are never applied to 2.0.0, because the same patients return under new IDs.
+
 ## Feature tables
 
 | table | Stanford | MGB | UTSW | ECUH |
 |---|---|---|---|---|
-| labs | yes, 14-day window | no | yes, 14-day window | yes, 30-day window |
-| vitals | yes | no | no | yes |
-| prior antibiotics | prior_med and class and subtype exposure | prior_abx | as Stanford | as Stanford |
-| prior resistance | microbial_resistance | prior_micro | as Stanford | as Stanford |
-| prior organisms | prior_infecting_organism | prior_org | as Stanford | as Stanford |
-| comorbidity | CCSR and Elixhauser components | ICD-10 and Elixhauser category, date-linked | as Stanford | as Stanford |
+| labs | yes, 14-day window | 2.0.0: yes, 14, 30 and 180-day windows | yes, 14-day window | yes, 30-day window |
+| vitals | yes | 2.0.0: yes | no | yes |
+| prior antibiotics | prior_med and class and subtype exposure | prior_abx (1.0.0: last doses; 2.0.0: orders, Stanford columns) | as Stanford | as Stanford |
+| prior resistance | microbial_resistance | 1.0.0: prior_micro; 2.0.0: as Stanford | as Stanford | as Stanford |
+| prior organisms | prior_infecting_organism | prior_org (2.0.0 with Stanford columns) | as Stanford | as Stanford |
+| comorbidity | CCSR and Elixhauser components | ICD-10 and category (date-linked in 1.0.0 only) | as Stanford | as Stanford |
 
 - The labs window is the median `Period_Day`.
 - **Nursing home visits change shape across sites.** Stanford keeps only visits (7,628 rows). MGB,
@@ -646,7 +711,9 @@ ordered cultures in each release's cohort table, measured on 2026-09-11 without 
 
 - Stanford's `prior_med` holds the day 0 records. Its `antibiotic_subtype_exposure` table starts at
   day 1 and otherwise matches. At UTSW and ECUH the two tables are identical and start at day 1.
-- MGB's `prior_abx` records the last dose only, so a course cannot be dated by its first dose.
+- MGB 1.0.0's `prior_abx` records the last dose only, so a course cannot be dated by its first dose.
+  MGB 2.0.0 records the order time and starts at day 1, like UTSW and ECUH: 6.8% of its cultures
+  have a record 1 to 3 days before collection, and none on the collection day.
 - A day 0 record cannot be placed before the order, and it includes treatment started after the
   culture was drawn. Counting it would remove 45% and 61% of cultures at Stanford and MGB, and almost
   nothing at UTSW and ECUH.
@@ -673,7 +740,8 @@ release, without labels or partitions. Shares are of ordered cultures:
   appear on the culture day for very few cultures. Prior 90-day carbapenem exposure is also 0.6% at
   Stanford against 5.7% at MGB. Capture of the agents that decide broad coverage looks incomplete.
 - MGB's last doses mix empiric courses with courses that began earlier and continued past the order.
-- UTSW and ECUH hold no culture-day records.
+- UTSW and ECUH hold no culture-day records, and neither does MGB 2.0.0 (checked 2026-11-03). The
+  MGB column above describes 1.0.0.
 - Decision: clinicians' empiric choices are not scored in ARMD, and the OrderGap paper states this as
   a limitation. MIMIC-IV, which records administrations, is the planned place to score them.
 
@@ -789,16 +857,23 @@ Decided on 2026-09-27:
   sentinel agent for Enterobacterales only impute susceptibility from ceftriaxone, cefotaxime or
   cefazolin, so the flagged Acinetobacter rule does not affect these labels.
 
+Decided on 2026-11-03 by the project lead:
+
+- **ARMD-MGB 2.0.0 replaces 1.0.0.** OrderGap reports Mass General Brigham from 2.0.0 (site `mgb2`),
+  with a new split, new cohorts, features and models and a new test read, logged as amendment E-10
+  in the analysis plan's deviations log. The 1.0.0 site key `mgb` and its results stay for
+  reproducibility. The frozen Stanford, UTSW and ECUH models are not retrained.
+
 Still open:
 
 1. **K. aerogenes grouping.** Klebsiella by taxonomy (current) or Enterobacter by AmpC behaviour.
 2. **ESBL confirmatory label at ECUH.** ECUH reports clavulanate combination tests, which could
    support a confirmatory-test label alongside MGB's enzyme label.
-3. **The revised ARMD-MGB release.** Whether armd-common and OrderGap move to it once PhysioNet
-   publishes it. Every result so far uses 1.0.0, which OrderGap's frozen plan names. Moving OrderGap
-   would mean a new MGB split, retraining and a new test read, because the releases cannot be linked.
-4. **The time anchor in the canonical schema.** `order_time` is the collection date at MGB and the
-   order time elsewhere. Whether the schema should record that difference in a column is undecided.
+3. **The time anchor in the canonical schema.** `order_time` is the collection date at MGB 1.0.0, the
+   collection timestamp at MGB 2.0.0 and the order time elsewhere. Whether the schema should record
+   that difference in a column is undecided.
+4. **The 2.0.0 cohort size.** Why 2.0.0 holds about 57,000 fewer cultures than the 1.0.0 cohort
+   under a same-day rule predicts (see "ARMD-MGB 2.0.0"). To ask the maintainers.
 
 ## Questions for the ARMD-MGB maintainers
 
