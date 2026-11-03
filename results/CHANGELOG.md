@@ -131,3 +131,35 @@
 - Clinicians, among 24,127 eMAR-covered inpatient orders with 226 resistant: a carbapenem within 24 hours flagged 18 per 1,000 and caught 15% (standardized net benefit at 0.10 of -0.05), and a carbapenem, piperacillin-tazobactam or cefepime flagged 213 and caught 44% (-2.03). The all-orders model flagged 11, caught 24% and reached 0.14, which is 0.19 (0.12 to 0.27) above the carbapenem policy. The blood comparison is withheld (33 resistant).
 - Frozen ARMD all-orders models reached AUROC 0.80 to 0.83 at BIDMC with intercepts of -0.67 to 0.13, and after local recalibration 0.12 to 0.17 standardized net benefit against 0.17 for retraining. Locally recalibrated positive-culture models reached 0.01 to 0.03. The Tumbarello score from exact items flagged 471 per 1,000 at 3 points (-4.83) and ranked positive cultures at 0.69.
 - Flagged: recalibration within urine did not restore treatment-threshold benefit at BIDMC as it did at the ARMD sites, so the lead message needs that qualification. Among orders already treated at collection (13,937) the gap widened (AUROC 0.62 against 0.82). The all-orders model ranked less well in the "other or unknown" insurance and race groups (0.73 and 0.75).
+
+## 2026-11-03 ARMD-MGB 2.0.0 staging, QC, features and gate (results/convert_mgb2, qc_mgb2, features_mgb2 and 00_gate/20261103T085546Z, SAP amendment E-10)
+
+- PhysioNet published ARMD-MGB 2.0.0 on 2026-11-02 (doi:10.13026/1smb-ts67). All 15 files verify against its SHA256SUMS.txt. It is staged as the site mgb2, separate from 1.0.0, which stays as mgb. These runs record commit 2b54204 with the 2.0.0 support uncommitted; that support is commits cc2e593 to fad0be9.
+- 353,603 cultures from 200,543 patients, against 972,798 and 226,659 in 1.0.0: 179,107 urine (52.8% positive), 164,366 blood (6.9%) and 10,130 respiratory (77.5%). Positivity is 32.2% overall, against 21.3% in 1.0.0 as released and 26.2% under the chained 14-day rule.
+- The repeat rule is applied at source. The smallest gap between one patient's cultures is 15 days, no two cultures share a day, and chained_14d removes nothing, so culture, specimen-day and order event are the same 353,603 units. Every one of the twelve feature tables now links by culture, so the 1.0.0 defect that forced three tables onto a patient-and-date link is fixed, and no order ID is shared by two patients.
+- E1 composite prevalence over the whole release is 10.4% and E2 is 2.5%, against 13.3% and 1.85% in 1.0.0 as released. Every antibiotic name maps except one combined carbapenem result, read as meropenem. The gate passes with no schema problem.
+- Flagged: 2.0.0 holds about 57,000 fewer cultures than the 1.0.0 cohort under a same-day rule predicts, because its build also requires the collection time to fall inside an encounter window and age over 18 at that admission. The CLSI 2022 interpretation, the enzyme-test label and the MIC and method fields are gone, so those analyses cannot run at this site. ADI is missing for 36.2% of cultures, and no prior antibiotic record sits on the collection day, where 1.0.0 recorded last doses on and after it.
+
+## 2026-11-03 splits_mgb2 and 01_build_cohorts (results/splits_mgb2/20261103T085702Z and 01_build_cohorts/20261103T085705Z, SAP amendment E-10)
+
+- 2.0.0 was de-identified again, so it needs its own split. One was frozen for its 200,543 patients with seed 20260911 and the same stratification: 160,434 derivation and 40,109 test patients, five inner folds of about 32,087. The 1.0.0 manifest does not carry over and both are pinned in benchmarks/manifests/SHA256SUMS.
+- Under the frozen rule and unit, mgb2 derivation E1 has 67,249 units with 10.47% resistant (7,039), and E2 has 282,822 units with the same 7,039 resistant, 24.9 per 1,000. The 1.0.0 derivation cohorts had 93,955 and 364,930 units with 10,016 resistant.
+- E2 is 46.6% blood against 4.5% in E1 (SMD 1.10) and 50.6% urine against 93.3% (SMD -1.08), the same specimen reversal as the other sites and as 1.0.0.
+- E2 is more inpatient than E1 (0.248 against 0.124, SMD 0.32), as MGB 1.0.0 was, and the gap is smaller than 1.0.0's 0.47 under the same unit.
+- Flagged: excluding orders with an antibacterial record 1 to 3 days before collection (S2) now removes 6.9% of E2 derivation units, against 20.8% at MGB 1.0.0, because 2.0.0 dates prior antibiotics by order rather than last dose.
+
+## 2026-11-03 02_train_e1 at mgb2 (results/02_train_e1/20261103T085729Z, 20261103T085808Z and 20261103T085833Z, SAP amendment E-10)
+
+- Trained XGBoost and logistic models on mgb2 derivation units with the frozen settings of SAP section 6: all specimens (67,249 E1 and 282,822 E2 units, 7,039 resistant), urine only (62,757 and 143,020, 6,313) and blood only (3,015 and 131,644, 442). Stanford, UTSW and ECUH were not retrained.
+- The Platt map from E1 toward E2 has an XGBoost intercept of -1.87 and slope 0.93 for all specimens, -0.82 and 1.07 for urine and -3.32 and 1.33 for blood. The all-specimen values are close to MGB 1.0.0's -1.75 and 0.95 and inside the range of the other three sites.
+- The 90%-sensitivity thresholds of the E2 XGBoost models are 0.0149 for all specimens, 0.0196 for urine and 0.0016 for blood, against 0.0153, 0.0208 and 0.0015 at MGB 1.0.0.
+- The recalibrated E1 threshold on E2 is 0.0087, close to the E2 model's 0.0149 but not equal, the same pattern as every other site.
+- Flagged: the blood E1 model learns from 3,015 units with 442 resistant, double MIMIC-IV's 1,464 but a third of MGB 1.0.0's, so blood results at this site are noisier than before.
+
+## 2026-11-03 04_cascade_sensitivity at mgb2 (results/04_cascade_sensitivity/20261103T090150Z, SAP amendment E-10)
+
+- Among 67,351 derivation Enterobacterales cultures at mgb2, a sentinel agent is reported for 99.85%, as at MGB 1.0.0 (99.88%). Ceftriaxone is reported for 83.1% (86.4% in 1.0.0), ceftazidime for 61.4% (50.8%), cefepime for 68.1% (72.0%) and piperacillin-tazobactam for 96.4% (95.9%).
+- Agents listed without an interpretable result almost vanish: ceftazidime falls from 12.4% of cultures in 1.0.0 to 0.07%, because 2.0.0 ships one three-valued column instead of MIC and phenotype fields.
+- Only 102 cultures have no sentinel result (0.15%). They are more often outpatient (SMD 0.22), E. coli (0.20) and have more prior organisms (0.19), but the group is too small to inform the cascade layer, as at 1.0.0 with 130.
+- Applying every implied-susceptibility rule makes 70 more cultures evaluable and adds no resistant culture, so E1 prevalence moves from 10.47% to 10.46%. Strict rules change nothing.
+- The 1.0.0 enzyme and CLSI 2022 cross-check has no counterpart here, because 2.0.0 removed both fields.
