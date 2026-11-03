@@ -519,20 +519,56 @@ section asked. Counts are over the whole release, before any split.
   prior resistance table holds resistant results only, like Stanford's. Prior antibiotics are dated by
   order time, not last dose, and start at day 1. Patient, encounter and culture IDs and the date
   offsets were drawn again.
-- **The repeat rule at source.** The build keeps a culture if it is the patient's first or was
-  collected more than 14 whole days after the patient's previous blood, urine or respiratory culture,
-  kept or not. In the release the smallest gap between a patient's cultures is 15 days, no two
-  cultures of a patient share a day, and the first gap bin holds 667 cultures at 15 days. So the rule
-  chains, as `chained_14d` does, drops the day-14 boundary that `chained_14d` keeps, and drops
-  same-day cultures, which `chained_14d` keeps. Applied to 2.0.0, `chained_14d` removes nothing, and
-  culture, specimen-day and order event are the same unit: 353,603 of each.
+- **The repeat rule at source.** `microbiology_cultures_cohort_query.ipynb` sorts a patient's
+  cultures by collection time, takes the gap to the previous culture in whole days, and keeps a
+  culture when that gap is absent or more than 14. Three consequences, all visible in the release:
+  the rule chains, as `chained_14d` does, because the gap is measured to the previous culture whether
+  or not it was kept; a gap of exactly 14 days is dropped, where `chained_14d` keeps it; and a
+  same-day culture has a gap of 0, so **at most one culture survives per patient per day, across
+  specimen types**. The smallest gap between a patient's cultures is 15 days and no two cultures of a
+  patient share a day. Applied to 2.0.0, `chained_14d` removes nothing, and culture, specimen-day and
+  order event are the same unit: 353,603 of each.
+- **The one-per-day collapse matters for OrderGap.** A patient-day that produced both a urine and a
+  blood culture contributes only the earlier one, so 2.0.0's specimen mix is not the mix of orders
+  placed. Blood is 46.5% of cultures here, against 57.4% of 1.0.0's cultures under `chained_14d`.
+  Our `specimen_day` unit cannot recover the dropped specimen, so at this site a patient-day holds one
+  specimen type by construction. This is stated in the paper.
+- **Collection times are kept to the minute.** 1,440 distinct times of day appear and only 277
+  cultures sit at midnight, so `order_time_resolution` is a real time, not a date as in 1.0.0. The
+  gap above is floored to whole days, so the effective window is more than 14 times 24 hours.
 - **Size.** 353,603 cultures from 200,543 patients: 179,107 urine (52.8% positive), 164,366 blood
   (6.9% positive) and 10,130 respiratory (77.5% positive). 3,461 cultures span two encounters, as the
-  release notes say, and are collapsed. The 1.0.0 cohort under `chained_14d` had 632,625 cultures on
-  410,763 dates, so a same-day rule alone would predict about 410,000 cultures. **Flagged:** 2.0.0
-  holds 57,000 fewer. The build also requires the collection time to fall inside an encounter's
-  admission and discharge window and age over 18 at that admission, which 1.0.0 did not visibly
-  apply. This is not settled from the releases and is a question for the maintainers.
+  release notes say, and are collapsed.
+- **Why 2.0.0 is smaller than the rule alone predicts.** Reconstructed on 2026-11-03 by applying
+  2.0.0's exact rule to 1.0.0, which is legitimate because 1.0.0 applies no rule and so holds every
+  culture the rule would use as a prior. 1.0.0 holds 972,798 cultures on 604,802 patient-dates from
+  226,659 patients. Keeping one culture per patient-date with a gap of more than 14 days leaves
+  407,596 cultures. The release holds 353,603, that is 53,993 fewer (13.2%), from 26,116 fewer
+  patients (11.5%).
+  - The rule reading is confirmed by the specimen mix. One culture per patient-date predicts 54.1%
+    urine, 42.8% blood and 3.2% respiratory, close to the released 50.7%, 46.5% and 2.9%. Keeping
+    every culture on those dates instead predicts 39.9% urine and 57.4% blood, which the release is
+    not.
+  - The shortfall is whole patients, not fewer cultures each. Cultures per patient are 1.80 predicted
+    against 1.76 released, and the share of patients with one culture (66.9% against 67.5%), two
+    (17.1% against 17.1%) and six or more (3.9% against 3.6%) barely move.
+  - The build explains the lost patients. Every culture must fall inside an encounter's admission and
+    discharge window, taken from an inner join on the encounter extract, and the patient must be over
+    18 at that admission and carry a hospital and MRN row in the identifier map. A patient with no
+    qualifying encounter leaves entirely. 1.0.0 matched on the admission date alone, which the
+    maintainers' own commit calls a defect.
+  - The extracts end before the cultures do. The microbiology extract runs 2015-05-25 to 2025-02-01,
+    while the encounter and demographics extracts are dated 2024-07-15. A culture collected after
+    that date can match only an encounter with no recorded discharge, which the build treats as
+    open-ended. That tail is 5.7% of the extract window, so it plausibly accounts for about half the
+    missing cultures, and for patients whose only cultures fall in it.
+  - **For the E2 denominator this is a new restriction.** 2.0.0 holds only cultures that sit inside a
+    recorded encounter window and, in practice, those collected before the encounter extract ended.
+    1.0.0's gap, cultures that grew without susceptibility testing, is still there as well. Both are
+    stated in the paper.
+  - Still worth asking the maintainers: whether the encounter-window requirement and the resulting
+    date ceiling are intended, and whether dropping a patient's second same-day culture, including the
+    second set of a blood draw and a same-day culture of another specimen type, is intended.
 - **Positivity and E2.** 32.2% of cultures are positive, against 21.3% in 1.0.0 as released and 26.2%
   under `chained_14d`. E1 composite prevalence is 10.4% and E2 is 2.5% over the whole release. The
   maintainers' statement that growth without AST is absent from their source data still applies.
@@ -872,8 +908,10 @@ Still open:
 3. **The time anchor in the canonical schema.** `order_time` is the collection date at MGB 1.0.0, the
    collection timestamp at MGB 2.0.0 and the order time elsewhere. Whether the schema should record
    that difference in a column is undecided.
-4. **The 2.0.0 cohort size.** Why 2.0.0 holds about 57,000 fewer cultures than the 1.0.0 cohort
-   under a same-day rule predicts (see "ARMD-MGB 2.0.0"). To ask the maintainers.
+4. **Confirmation from the maintainers on two 2.0.0 build choices.** The encounter-window
+   requirement with its date ceiling, and the one-culture-per-patient-day collapse. Both are now
+   explained from the public build code and quantified under "ARMD-MGB 2.0.0", so neither blocks the
+   analysis; confirmation would settle whether they are intended.
 
 ## Questions for the ARMD-MGB maintainers
 
